@@ -55,7 +55,11 @@ func Dir() (string, error) {
 // Filepath returns the path to the docker cli config file.
 func Filepath() (string, error) {
 	dir, err := Dir()
-	return filepath.Join(dir, FileName), err
+	if err != nil {
+		return "", fmt.Errorf("config dir: %w", err)
+	}
+
+	return filepath.Join(dir, FileName), nil
 }
 
 // Load returns the docker config file. It will internally check, in this particular order:
