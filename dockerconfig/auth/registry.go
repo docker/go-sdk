@@ -47,8 +47,6 @@ type ImageReference struct {
 }
 
 // ParseImageRef extracts the registry from the image name, using a regular expression to extract the registry from the image name.
-// regular expression to extract the registry from the image name
-// the regular expression is based on the grammar defined in
 // - image:tag
 // - image:tag@digest
 // - image
