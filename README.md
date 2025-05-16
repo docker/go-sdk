@@ -1,3 +1,12 @@
+# ⚠️ Disclaimer
+
+**This repository is Work in Progress (WIP)**. We are actively developing and improving this SDK. While the current functionality is stable and continuously tested in the CI, the API may change as we continue to enhance and refine the codebase until we reach a `v1.0.0` release. We recommend:
+
+- Using specific version tags in your dependencies.
+- Reviewing the changelog before upgrading.
+- Testing thoroughly in your environment.
+- Reporting any issues you encounter.
+
 # Docker SDK for Go
 
 A lightweight, modular SDK for interacting with Docker configuration and context data in Go.
