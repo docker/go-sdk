@@ -35,6 +35,7 @@ var (
 //
 // If the username string is empty, the password string is an identity token.
 func credentialsFromHelper(helper, hostname string) (string, string, error) {
+	credHelperName := helper
 	if helper == "" {
 		helper, helperErr := getCredentialHelper()
 		if helperErr != nil {
@@ -44,9 +45,11 @@ func credentialsFromHelper(helper, hostname string) (string, string, error) {
 		if helper == "" {
 			return "", "", nil
 		}
+
+		credHelperName = helper
 	}
 
-	helper = "docker-credential-" + helper
+	helper = "docker-credential-" + credHelperName
 	p, err := execLookPath(helper)
 	if err != nil {
 		if !errors.Is(err, exec.ErrNotFound) {
@@ -97,7 +100,7 @@ func credentialsFromHelper(helper, hostname string) (string, string, error) {
 func getCredentialHelper() (string, error) {
 	switch runtime.GOOS {
 	case "linux":
-		if _, err := exec.LookPath("pass"); err != nil {
+		if _, err := execLookPath("pass"); err != nil {
 			if errors.Is(err, exec.ErrNotFound) {
 				return "secretservice", nil
 			}
