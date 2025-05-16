@@ -1,5 +1,20 @@
 package dockerconfig
 
+const (
+	// EnvOverrideDir is the name of the environment variable that can be
+	// used to override the location of the client configuration files (~/.docker).
+	//
+	// It takes priority over the default.
+	EnvOverrideDir = "DOCKER_CONFIG"
+
+	// configFileDir is the name of the directory containing the client configuration files
+	configFileDir = ".docker"
+
+	// configFileName is the name of the client configuration file inside the
+	// config-directory.
+	FileName = "config.json"
+)
+
 // Config represents the on disk format of the docker CLI's config file.
 type Config struct {
 	AuthConfigs          map[string]AuthConfig  `json:"auths"`
