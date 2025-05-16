@@ -83,11 +83,11 @@ func Load() (Config, error) {
 		return cfg, fmt.Errorf("config path: %w", err)
 	}
 
-	return cfg, LoadFromFilepath(p, &cfg)
+	return cfg, loadFromFilepath(p, &cfg)
 }
 
-// LoadFromFilepath loads config from the specified path into cfg.
-func LoadFromFilepath(configPath string, cfg *Config) error {
+// loadFromFilepath loads config from the specified path into cfg.
+func loadFromFilepath(configPath string, cfg *Config) error {
 	f, err := os.Open(configPath)
 	if err != nil {
 		return fmt.Errorf("open config: %w", err)
