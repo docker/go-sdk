@@ -73,7 +73,8 @@ type ImageReference struct {
 // - registry:port/image:tag@digest
 // - registry:port/image
 // - registry:port/image@digest
-// Once extracted the registry, it is validated to check if it is a valid URL or an IP address.
+// Once extracted the registry, it is validated to return the Docker Index URL
+// if the registry is a valid Docker Index URL, otherwise it returns the registry as is.
 func ParseImageRef(imageRef string) (ImageReference, error) {
 	var ref ImageReference
 
@@ -98,11 +99,23 @@ func ParseImageRef(imageRef string) (ImageReference, error) {
 	}
 
 	ref = ImageReference{
-		Registry:   result["registry"],
+		Registry:   resolveRegistryHost(result["registry"]),
 		Repository: result["repository"],
 		Tag:        result["tag"],
 		Digest:     result["digest"],
 	}
 
 	return ref, nil
+}
+
+// resolveRegistryHost can be used to transform a docker registry host name into what is used for the docker config/cred helpers
+//
+// This is useful for using with containerd authorizers.
+// Naturally this only transforms docker hub URLs.
+func resolveRegistryHost(host string) string {
+	switch host {
+	case "index.docker.io", "docker.io", IndexDockerIO, "registry-1.docker.io":
+		return IndexDockerIO
+	}
+	return host
 }

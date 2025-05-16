@@ -34,18 +34,6 @@ func RegistryCredentialsForHostname(hostname string) (string, string, error) {
 	return cfg.RegistryCredentialsForHostname(hostname)
 }
 
-// ResolveRegistryHost can be used to transform a docker registry host name into what is used for the docker config/cred helpers
-//
-// This is useful for using with containerd authorizers.
-// Naturally this only transforms docker hub URLs.
-func ResolveRegistryHost(host string) string {
-	switch host {
-	case "index.docker.io", "docker.io", "https://index.docker.io/v1/", "registry-1.docker.io":
-		return "https://index.docker.io/v1/"
-	}
-	return host
-}
-
 // RegistryCredentialsForHostname gets credentials, if any, for the provided hostname.
 //
 // Hostnames should already be resolved using [ResolveRegistryHost].
