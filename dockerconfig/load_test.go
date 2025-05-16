@@ -13,7 +13,7 @@ import (
 //go:embed testdata/.docker/config.json
 var dockerConfig string
 
-func TestReadDockerConfig(t *testing.T) {
+func TestLoad(t *testing.T) {
 	var expectedConfig Config
 	err := json.Unmarshal([]byte(dockerConfig), &expectedConfig)
 	require.NoError(t, err)
