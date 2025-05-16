@@ -1,21 +1,34 @@
 package dockerconfig
 
 import (
-	"bytes"
 	"encoding/base64"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"io/fs"
-	"os/exec"
-	"runtime"
 	"strings"
+
+	"github.com/mdelapenya/docker-sdk-go/dockerconfig/auth"
 )
 
 // This is used by the docker CLI in cases where an oauth identity token is used.
 // In that case the username is stored literally as `<token>`
 // When fetching the credentials we check for this value to determine if.
 const tokenUsername = "<token>"
+
+// RegistryCredentials gets registry credentials for the passed in image reference.
+//
+// This will use [Load] to read registry auth details from the config.
+// If the config doesn't exist, it will attempt to load registry credentials using the default credential helper for the platform.
+func RegistryCredentials(imageRef string) (string, string, error) {
+	var ref auth.ImageReference
+
+	ref, err := auth.ParseImageRef(imageRef)
+	if err != nil {
+		return "", "", fmt.Errorf("parse image ref: %w", err)
+	}
+
+	return RegistryCredentialsForHostname(ref.Registry)
+}
 
 // RegistryCredentialsForHostname gets registry credentials for the passed in registry host.
 //
