@@ -26,40 +26,67 @@ import (
 // as dependency for consumers that only need to read the config-file.
 //
 // [pkg/homedir.Get]: https://pkg.go.dev/github.com/docker/docker@v26.1.4+incompatible/pkg/homedir#Get
-func getHomeDir() string {
+func getHomeDir() (string, error) {
 	home, _ := os.UserHomeDir()
 	if home == "" && runtime.GOOS != "windows" {
 		if u, err := user.Current(); err == nil {
-			return u.HomeDir
+			return u.HomeDir, nil
 		}
 	}
-	return home
-}
 
-// Dir returns the directory the configuration file is stored in.
-// It handles all path resolution logic in one place.
-func Dir() (string, error) {
-	dir := os.Getenv(EnvOverrideDir)
-	if dir != "" {
-		return dir, nil
-	}
-
-	home := getHomeDir()
 	if home == "" {
 		return "", errors.New("user home directory not determined")
 	}
 
-	return filepath.Join(home, configFileDir), nil
+	return home, nil
 }
 
-// Filepath returns the path to the docker cli config file.
+// Dir returns the directory the configuration file is stored in,
+// checking if the directory exists.
+func Dir() (string, error) {
+	dir := os.Getenv(EnvOverrideDir)
+	if dir != "" {
+		if err := fileExists(dir); err != nil {
+			return "", fmt.Errorf("config dir: %w", err)
+		}
+		return dir, nil
+	}
+
+	home, err := getHomeDir()
+	if err != nil {
+		return "", fmt.Errorf("user home dir: %w", err)
+	}
+
+	configDir := filepath.Join(home, configFileDir)
+	if err := fileExists(configDir); err != nil {
+		return "", fmt.Errorf("config dir: %w", err)
+	}
+
+	return configDir, nil
+}
+
+func fileExists(path string) error {
+	if _, err := os.Stat(path); os.IsNotExist(err) {
+		return fmt.Errorf("file does not exist: %w", err)
+	}
+
+	return nil
+}
+
+// Filepath returns the path to the docker cli config file,
+// checking if the file exists.
 func Filepath() (string, error) {
 	dir, err := Dir()
 	if err != nil {
 		return "", fmt.Errorf("config dir: %w", err)
 	}
 
-	return filepath.Join(dir, FileName), nil
+	configFilePath := filepath.Join(dir, FileName)
+	if err := fileExists(configFilePath); err != nil {
+		return "", fmt.Errorf("config file: %w", err)
+	}
+
+	return configFilePath, nil
 }
 
 // Load returns the docker config file. It will internally check, in this particular order:
@@ -81,20 +108,26 @@ func Load() (Config, error) {
 		return cfg, fmt.Errorf("config path: %w", err)
 	}
 
-	return cfg, loadFromFilepath(p, &cfg)
+	cfg, err = loadFromFilepath(p)
+	if err != nil {
+		return cfg, fmt.Errorf("load config: %w", err)
+	}
+
+	return cfg, nil
 }
 
 // loadFromFilepath loads config from the specified path into cfg.
-func loadFromFilepath(configPath string, cfg *Config) error {
+func loadFromFilepath(configPath string) (Config, error) {
+	var cfg Config
 	f, err := os.Open(configPath)
 	if err != nil {
-		return fmt.Errorf("open config: %w", err)
+		return cfg, fmt.Errorf("open config: %w", err)
 	}
 	defer f.Close()
 
 	if err = json.NewDecoder(f).Decode(&cfg); err != nil {
-		return fmt.Errorf("decode config: %w", err)
+		return cfg, fmt.Errorf("decode config: %w", err)
 	}
 
-	return nil
+	return cfg, nil
 }

@@ -18,8 +18,6 @@ func TestLoad(t *testing.T) {
 	err := json.Unmarshal([]byte(dockerConfig), &expectedConfig)
 	require.NoError(t, err)
 
-	setupDockerConfigs(t, "")
-
 	t.Run("HOME", func(t *testing.T) {
 		t.Run("valid", func(t *testing.T) {
 			setupHome(t, "testdata")
@@ -88,16 +86,27 @@ func TestLoad(t *testing.T) {
 }
 
 func TestDir(t *testing.T) {
-	setupDockerConfigs(t, "")
-
 	t.Run("HOME", func(t *testing.T) {
 		t.Run("valid", func(t *testing.T) {
 			tmpDir := t.TempDir()
 			setupHome(t, tmpDir)
 
+			// create the Docker config directory
+			cfgDir := filepath.Join(tmpDir, configFileDir)
+			err := os.Mkdir(cfgDir, 0755)
+			require.NoError(t, err)
+
 			dir, err := Dir()
 			require.NoError(t, err)
-			require.Equal(t, filepath.Join(tmpDir, ".docker"), dir)
+			require.Equal(t, cfgDir, dir)
+		})
+
+		t.Run("not-found", func(t *testing.T) {
+			setupHome(t, "testdata", "not-found")
+
+			dir, err := Dir()
+			require.ErrorIs(t, err, os.ErrNotExist)
+			require.Empty(t, dir)
 		})
 	})
 
@@ -110,11 +119,19 @@ func TestDir(t *testing.T) {
 			require.NoError(t, err)
 			require.Equal(t, tmpDir, dir)
 		})
+
+		t.Run("not-found", func(t *testing.T) {
+			setupDockerConfigs(t, "testdata", "not-found")
+
+			dir, err := Dir()
+			require.ErrorIs(t, err, os.ErrNotExist)
+			require.Empty(t, dir)
+		})
 	})
 }
 
 // setupHome sets the user's home directory to the given path
-// and unsets the DOCKER_CONFIG and DOCKER_AUTH_CONFIG environment variables.
+// It also creates the Docker config directory.
 func setupHome(t *testing.T, dirs ...string) {
 	t.Helper()
 
@@ -123,12 +140,12 @@ func setupHome(t *testing.T, dirs ...string) {
 	t.Setenv("USERPROFILE", dir) // Windows
 }
 
-// setupHome sets the user's home directory to the given path
-// and unsets the DOCKER_CONFIG and DOCKER_AUTH_CONFIG environment variables.
+// setupDockerConfigs sets the DOCKER_CONFIG environment variable to the given path,
+// and the DOCKER_AUTH_CONFIG environment variable to the testdata/dockerconfig/config.json file.
 func setupDockerConfigs(t *testing.T, dirs ...string) {
 	t.Helper()
 
 	dir := filepath.Join(dirs...)
-	t.Setenv("DOCKER_AUTH_CONFIG", dir)
+	t.Setenv("DOCKER_AUTH_CONFIG", dockerConfig)
 	t.Setenv(EnvOverrideDir, dir)
 }
