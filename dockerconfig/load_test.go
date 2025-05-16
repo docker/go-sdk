@@ -93,7 +93,7 @@ func TestDir(t *testing.T) {
 
 			// create the Docker config directory
 			cfgDir := filepath.Join(tmpDir, configFileDir)
-			err := os.Mkdir(cfgDir, 0755)
+			err := os.Mkdir(cfgDir, 0o755)
 			require.NoError(t, err)
 
 			dir, err := Dir()

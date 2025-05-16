@@ -3,8 +3,9 @@ package auth_test
 import (
 	"testing"
 
-	"github.com/mdelapenya/docker-sdk-go/dockerconfig/auth"
 	"github.com/stretchr/testify/require"
+
+	"github.com/mdelapenya/docker-sdk-go/dockerconfig/auth"
 )
 
 const (
@@ -15,7 +16,6 @@ const (
 )
 
 func TestParseImageRef(t *testing.T) {
-
 	t.Run("empty-image", func(t *testing.T) {
 		ref, err := auth.ParseImageRef("")
 		require.Error(t, err)
@@ -45,7 +45,7 @@ func TestParseImageRef(t *testing.T) {
 
 		expectedRegistry := testRegistry
 		if testRegistry != "" {
-			testRegistry = testRegistry + "/"
+			testRegistry += "/"
 		} else {
 			expectedRegistry = auth.IndexDockerIO
 		}
