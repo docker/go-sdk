@@ -21,7 +21,7 @@ func TestDecodeBase64Auth(t *testing.T) {
 	}
 }
 
-func TestConfig_GetRegistryCredentials(t *testing.T) {
+func TestConfig_RegistryCredentialsForHostname(t *testing.T) {
 	t.Run("from base64 auth", func(t *testing.T) {
 		for _, tc := range base64TestCases() {
 			t.Run(tc.name, func(t *testing.T) {
@@ -31,7 +31,7 @@ func TestConfig_GetRegistryCredentials(t *testing.T) {
 					},
 				}
 				testBase64Case(tc, func() (string, string, error) {
-					return config.GetRegistryCredentials("some.domain")
+					return config.RegistryCredentialsForHostname("some.domain")
 				})(t)
 			})
 		}
@@ -83,7 +83,7 @@ func testBase64Case(tc base64TestCase, authFn testAuthFn) func(t *testing.T) {
 func validateAuth(t *testing.T, hostname, expectedUser, expectedPass string) {
 	t.Helper()
 
-	username, password, err := GetRegistryCredentials(hostname)
+	username, password, err := RegistryCredentialsForHostname(hostname)
 	require.NoError(t, err)
 	require.Equal(t, expectedUser, username)
 	require.Equal(t, expectedPass, password)
@@ -93,7 +93,7 @@ func validateAuth(t *testing.T, hostname, expectedUser, expectedPass string) {
 func validateAuthError(t *testing.T, hostname string, expectedErr error) {
 	t.Helper()
 
-	username, password, err := GetRegistryCredentials(hostname)
+	username, password, err := RegistryCredentialsForHostname(hostname)
 	require.Error(t, err)
 	require.Equal(t, expectedErr.Error(), err.Error())
 	require.Empty(t, username)
@@ -128,7 +128,7 @@ func mockExecCommand(t *testing.T, env ...string) {
 	})
 }
 
-func TestGetRegistryCredentials(t *testing.T) {
+func TestRegistryCredentialsForHostname(t *testing.T) {
 	t.Setenv(EnvOverrideDir, filepath.Join("testdata", "credhelpers-config"))
 
 	t.Run("auths/user-pass", func(t *testing.T) {

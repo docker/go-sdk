@@ -17,11 +17,11 @@ import (
 // When fetching the credentials we check for this value to determine if.
 const tokenUsername = "<token>"
 
-// GetRegistryCredentials gets registry credentials for the passed in registry host.
+// RegistryCredentialsForHostname gets registry credentials for the passed in registry host.
 //
 // This will use [Load] to read registry auth details from the config.
 // If the config doesn't exist, it will attempt to load registry credentials using the default credential helper for the platform.
-func GetRegistryCredentials(hostname string) (string, string, error) {
+func RegistryCredentialsForHostname(hostname string) (string, string, error) {
 	cfg, err := Load()
 	if err != nil {
 		if !errors.Is(err, fs.ErrNotExist) {
@@ -31,7 +31,7 @@ func GetRegistryCredentials(hostname string) (string, string, error) {
 		return GetCredentialsFromHelper("", hostname)
 	}
 
-	return cfg.GetRegistryCredentials(hostname)
+	return cfg.RegistryCredentialsForHostname(hostname)
 }
 
 // ResolveRegistryHost can be used to transform a docker registry host name into what is used for the docker config/cred helpers
@@ -46,12 +46,12 @@ func ResolveRegistryHost(host string) string {
 	return host
 }
 
-// GetRegistryCredentials gets credentials, if any, for the provided hostname.
+// RegistryCredentialsForHostname gets credentials, if any, for the provided hostname.
 //
 // Hostnames should already be resolved using [ResolveRegistryHost].
 //
 // If the returned username string is empty, the password is an identity token.
-func (c *Config) GetRegistryCredentials(hostname string) (string, string, error) {
+func (c *Config) RegistryCredentialsForHostname(hostname string) (string, string, error) {
 	h, ok := c.CredentialHelpers[hostname]
 	if ok {
 		return GetCredentialsFromHelper(h, hostname)
