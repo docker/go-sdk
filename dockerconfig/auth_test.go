@@ -78,8 +78,8 @@ func testBase64Case(tc base64TestCase, authFn testAuthFn) func(t *testing.T) {
 	}
 }
 
-// validateAuth is a helper function to validate the username and password for a given hostname.
-func validateAuth(t *testing.T, hostname, expectedUser, expectedPass string) {
+// validateAuthForHostname is a helper function to validate the username and password for a given hostname.
+func validateAuthForHostname(t *testing.T, hostname, expectedUser, expectedPass string) {
 	t.Helper()
 
 	username, password, err := RegistryCredentialsForHostname(hostname)
@@ -88,8 +88,8 @@ func validateAuth(t *testing.T, hostname, expectedUser, expectedPass string) {
 	require.Equal(t, expectedPass, password)
 }
 
-// validateAuthError is a helper function to validate we get an error for the given hostname.
-func validateAuthError(t *testing.T, hostname string, expectedErr error) {
+// validateAuthErrorForHostname is a helper function to validate we get an error for the given hostname.
+func validateAuthErrorForHostname(t *testing.T, hostname string, expectedErr error) {
 	t.Helper()
 
 	username, password, err := RegistryCredentialsForHostname(hostname)
@@ -103,63 +103,63 @@ func TestRegistryCredentialsForHostname(t *testing.T) {
 	t.Setenv(EnvOverrideDir, filepath.Join("testdata", "credhelpers-config"))
 
 	t.Run("auths/user-pass", func(t *testing.T) {
-		validateAuth(t, "userpass.io", "user", "pass")
+		validateAuthForHostname(t, "userpass.io", "user", "pass")
 	})
 
 	t.Run("auths/auth", func(t *testing.T) {
-		validateAuth(t, "auth.io", "auth", "authsecret")
+		validateAuthForHostname(t, "auth.io", "auth", "authsecret")
 	})
 
 	t.Run("credsStore", func(t *testing.T) {
-		validateAuth(t, "credstore.io", "", "")
+		validateAuthForHostname(t, "credstore.io", "", "")
 	})
 
 	t.Run("credHelpers/user-pass", func(t *testing.T) {
 		mockExecCommand(t, `HELPER_STDOUT={"Username":"credhelper","Secret":"credhelpersecret"}`)
-		validateAuth(t, "helper.io", "credhelper", "credhelpersecret")
+		validateAuthForHostname(t, "helper.io", "credhelper", "credhelpersecret")
 	})
 
 	t.Run("credHelpers/token", func(t *testing.T) {
 		mockExecCommand(t, `HELPER_STDOUT={"Username":"<token>", "Secret":"credhelpersecret"}`)
-		validateAuth(t, "helper.io", "", "credhelpersecret")
+		validateAuthForHostname(t, "helper.io", "", "credhelpersecret")
 	})
 
 	t.Run("credHelpers/not-found", func(t *testing.T) {
 		mockExecCommand(t, "HELPER_STDOUT="+ErrCredentialsNotFound.Error(), "HELPER_EXIT_CODE=1")
-		validateAuth(t, "helper.io", "", "")
+		validateAuthForHostname(t, "helper.io", "", "")
 	})
 
 	t.Run("credHelpers/missing-url", func(t *testing.T) {
 		mockExecCommand(t, "HELPER_STDOUT="+ErrCredentialsMissingServerURL.Error(), "HELPER_EXIT_CODE=1")
-		validateAuthError(t, "helper.io", ErrCredentialsMissingServerURL)
+		validateAuthErrorForHostname(t, "helper.io", ErrCredentialsMissingServerURL)
 	})
 
 	t.Run("credHelpers/other-error", func(t *testing.T) {
 		mockExecCommand(t, "HELPER_STDOUT=output", "HELPER_STDERR=my error", "HELPER_EXIT_CODE=10")
 		expectedErr := errors.New(`execute "docker-credential-helper" stdout: "output" stderr: "my error": exit status 10`)
-		validateAuthError(t, "helper.io", expectedErr)
+		validateAuthErrorForHostname(t, "helper.io", expectedErr)
 	})
 
 	t.Run("credHelpers/lookup-not-found", func(t *testing.T) {
 		mockExecCommand(t, "HELPER_STDOUT=output", "HELPER_STDERR=my error", "HELPER_EXIT_CODE=10")
-		validateAuth(t, "other.io", "", "")
+		validateAuthForHostname(t, "other.io", "", "")
 	})
 
 	t.Run("credHelpers/lookup-error", func(t *testing.T) {
 		mockExecCommand(t, "HELPER_STDOUT=output", "HELPER_STDERR=my error", "HELPER_EXIT_CODE=10")
 		expectedErr := errors.New(`look up "docker-credential-error": lookup error`)
-		validateAuthError(t, "error.io", expectedErr)
+		validateAuthErrorForHostname(t, "error.io", expectedErr)
 	})
 
 	t.Run("credHelpers/decode-json", func(t *testing.T) {
 		mockExecCommand(t, "HELPER_STDOUT=bad-json")
 		expectedErr := errors.New(`unmarshal credentials from: "docker-credential-helper": invalid character 'b' looking for beginning of value`)
-		validateAuthError(t, "helper.io", expectedErr)
+		validateAuthErrorForHostname(t, "helper.io", expectedErr)
 	})
 
 	t.Run("config/not-found", func(t *testing.T) {
 		t.Setenv(EnvOverrideDir, filepath.Join("testdata", "missing"))
-		validateAuth(t, "userpass.io", "", "")
+		validateAuthForHostname(t, "userpass.io", "", "")
 	})
 }
 
