@@ -41,6 +41,8 @@ func TestParseImageRef(t *testing.T) {
 	})
 
 	suiteParseImageRefFn := func(t *testing.T, testRegistry string) {
+		t.Helper()
+
 		expectedRegistry := testRegistry
 		if testRegistry != "" {
 			testRegistry = testRegistry + "/"
