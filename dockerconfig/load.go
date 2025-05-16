@@ -36,32 +36,26 @@ func getHomeDir() string {
 	return home
 }
 
-// getConfigLocation returns both the directory and full path for the config file.
-// It handles all path resolution logic in one place.
-func getConfigLocation() (dir string, configPath string, err error) {
-	dir = os.Getenv(EnvOverrideDir)
-	if dir == "" {
-		home := getHomeDir()
-		if home == "" {
-			return "", "", errors.New("user home directory not determined")
-		}
-		dir = filepath.Join(home, configFileDir)
-	}
-	configPath = filepath.Join(dir, FileName)
-
-	return dir, configPath, nil
-}
-
 // Dir returns the directory the configuration file is stored in.
+// It handles all path resolution logic in one place.
 func Dir() (string, error) {
-	dir, _, err := getConfigLocation()
-	return dir, err
+	dir := os.Getenv(EnvOverrideDir)
+	if dir != "" {
+		return dir, nil
+	}
+
+	home := getHomeDir()
+	if home == "" {
+		return "", errors.New("user home directory not determined")
+	}
+
+	return filepath.Join(home, configFileDir), nil
 }
 
 // Filepath returns the path to the docker cli config file.
 func Filepath() (string, error) {
-	_, configPath, err := getConfigLocation()
-	return configPath, err
+	dir, err := Dir()
+	return filepath.Join(dir, FileName), err
 }
 
 // Load returns the docker config file. It will internally check, in this particular order:
