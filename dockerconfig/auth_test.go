@@ -16,7 +16,7 @@ import (
 func TestDecodeBase64Auth(t *testing.T) {
 	for _, tc := range base64TestCases() {
 		t.Run(tc.name, testBase64Case(tc, func() (string, string, error) {
-			return DecodeBase64Auth(tc.config)
+			return decodeBase64Auth(tc.config)
 		}))
 	}
 }

@@ -81,14 +81,14 @@ func (c *Config) RegistryCredentialsForHostname(hostname string) (string, string
 		return auth.Username, auth.Password, nil
 	}
 
-	return DecodeBase64Auth(auth)
+	return decodeBase64Auth(auth)
 }
 
-// DecodeBase64Auth decodes the legacy file-based auth storage from the docker CLI.
+// decodeBase64Auth decodes the legacy file-based auth storage from the docker CLI.
 // It takes the "Auth" filed from AuthConfig and decodes that into a username and password.
 //
 // If "Auth" is empty, an empty user/pass will be returned, but not an error.
-func DecodeBase64Auth(auth AuthConfig) (string, string, error) {
+func decodeBase64Auth(auth AuthConfig) (string, string, error) {
 	if auth.Auth == "" {
 		return "", "", nil
 	}
