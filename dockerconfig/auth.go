@@ -28,7 +28,7 @@ func RegistryCredentialsForHostname(hostname string) (string, string, error) {
 			return "", "", fmt.Errorf("load default config: %w", err)
 		}
 
-		return GetCredentialsFromHelper("", hostname)
+		return credentialsFromHelper("", hostname)
 	}
 
 	return cfg.RegistryCredentialsForHostname(hostname)
@@ -54,11 +54,11 @@ func ResolveRegistryHost(host string) string {
 func (c *Config) RegistryCredentialsForHostname(hostname string) (string, string, error) {
 	h, ok := c.CredentialHelpers[hostname]
 	if ok {
-		return GetCredentialsFromHelper(h, hostname)
+		return credentialsFromHelper(h, hostname)
 	}
 
 	if c.CredentialsStore != "" {
-		username, password, err := GetCredentialsFromHelper(c.CredentialsStore, hostname)
+		username, password, err := credentialsFromHelper(c.CredentialsStore, hostname)
 		if err != nil {
 			return "", "", fmt.Errorf("get credentials from store: %w", err)
 		}
@@ -70,7 +70,7 @@ func (c *Config) RegistryCredentialsForHostname(hostname string) (string, string
 
 	auth, ok := c.AuthConfigs[hostname]
 	if !ok {
-		return GetCredentialsFromHelper("", hostname)
+		return credentialsFromHelper("", hostname)
 	}
 
 	if auth.IdentityToken != "" {
@@ -125,7 +125,7 @@ var (
 	execCommand = exec.Command
 )
 
-// GetCredentialsFromHelper attempts to lookup credentials from the passed in docker credential helper.
+// credentialsFromHelper attempts to lookup credentials from the passed in docker credential helper.
 //
 // The credential helper should just be the suffix name (no "docker-credential-").
 // If the passed in helper program is empty this will look up the default helper for the platform.
@@ -135,7 +135,7 @@ var (
 // Hostnames should already be resolved using [ResolveRegistryHost]
 //
 // If the username string is empty, the password string is an identity token.
-func GetCredentialsFromHelper(helper, hostname string) (string, string, error) {
+func credentialsFromHelper(helper, hostname string) (string, string, error) {
 	if helper == "" {
 		helper, helperErr := getCredentialHelper()
 		if helperErr != nil {
