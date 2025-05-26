@@ -51,23 +51,11 @@ jobs:
         working-directory: ./${{ inputs.project-directory }}
         run: go build ./...
 
-      - name: Install gotestsum
-        run: go install gotest.tools/gotestsum@latest
-
       - name: go test
         working-directory: ./${{ inputs.project-directory }}
         timeout-minutes: 30
         shell: bash
-        run: |
-          gotestsum \
-            --format short-verbose \
-            --packages="./..." \
-            --junitfile TEST-unit.xml \
-            -- \
-            -v \
-            -coverprofile=coverage.out \
-            -timeout=60s \
-            -race
+        run: make test
 
       - name: Test Summary
         uses: test-summary/action@31493c76ec9e7aa675f1585d3ed6f1da69269a86 # v2.4
