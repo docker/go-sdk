@@ -105,10 +105,10 @@ func setupDockerContexts(t *testing.T, currentContextIndex int, contextsCount in
 	t.Setenv("HOME", tmpDir)
 	t.Setenv("USERPROFILE", tmpDir) // Windows support
 
+	tempMkdirAll(t, filepath.Join(tmpDir, ".docker"))
+
 	configDir, err := dockerconfig.Dir()
 	require.NoError(t, err)
-
-	tempMkdirAll(t, configDir)
 
 	configJSON := filepath.Join(configDir, dockerconfig.FileName)
 
