@@ -1,6 +1,5 @@
 # Contributing
 
-<<<<<<< HEAD
 `Docker SDK for Go` is open source, and we love to receive contributions from our community — you!
 
 There are many ways to contribute, from writing tutorials or blog posts, improving the documentation, submitting bug reports and feature requests, or writing code for the any of the modules in the repository.
@@ -48,16 +47,3 @@ Please just be sure to:
 * apply format running `make lint` for the module you are contributing to. It will run `golangci-lint` for the module you are contributing to with the configuration set in the root directory of the project. Please be aware that the lint stage on CI could fail if this is not done.
 * verify all tests for the module you are contributing to are passing. Build and test the project with `make test` to do this.
 * when updating the `go.mod` file, please run `go work sync` to ensure all modules are updated.
-=======
-Please see the [main contributing guidelines](./docs/contributing.md).
-
-There are additional docs describing [contributing documentation changes](./docs/contributing.md).
-
-### GitHub Sponsorship
-
-Testcontainers is [in the GitHub Sponsors program](https://github.com/sponsors/testcontainers)!
-
-This repository is supported by our sponsors, meaning that issues are eligible to have a 'bounty' attached to them by sponsors.
-
-Please see [the bounty policy page](https://golang.testcontainers.org/bounty) if you are interested, either as a sponsor or as a contributor.
->>>>>>> tcgo/main

@@ -18,24 +18,6 @@ on:
         type: string
         default: "."
         description: "The directory where the Go project is located."
-<<<<<<< HEAD
-=======
-      testcontainers-cloud:
-        required: false
-        type: boolean
-        default: false
-        description: "Run the tests on Testcontainers Cloud"
-      rootless-docker:
-        required: false
-        type: boolean
-        default: false
-        description: "Run the test with rootless docker."
-      ryuk-disabled:
-        required: false
-        type: boolean
-        default: false
-        description: "Disable the ryuk container for the test."
->>>>>>> tcgo/main
 
 permissions:
   contents: read
@@ -44,32 +26,14 @@ permissions:
 
 jobs:
   test-go-project:
-<<<<<<< HEAD
     name: "test: ${{ inputs.project-directory }}/${{ inputs.go-version }}/${{ matrix.platform }}"
     env:
-=======
-    name: "test: ${{ inputs.project-directory }}/${{ inputs.go-version }}"
-    # Modulegen can run the tests on all platforms
-    env:
-      TESTCONTAINERS_RYUK_DISABLED: "${{ inputs.ryuk-disabled }}"
-      RYUK_CONNECTION_TIMEOUT: "${{ inputs.project-directory == 'modules/compose' && '5m' || '60s' }}"
-      RYUK_RECONNECTION_TIMEOUT: "${{ inputs.project-directory == 'modules/compose' && '30s' || '10s' }}"
->>>>>>> tcgo/main
       SHOULD_RUN_SONAR: "false"
     strategy:
       matrix:
         platform: ${{ fromJSON(inputs.platforms) }}
     runs-on: ${{ matrix.platform }}
     steps:
-<<<<<<< HEAD
-=======
-      - name: Setup rootless Docker
-        if: ${{ inputs.rootless-docker }}
-        uses: docker/setup-docker-action@b60f85385d03ac8acfca6d9996982511d8620a19 # v4
-        with:
-          rootless: true
-
->>>>>>> tcgo/main
       - name: Check out code into the Go module directory
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
@@ -77,11 +41,7 @@ jobs:
           fetch-depth: 0
 
       - name: Set up Go
-<<<<<<< HEAD
         uses: actions/setup-go@f111f3307d8850f501ac008e886eec1fd1932a34 # v5.3.0
-=======
-        uses: actions/setup-go@0aaccfd150d50ccaeb58ebd88d36e91967a5f35b # v5.4.0
->>>>>>> tcgo/main
         with:
             go-version: '${{ inputs.go-version }}'
             cache-dependency-path: '${{ inputs.project-directory }}/go.sum'
@@ -91,46 +51,11 @@ jobs:
         working-directory: ./${{ inputs.project-directory }}
         run: go build ./...
 
-<<<<<<< HEAD
       - name: go test
         working-directory: ./${{ inputs.project-directory }}
         timeout-minutes: 30
         shell: bash
         run: make test
-=======
-      - name: Install dependencies
-        shell: bash
-        run: |
-          SCRIPT_PATH="./.github/scripts/${{ inputs.project-directory }}/install-dependencies.sh"
-          if [ -f "$SCRIPT_PATH" ]; then
-            $SCRIPT_PATH
-          else
-            echo "No dependencies script found at $SCRIPT_PATH - skipping installation"
-          fi
-
-      # Setup Testcontainers Cloud Client right before your Testcontainers tests
-      - name: Setup Testcontainers Cloud Client
-        if: ${{ inputs.testcontainers-cloud }}
-        uses: atomicjar/testcontainers-cloud-setup-action@c335bdbb570ec7c48f72c7d450c077f0a002293e # v1.3
-        with:
-          token: ${{ secrets.TCC_TOKEN }}
-
-      - name: go test
-        working-directory: ./${{ inputs.project-directory }}
-        timeout-minutes: 30
-        run: make test-unit
-
-      - name: Run checker
-        run: |
-            ./scripts/check_environment.sh
-
-      # (Optionally) When you don't need Testcontainers Cloud anymore, you could terminate sessions eagerly
-      - name: Terminate Testcontainers Cloud Client active sessions
-        if: ${{ inputs.testcontainers-cloud }}
-        uses: atomicjar/testcontainers-cloud-setup-action@c335bdbb570ec7c48f72c7d450c077f0a002293e # v1.3
-        with:
-          action: terminate
->>>>>>> tcgo/main
 
       - name: Test Summary
         uses: test-summary/action@31493c76ec9e7aa675f1585d3ed6f1da69269a86 # v2.4
@@ -142,7 +67,6 @@ jobs:
         if: ${{ matrix.platform == 'ubuntu-latest' }}
         run: |
           if [[ "1.23.x" == "${{ inputs.go-version }}" ]] && \
-<<<<<<< HEAD
              [[ "main" == "${{ github.ref_name }}" ]] && \
              [[ "docker" == "${{ github.repository_owner }}" ]]; then
             echo "SHOULD_RUN_SONAR=true" >> $GITHUB_ENV
@@ -154,22 +78,11 @@ jobs:
         run: |
           echo "SHOULD_RUN_SONAR=false" >> $GITHUB_ENV
 
-=======
-             [[ "true" != "${{ inputs.rootless-docker }}" ]] && \
-             [[ "true" != "${{ inputs.testcontainers-cloud }}" ]] && \
-             [[ "true" != "${{ inputs.ryuk-disabled }}" ]] && \
-             [[ "main" == "${{ github.ref_name }}" ]] && \
-             [[ "testcontainers" == "${{ github.repository_owner }}" ]]; then
-            echo "SHOULD_RUN_SONAR=true" >> $GITHUB_ENV
-          fi
-
->>>>>>> tcgo/main
       - name: Set Sonar Cloud environment variables
         if: ${{ env.SHOULD_RUN_SONAR == 'true' }}
         run: |
           echo "PROJECT_VERSION=$(grep 'latest_version' mkdocs.yml | cut -d':' -f2 | tr -d ' ')" >> $GITHUB_ENV
           if [ "${{ inputs.project-directory }}" == "" ]; then
-<<<<<<< HEAD
             echo "PROJECT_KEY=docker_docker-sdk-go" >> $GITHUB_ENV
             echo "PROJECT_NAME=docker-sdk-go" >> $GITHUB_ENV
             echo "PROJECT_SRC_EXCLUSIONS=**/*_test.go,**/vendor/**,**/testdata/**,modules/**,examples/**,modulegen/**" >> $GITHUB_ENV
@@ -177,36 +90,19 @@ jobs:
           else
             echo "PROJECT_KEY=docker_docker-sdk-go_$(echo ${{ inputs.project-directory }} | tr '/' '_')" >> $GITHUB_ENV
             echo "PROJECT_NAME=docker-sdk-go-$(echo ${{ inputs.project-directory }} | tr '/' '-')" >> $GITHUB_ENV
-=======
-            echo "PROJECT_KEY=testcontainers_testcontainers-go" >> $GITHUB_ENV
-            echo "PROJECT_NAME=testcontainers-go" >> $GITHUB_ENV
-            echo "PROJECT_SRC_EXCLUSIONS=**/*_test.go,**/vendor/**,**/testdata/**,modules/**,examples/**,modulegen/**" >> $GITHUB_ENV
-            echo "PROJECT_TEST_EXCLUSIONS=**/vendor/**,modules/**,examples/**,modulegen/**" >> $GITHUB_ENV
-          else
-            echo "PROJECT_KEY=testcontainers_testcontainers-go_$(echo ${{ inputs.project-directory }} | tr '/' '_')" >> $GITHUB_ENV
-            echo "PROJECT_NAME=testcontainers-go-$(echo ${{ inputs.project-directory }} | tr '/' '-')" >> $GITHUB_ENV
->>>>>>> tcgo/main
             echo "PROJECT_SRC_EXCLUSIONS=**/*_test.go,**/vendor/**,**/testdata/**" >> $GITHUB_ENV
             echo "PROJECT_TEST_EXCLUSIONS=**/vendor/**" >> $GITHUB_ENV
           fi
 
       - name: SonarQube Scan
         if: ${{ env.SHOULD_RUN_SONAR == 'true' }}
-<<<<<<< HEAD
         uses: SonarSource/sonarqube-scan-action@0303d6b62e310685c0e34d0b9cde218036885c4d # v5.0.0
-=======
-        uses: SonarSource/sonarqube-scan-action@aa494459d7c39c106cc77b166de8b4250a32bb97 # v5.1.0
->>>>>>> tcgo/main
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         with:
           projectBaseDir: "${{ inputs.project-directory == '' && '.' || inputs.project-directory }}"
           args: >
-<<<<<<< HEAD
             -Dsonar.organization=docker
-=======
-            -Dsonar.organization=testcontainers
->>>>>>> tcgo/main
             -Dsonar.projectKey=${{ env.PROJECT_KEY }}
             -Dsonar.projectName=${{ env.PROJECT_NAME }}
             -Dsonar.projectVersion=${{ env.PROJECT_VERSION }}

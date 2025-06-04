@@ -23,15 +23,9 @@ jobs:
           # We may not need a scope on every commit (i.e. repo-level change).
           #
           # feat!: read config consistently
-<<<<<<< HEAD
           # feat(dockerconfig): support for A
           # chore(dockerconfig): update tests
           # fix(dockerconfig): trim value
-=======
-          # feat(redis): support for clustering
-          # chore(redis): update tests
-          # fix(redis): trim connection string
->>>>>>> tcgo/main
           # ^    ^    ^
           # |    |    |__ Subject
           # |    |_______ Scope

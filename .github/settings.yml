@@ -4,7 +4,6 @@ repository:
   # See https://docs.github.com/en/rest/reference/repos#update-a-repository for all available settings.
 
   # The name of the repository. Changing this will rename the repository
-<<<<<<< HEAD
   name: docker-sdk-go
 
   # A short description of the repository that will show up on GitHub
@@ -15,18 +14,6 @@ repository:
 
   # A comma-separated list of topics to set on the repository
   topics: docker,go,golang,sdk
-=======
-  name: testcontainers-go
-
-  # A short description of the repository that will show up on GitHub
-  description: Testcontainers for Go is a Go package that makes it simple to create and clean up container-based dependencies for automated integration/smoke tests. The clean, easy-to-use API enables developers to programmatically define containers that should be run as part of a test and clean up those resources when the test is done.
-
-  # A URL with more information about the repository
-  homepage: https://golang.testcontainers.org
-
-  # A comma-separated list of topics to set on the repository
-  topics: testing,go,docker,golang,automation,testcontainers,hacktoberfest,testcontainers-go
->>>>>>> tcgo/main
 
   # Either `true` to make the repository private, or `false` to make it public.
   private: false
@@ -36,11 +23,7 @@ repository:
 
   # Either `true` to enable projects for this repository, or `false` to disable them.
   # If projects are disabled for the organization, passing `true` will cause an API error.
-<<<<<<< HEAD
   has_projects: true
-=======
-  has_projects: false
->>>>>>> tcgo/main
 
   # Either `true` to enable the wiki for this repository, `false` to disable it.
   has_wiki: false
@@ -73,13 +56,6 @@ labels:
     color: '#ff0000'
     description: An issue with the library
 
-<<<<<<< HEAD
-=======
-  - name: compose
-    color: '#0888DA'
-    description: Docker Compose.
-
->>>>>>> tcgo/main
   - name: dependencies
     color: '#0c19d1'
     description: Dependencies or external services
@@ -94,11 +70,7 @@ labels:
 
   - name: good first issue
     color: '#FEF2C0'
-<<<<<<< HEAD
     description: Want to contribute? Start from here
-=======
-    description: Want to contribute to testcontainers? Start from here
->>>>>>> tcgo/main
 
   - name: hacktoberfest
     color: '#fbca04'
@@ -116,13 +88,6 @@ labels:
     color: '#FFC300'
     description: Issues that are good for newcomers.
 
-<<<<<<< HEAD
-=======
-  - name: podman
-    color: '#B52710'
-    description: Issues regarding podman.
-
->>>>>>> tcgo/main
   - name: breaking change
     color: '#c91873'
     description: Causing compatibility issues.
@@ -141,11 +106,7 @@ labels:
 
   - name: question
     color: '#8ba7f4'
-<<<<<<< HEAD
     description: Have you tried our Slack (https://dockr.ly/comm-slack)?
-=======
-    description: Have you tried our Slack (https://testcontainers.slack.com)?
->>>>>>> tcgo/main
 
   - name: security
     color: '#D93F0B'
@@ -162,17 +123,8 @@ labels:
 # Collaborators: give specific users access to this repository.
 # See https://docs.github.com/en/rest/reference/repos#add-a-repository-collaborator for available options
 collaborators:
-<<<<<<< HEAD
   - username: mdelapenya
     permission: admin
-=======
-  - username: gianarb
-    permission: maintain
-  - username: mdelapenya
-    permission: admin
-  - username: testcontainersbot
-    permission: write
->>>>>>> tcgo/main
 
   # Note: `permission` is only valid on organization-owned repositories.
   # The permission to grant the collaborator. Can be one of:
@@ -186,11 +138,7 @@ collaborators:
 teams:
   # Please make sure the team already exist in the organization, as the repository-settings application is not creating them.
   # See https://github.com/repository-settings/app/discussions/639 for more information about teams and settings
-<<<<<<< HEAD
   - name: docker-sdk-maintainers
-=======
-  - name: go-team
->>>>>>> tcgo/main
     # The permission to grant the team. Can be one of:
     # * `pull` - can pull, but not push to or administer this repository.
     # * `push` - can pull and push, but not administer this repository.
@@ -198,11 +146,6 @@ teams:
     # * `maintain` - Recommended for project managers who need to manage the repository without access to sensitive or destructive actions.
     # * `triage` - Recommended for contributors who need to proactively manage issues and pull requests without write access.
     permission: admin
-<<<<<<< HEAD
-=======
-  - name: oss-team
-    permission: maintain
->>>>>>> tcgo/main
 
 branches:
   - name: main
@@ -220,11 +163,7 @@ branches:
         # Specify which users and teams can dismiss pull request reviews. Pass an empty dismissal_restrictions object to disable. User and team dismissal_restrictions are only available for organization-owned repositories. Omit this parameter for personal repositories.
         dismissal_restrictions:
           users: []
-<<<<<<< HEAD
           teams: [docker-sdk-maintainers]
-=======
-          teams: [go-team]
->>>>>>> tcgo/main
       # Required. Require status checks to pass before merging. Set to null to disable
       required_status_checks:
         # Required. Require branches to be up to date before merging.
@@ -239,8 +178,4 @@ branches:
       restrictions:
         apps: []
         users: []
-<<<<<<< HEAD
         teams: [docker-sdk-maintainers]
-=======
-        teams: [go-team]
->>>>>>> tcgo/main

@@ -13,3 +13,10 @@ Author: cpuguy83 and contributors
 License: MIT (see third_party/cpuguy83/dockercfg/LICENSE)
 
 This code has been modified.
+
+## testcontainers/testcontainers-go (MIT License)
+Source: https://github.com/testcontainers/testcontainers-go  
+Author: Gianluca Arbezzano and contributors  
+License: MIT (see third_party/testcontainers/testcontainers-go/LICENSE)
+
+This code has been modified.

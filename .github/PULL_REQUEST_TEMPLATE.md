@@ -23,13 +23,8 @@ Link related issues below. Insert the issue link or reference after the word "Cl
 - Relates #123
 - Requires #123
 - Supersedes #123
-<<<<<<< HEAD
 - See #123
 -->
-=======
--->
-- 
->>>>>>> tcgo/main
 
 <!-- Recommended
 ## How to test this PR

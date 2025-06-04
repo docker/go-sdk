@@ -1,22 +1,9 @@
-<<<<<<< HEAD
 version: "2"
 output:
   formats:
     text:
       path: stdout
   path-prefix: .
-=======
-formatters:
-  enable:
-    - gci
-    - gofumpt
-  settings:
-    gci:
-      sections:
-        - standard
-        - default
-        - prefix(github.com/testcontainers)
->>>>>>> tcgo/main
 linters:
   enable:
     - errorlint
@@ -29,27 +16,12 @@ linters:
     - testifylint
     - thelper
     - usestdlibvars
-<<<<<<< HEAD
   settings:
     errorlint:
       errorf: true
       errorf-multi: true
       asserts: true
       comparison: true
-=======
-  exclusions:
-    presets:
-      - comments
-      - common-false-positives
-      - legacy
-      - std-error-handling
-  settings:
-    errorlint:
-      asserts: true
-      comparison: true
-      errorf: true
-      errorf-multi: true
->>>>>>> tcgo/main
     revive:
       rules:
         - name: blank-imports
@@ -91,7 +63,6 @@ linters:
             - - ID
             - - VM
             - - upperCaseConst: true
-<<<<<<< HEAD
     testifylint:
       enable-all: true
       disable:
@@ -124,19 +95,3 @@ formatters:
       - third_party$
       - builtin$
       - examples$
-=======
-    staticcheck:
-      checks:
-        - all
-    testifylint:
-      disable:
-        - float-compare
-        - go-require
-      enable-all: true
-output:
-  formats:
-    text:
-      path: stdout
-  path-prefix: .
-version: "2"
->>>>>>> tcgo/main
