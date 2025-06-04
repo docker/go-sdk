@@ -23,8 +23,8 @@ const (
 	packagePath = "github.com/docker/go-sdk"
 )
 
-// NewClient returns a new client for interacting with containers.
-func NewClient(ctx context.Context, options ...ClientOption) (*Client, error) {
+// New returns a new client for interacting with containers.
+func New(ctx context.Context, options ...ClientOption) (*Client, error) {
 	client := &Client{}
 	for _, opt := range options {
 		if err := opt.Apply(client); err != nil {
