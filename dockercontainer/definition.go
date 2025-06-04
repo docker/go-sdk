@@ -104,11 +104,11 @@ type File struct {
 // validate validates the [File]
 func (f *File) validate() error {
 	if f.Reader == nil {
-		return errors.New("Reader must be specified")
+		return errors.New("reader must be specified")
 	}
 
 	if f.ContainerPath == "" {
-		return errors.New("ContainerPath must be specified")
+		return errors.New("container path must be specified")
 	}
 
 	return nil
