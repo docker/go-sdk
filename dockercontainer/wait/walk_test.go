@@ -100,7 +100,7 @@ func TestWalk(t *testing.T) {
 		def := dockercontainer.Definition{
 			WaitingFor: wait.ForFile("/tmp/file"),
 		}
-		requireVisits(t, def, 1)
+		requireVisits(t, &def, 1)
 	})
 
 	t.Run("for-all-single", func(t *testing.T) {
@@ -109,12 +109,12 @@ func TestWalk(t *testing.T) {
 				wait.ForFile("/tmp/file"),
 			),
 		}
-		requireVisits(t, def, 2)
+		requireVisits(t, &def, 2)
 	})
 }
 
 // requireVisits validates the number of visits for a given request.
-func requireVisits(t *testing.T, def dockercontainer.Definition, expected int) {
+func requireVisits(t *testing.T, def *dockercontainer.Definition, expected int) {
 	t.Helper()
 
 	var count int
