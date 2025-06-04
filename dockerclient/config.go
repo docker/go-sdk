@@ -1,6 +1,7 @@
 package dockerclient
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/caarlos0/env/v11"
@@ -44,7 +45,7 @@ func newConfig() (*config, error) {
 // validate verifies the configuration is valid.
 func (c *config) validate() error {
 	if c.TLSVerify && c.CertPath == "" {
-		return fmt.Errorf("cert path required when TLS is enabled")
+		return errors.New("cert path required when TLS is enabled")
 	}
 
 	return nil
