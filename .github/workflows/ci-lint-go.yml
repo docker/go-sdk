@@ -38,6 +38,13 @@ jobs:
           # Optional: working directory, useful for monorepos
           working-directory: ${{ inputs.project-directory }}
 
+      - name: generate
+        working-directory: ./${{ inputs.project-directory }}
+        shell: bash
+        run: |
+          make generate
+          git --no-pager diff && [[ 0 -eq $(git status --porcelain | wc -l) ]]
+
       - name: modTidy
         working-directory: ./${{ inputs.project-directory }}
         shell: bash
