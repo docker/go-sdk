@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"log"
 	"time"
 
 	"github.com/docker/docker/api/types/container"
@@ -23,40 +22,6 @@ type Container struct {
 
 	// Image the image to use for the container.
 	Image string
-
-	// exposedPorts a reference to the container's requested exposed ports.
-	// It allows checking they are ready before any wait strategy
-	exposedPorts []string
-
-	// isRunning whether the container is running
-	isRunning bool
-
-	// imageWasBuilt whether the image was built
-	imageWasBuilt bool
-
-	// keepBuiltImage makes Terminate not remove the image if imageWasBuilt.
-	keepBuiltImage bool
-
-	// sessionID the session ID for the container
-	sessionID string
-
-	// terminationSignal the termination signal for the container
-	terminationSignal chan bool
-
-	// consumers the log consumers for the container
-	consumers []LogConsumer
-
-	// TODO: Remove locking and wait group once the deprecated StartLogProducer and
-	// StopLogProducer have been removed and hence logging can only be started and
-	// stopped once.
-
-	// logProductionCancel is used to signal the log production to stop.
-	logProductionCancel context.CancelCauseFunc
-	logProductionCtx    context.Context
-
-	logProductionTimeout *time.Duration
-	logger               log.Logger
-	lifecycleHooks       []LifecycleHooks
 }
 
 // Exec executes a command in the current container.
