@@ -32,7 +32,7 @@ type Container struct {
 // Alternatively, to separate the stdout and stderr from [io.Reader] and interpret these headers properly,
 // [github.com/docker/docker/pkg/stdcopy.StdCopy] from the Docker API should be used.
 func (c *Container) Exec(ctx context.Context, cmd []string, options ...cexec.ProcessOption) (int, io.Reader, error) {
-	cli, err := dockerclient.NewClient(ctx)
+	cli, err := dockerclient.New(ctx)
 	if err != nil {
 		return 0, nil, fmt.Errorf("new client: %w", err)
 	}
