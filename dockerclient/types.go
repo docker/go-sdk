@@ -3,7 +3,6 @@ package dockerclient
 import (
 	"context"
 	"fmt"
-	"log"
 	"log/slog"
 	"sync"
 
@@ -23,13 +22,20 @@ var DefaultClient = &Client{}
 
 // Client is a type that represents a client for interacting with containers.
 type Client struct {
+	// log is the logger for the client.
 	log *slog.Logger
 
 	// mtx is a mutex for synchronizing access to the fields below.
-	mtx    sync.RWMutex
+	mtx sync.RWMutex
+
+	// client is the underlying docker client.
 	client *client.Client
-	cfg    *config
-	err    error
+
+	// cfg is the configuration for the client, obtained from the environment variables.
+	cfg *config
+
+	// err is used to store errors that occur during the client's initialization.
+	err error
 
 	// dockerOpts are options to be passed to the docker client.
 	dockerOpts []client.Opt
