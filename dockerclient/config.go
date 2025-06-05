@@ -3,6 +3,7 @@ package dockerclient
 import (
 	"errors"
 	"fmt"
+	"os"
 
 	"github.com/caarlos0/env/v11"
 )
@@ -26,12 +27,12 @@ type config struct {
 
 // newConfig returns a new configuration loaded from the properties file
 // located in the user's home directory and overridden by environment variables.
-func newConfig() (*config, error) {
+func newConfig(host string) (*config, error) {
 	cfg := &config{
-		Host: "unix:///var/run/docker.sock", // default
+		Host: host,
 	}
 
-	if err := env.Parse(&cfg); err != nil {
+	if err := env.Parse(cfg); err != nil {
 		return nil, fmt.Errorf("parse env: %w", err)
 	}
 
@@ -46,6 +47,16 @@ func newConfig() (*config, error) {
 func (c *config) validate() error {
 	if c.TLSVerify && c.CertPath == "" {
 		return errors.New("cert path required when TLS is enabled")
+	}
+
+	if c.TLSVerify {
+		if _, err := os.Stat(c.CertPath); os.IsNotExist(err) {
+			return fmt.Errorf("cert path does not exist: %s", c.CertPath)
+		}
+	}
+
+	if c.Host == "" {
+		return errors.New("host is required")
 	}
 
 	return nil
