@@ -19,9 +19,10 @@ type dockerOptAdapter struct {
 	opt client.Opt
 }
 
-// Apply implements the ClientOption interface.
+// Apply implements the ClientOption interface, adding the docker Opt to the client.
 func (a *dockerOptAdapter) Apply(c *Client) error {
-	return a.opt(c.client)
+	c.dockerOpts = append(c.dockerOpts, a.opt)
+	return nil
 }
 
 // FromDockerOpt converts a docker Opt to our ClientOption
@@ -51,7 +52,7 @@ func WithExtraHeaders(headers map[string]string) ClientOption {
 }
 
 // WithLogger returns a client option that sets the logger for the client.
-func WithLogger(log slog.Logger) ClientOption {
+func WithLogger(log *slog.Logger) ClientOption {
 	return NewClientOption(func(c *Client) error {
 		c.log = log
 		return nil

@@ -15,18 +15,24 @@ import (
 	"github.com/docker/go-sdk/dockercontext"
 )
 
+// packagePath is the package path for the docker-go-sdk package.
+const packagePath = "github.com/docker/go-sdk"
+
 // DefaultClient is the default client for interacting with containers.
 var DefaultClient = &Client{}
 
 // Client is a type that represents a client for interacting with containers.
 type Client struct {
-	log slog.Logger
+	log *slog.Logger
 
 	// mtx is a mutex for synchronizing access to the fields below.
 	mtx    sync.RWMutex
 	client *client.Client
 	cfg    *config
 	err    error
+
+	// dockerOpts are options to be passed to the docker client.
+	dockerOpts []client.Opt
 
 	// extraHeaders are additional headers to be sent to the docker client.
 	extraHeaders map[string]string

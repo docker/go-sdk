@@ -18,17 +18,25 @@ const (
 	tlsCACertFile = "ca.pem"
 	tlsCertFile   = "cert.pem"
 	tlsKeyFile    = "key.pem"
-
-	// packagePath is the package path for the docker-go-sdk package.
-	packagePath = "github.com/docker/go-sdk"
 )
 
 // New returns a new client for interacting with containers.
+// The client is configured using the provided options, that must be compatible with
+// docker's [client.Opt] type.
+//
+// The Docker host is automatically resolved reading it from the current docker context;
+// in case you need pass [client.Opt] options that override the docker host, you can
+// do so by providing the [FromDockerOpt] options.
+// E.g.
+//
+//	cli, err := dockerclient.New(context.Background(), dockerclient.FromDockerOpt(client.WithHost("tcp://foobar:2375")))
+//
+// The client is safe for concurrent use by multiple goroutines.
 func New(ctx context.Context, options ...ClientOption) (*Client, error) {
 	client := &Client{}
 	for _, opt := range options {
 		if err := opt.Apply(client); err != nil {
-			return nil, err
+			return nil, fmt.Errorf("apply option: %w", err)
 		}
 	}
 
@@ -53,20 +61,23 @@ func (c *Client) initOnce(_ context.Context) error {
 	c.mtx.Lock()
 	defer c.mtx.Unlock()
 
-	if c.cfg, c.err = newConfig(); c.err != nil {
-		return c.err
-	}
-
-	opts := []client.Opt{client.FromEnv, client.WithAPIVersionNegotiation()}
-
 	dockerHost, err := dockercontext.CurrentDockerHost()
 	if err != nil {
 		return fmt.Errorf("current docker host: %w", err)
 	}
 
+	if c.cfg, c.err = newConfig(dockerHost); c.err != nil {
+		return c.err
+	}
+
+	opts := []client.Opt{client.FromEnv, client.WithAPIVersionNegotiation()}
+
 	// Always add the resolved docker host to the client options,
 	// as it cannot be empty.
 	opts = append(opts, client.WithHost(dockerHost))
+
+	// Add all collected Docker options
+	opts = append(opts, c.dockerOpts...)
 
 	if c.cfg.TLSVerify {
 		// For further information see:
@@ -99,7 +110,6 @@ func (c *Client) initOnce(_ context.Context) error {
 // Close closes the client.
 // This method is safe for concurrent use by multiple goroutines.
 func (c *Client) Close() error {
-	// Change from RLock to Lock since we're performing a write operation
 	c.mtx.Lock()
 	defer c.mtx.Unlock()
 
