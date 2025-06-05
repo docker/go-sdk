@@ -68,14 +68,6 @@ func (c *Client) Info(ctx context.Context) (system.Info, error) {
 	c.dockerInfo = info
 	c.dockerInfoSet = true
 
-	infoMessage := `%v - Connected to docker: 
-  Server Version: %v
-  API Version: %v
-  Operating System: %v
-  Total Memory: %v MB%s
-  Docker Context: %s
-  Resolved Docker Host: %s
-`
 	infoLabels := ""
 	if len(c.dockerInfo.Labels) > 0 {
 		infoLabels = `
@@ -95,13 +87,15 @@ func (c *Client) Info(ctx context.Context) (system.Info, error) {
 		return c.dockerInfo, fmt.Errorf("current docker host: %w", err)
 	}
 
-	log.Printf(infoMessage, packagePath,
-		c.dockerInfo.ServerVersion,
-		c.client.ClientVersion(),
-		c.dockerInfo.OperatingSystem, c.dockerInfo.MemTotal/1024/1024,
-		infoLabels,
-		currentContext,
-		dockerHost,
+	c.log.Info("Connected to docker",
+		"package", packagePath,
+		"server_version", c.dockerInfo.ServerVersion,
+		"client_version", c.client.ClientVersion(),
+		"operating_system", c.dockerInfo.OperatingSystem,
+		"mem_total", c.dockerInfo.MemTotal/1024/1024,
+		"labels", infoLabels,
+		"current_context", currentContext,
+		"docker_host", dockerHost,
 	)
 
 	return c.dockerInfo, nil
