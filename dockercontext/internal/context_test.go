@@ -36,7 +36,7 @@ func TestExtractDockerHost(t *testing.T) {
 			Endpoints: map[string]*endpoint{
 				"docker": {Host: "tcp://1.2.3.4:2375"},
 			},
-		}, ErrDockerHostNotSet)
+		}, ErrDockerContextNotFound)
 	})
 
 	t.Run("nested-context-found", func(t *testing.T) {
