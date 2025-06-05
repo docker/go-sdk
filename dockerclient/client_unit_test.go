@@ -6,10 +6,30 @@ import (
 	"log/slog"
 	"testing"
 
+	"github.com/docker/go-sdk/dockercontext"
 	"github.com/stretchr/testify/require"
 )
 
 func TestNew_internal_state(t *testing.T) {
+
+	t.Run("debug-host-resolution", func(t *testing.T) {
+		// Get the host before creating the client
+		host, err := dockercontext.CurrentDockerHost()
+		t.Logf("Docker host before client creation: %q, error: %v", host, err)
+
+		cli, err := New(context.Background())
+		if err != nil {
+			t.Logf("Client creation error: %v", err)
+		}
+		require.NoError(t, err)
+		require.NotNil(t, cli)
+
+		// Log the actual host being used
+		if cli.cfg != nil {
+			t.Logf("Client config host: %q", cli.cfg.Host)
+		}
+	})
+
 	t.Run("success", func(t *testing.T) {
 		client, err := New(context.Background())
 		require.NoError(t, err)
