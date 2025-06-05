@@ -7,10 +7,11 @@ import (
 	"sync"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/docker/docker/client"
 	"github.com/docker/go-sdk/dockerclient"
 	"github.com/docker/go-sdk/dockercontext"
-	"github.com/stretchr/testify/require"
 )
 
 func TestNew(t *testing.T) {
@@ -66,7 +67,7 @@ func TestNew(t *testing.T) {
 	t.Run("error/apply-option", func(t *testing.T) {
 		// custom option that always fails to apply
 		customOpt := func() dockerclient.ClientOption {
-			return dockerclient.NewClientOption(func(c *dockerclient.Client) error {
+			return dockerclient.NewClientOption(func(_ *dockerclient.Client) error {
 				return errors.New("apply option")
 			})
 		}
