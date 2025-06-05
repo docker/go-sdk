@@ -1,5 +1,5 @@
 name: Run tests for a Go project
-run-name: "${{ inputs.project-directory }} ${{ inputs.go-version }} ${{ inputs.platforms }}"
+run-name: "${{ inputs.project-directory }} ${{ inputs.go-version }}"
 
 on:
   workflow_call:
@@ -8,11 +8,6 @@ on:
         required: true
         type: string
         description: "The version of Go to use for the test."
-      platforms:
-        required: true
-        type: string
-        default: "ubuntu-latest"
-        description: "The platforms in which the project will be run"
       project-directory:
         required: true
         type: string
@@ -31,7 +26,7 @@ jobs:
       SHOULD_RUN_SONAR: "false"
     strategy:
       matrix:
-        platform: ${{ fromJSON(inputs.platforms) }}
+        platform: ["ubuntu-latest", "macos-13", "windows-latest"]
     runs-on: ${{ matrix.platform }}
     steps:
       - name: Check out code into the Go module directory
@@ -48,7 +43,7 @@ jobs:
         id: go
       
       - name: Setup docker for MacOS
-        if: ${{ matrix.platform == 'macos-latest' }}
+        if: ${{ matrix.platform == 'macos-13' }}
         uses: docker/desktop-action/start@70b6492577832988cce80d7bba119a2eb61ac5d6 # v0.4.0
         timeout-minutes: 5
         with:
