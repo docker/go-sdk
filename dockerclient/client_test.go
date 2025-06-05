@@ -90,10 +90,10 @@ func TestNew(t *testing.T) {
 		})
 
 		t.Run("context-wins/found", func(t *testing.T) {
-			t.Setenv(dockercontext.EnvOverrideContext, "default")
+			t.Setenv(dockercontext.EnvOverrideContext, dockercontext.DefaultContextName)
 			cli, err := dockerclient.New(context.Background())
-			require.Error(t, err)
-			require.Nil(t, cli)
+			require.NoError(t, err)
+			require.NotNil(t, cli)
 		})
 
 		t.Run("context-wins/not-found", func(t *testing.T) {
