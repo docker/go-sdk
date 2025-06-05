@@ -13,6 +13,8 @@ import (
 
 func TestNew_internal_state(t *testing.T) {
 	t.Run("debug-host-resolution", func(t *testing.T) {
+		t.Setenv(dockercontext.EnvOverrideContext, "default")
+
 		// Get the host before creating the client
 		host, err := dockercontext.CurrentDockerHost()
 		t.Logf("Docker host before client creation: %q, error: %v", host, err)

@@ -30,7 +30,7 @@ func TestCurrent(t *testing.T) {
 	})
 
 	t.Run("current/override-host", func(tt *testing.T) {
-		tt.Setenv("DOCKER_HOST", "tcp://127.0.0.1:2")
+		tt.Setenv(EnvOverrideHost, "tcp://127.0.0.1:2")
 
 		current, err := Current()
 		require.NoError(t, err)
@@ -38,8 +38,8 @@ func TestCurrent(t *testing.T) {
 	})
 
 	t.Run("current/override-context", func(tt *testing.T) {
-		setupDockerContexts(tt, 1, 3)           // current context is context1
-		tt.Setenv("DOCKER_CONTEXT", "context2") // override the current context
+		setupDockerContexts(tt, 1, 3)             // current context is context1
+		tt.Setenv(EnvOverrideContext, "context2") // override the current context
 
 		current, err := Current()
 		require.NoError(t, err)
@@ -59,11 +59,19 @@ func TestCurrent(t *testing.T) {
 func TestCurrentDockerHost(t *testing.T) {
 	t.Run("docker-context/override-host", func(tt *testing.T) {
 		setupDockerContexts(tt, 1, 3) // current context is context1
-		tt.Setenv("DOCKER_HOST", "tcp://127.0.0.1:123")
+		tt.Setenv(EnvOverrideHost, "tcp://127.0.0.1:123")
 
 		host, err := CurrentDockerHost()
 		require.NoError(t, err)
 		require.Equal(t, "tcp://127.0.0.1:123", host) // from context1
+	})
+
+	t.Run("docker-context/default", func(tt *testing.T) {
+		tt.Setenv(EnvOverrideContext, DefaultContextName)
+
+		host, err := CurrentDockerHost()
+		require.NoError(t, err)
+		require.Equal(t, DefaultDockerHost, host)
 	})
 
 	t.Run("docker-context/1", func(tt *testing.T) {
