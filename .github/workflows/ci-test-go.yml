@@ -46,6 +46,13 @@ jobs:
             go-version: '${{ inputs.go-version }}'
             cache-dependency-path: '${{ inputs.project-directory }}/go.sum'
         id: go
+      
+      - name: Setup docker for MacOS
+        if: ${{ matrix.platform == 'macos-latest' }}
+        uses: docker/desktop-action/start@70b6492577832988cce80d7bba119a2eb61ac5d6 # v0.4.0
+        timeout-minutes: 5
+        with:
+          docker-desktop-build-url: latest
 
       - name: ensure compilation
         working-directory: ./${{ inputs.project-directory }}
