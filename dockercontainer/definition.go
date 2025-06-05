@@ -30,9 +30,6 @@ type Definition struct {
 	// Files the files to be copied when container starts
 	Files []File
 
-	// FromDockerfile embeds the FromDockerfile struct
-	FromDockerfile
-
 	// HostConfigModifier the modifier for the host config before container creation
 	HostConfigModifier func(*container.HostConfig)
 
@@ -75,10 +72,6 @@ type Definition struct {
 
 	// AlwaysPullImage whether to always pull the image
 	AlwaysPullImage bool
-
-	// Reuse whether to reuse an existing container if it exists or create a new one.
-	// A container name must be provided to identify the container to be reused.
-	Reuse bool
 
 	// Started whether to auto-start the container.
 	Started bool

@@ -28,15 +28,6 @@ func (opt CustomizeDefinitionOption) Customize(def *Definition) error {
 	return opt(def)
 }
 
-// WithDockerfile allows to build a container from a Dockerfile
-func WithDockerfile(df FromDockerfile) CustomizeDefinitionOption {
-	return func(def *Definition) error {
-		def.FromDockerfile = df
-
-		return nil
-	}
-}
-
 // WithConfigModifier allows to override the default container config
 func WithConfigModifier(modifier func(config *container.Config)) CustomizeDefinitionOption {
 	return func(def *Definition) error {
@@ -107,19 +98,6 @@ func WithName(containerName string) CustomizeDefinitionOption {
 func WithNoStart() CustomizeDefinitionOption {
 	return func(def *Definition) error {
 		def.Started = false
-		return nil
-	}
-}
-
-// WithReuseByName will mark a container to be reused if it exists or create a new one if it doesn't.
-// A container name must be provided to identify the container to be reused.
-func WithReuseByName(containerName string) CustomizeDefinitionOption {
-	return func(def *Definition) error {
-		if err := WithName(containerName)(def); err != nil {
-			return err
-		}
-
-		def.Reuse = true
 		return nil
 	}
 }
