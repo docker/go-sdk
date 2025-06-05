@@ -38,8 +38,13 @@ const (
 	metadataDir = "meta"
 )
 
-// ErrDockerHostNotSet is the error returned when the Docker host is not set in the Docker context
-var ErrDockerHostNotSet = internal.ErrDockerHostNotSet
+var (
+	// ErrDockerHostNotSet is the error returned when the Docker host is not set in the Docker context
+	ErrDockerHostNotSet = internal.ErrDockerHostNotSet
+
+	// ErrDockerContextNotFound is the error returned when the Docker context is not found.
+	ErrDockerContextNotFound = internal.ErrDockerContextNotFound
+)
 
 // getContextFromEnv returns the context name from the environment variables.
 func getContextFromEnv() string {
@@ -84,10 +89,17 @@ func Current() (string, error) {
 // CurrentDockerHost returns the Docker host from the current Docker context.
 // For that, it traverses the directory structure of the Docker configuration directory,
 // looking for the current context and its Docker endpoint.
+//
+// If the current context is the default context, it returns the value of the
+// DOCKER_HOST environment variable.
 func CurrentDockerHost() (string, error) {
 	current, err := Current()
 	if err != nil {
 		return "", fmt.Errorf("current context: %w", err)
+	}
+
+	if current == DefaultContextName {
+		return os.Getenv(EnvOverrideHost), nil
 	}
 
 	metaRoot, err := metaRoot()

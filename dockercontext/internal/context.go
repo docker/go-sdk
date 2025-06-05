@@ -52,7 +52,7 @@ func ExtractDockerHost(contextName string, metaRoot string) (string, error) {
 			return ep.Host, nil
 		}
 	}
-	return "", ErrDockerHostNotSet
+	return "", ErrDockerContextNotFound
 }
 
 func (s *store) list() ([]*metadata, error) {
