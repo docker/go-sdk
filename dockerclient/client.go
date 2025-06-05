@@ -25,8 +25,8 @@ const (
 // docker's [client.Opt] type.
 //
 // The Docker host is automatically resolved reading it from the current docker context;
-// in case you need pass [client.Opt] options that override the docker host, you can
-// do so by providing the [FromDockerOpt] options.
+// in case you need to pass [client.Opt] options that override the docker host, you can
+// do so by providing the [FromDockerOpt] options adapter.
 // E.g.
 //
 //	cli, err := dockerclient.New(context.Background(), dockerclient.FromDockerOpt(client.WithHost("tcp://foobar:2375")))
@@ -72,10 +72,6 @@ func (c *Client) initOnce(_ context.Context) error {
 
 	opts := []client.Opt{client.FromEnv, client.WithAPIVersionNegotiation()}
 
-	// Always add the resolved docker host to the client options,
-	// as it cannot be empty.
-	opts = append(opts, client.WithHost(dockerHost))
-
 	// Add all collected Docker options
 	opts = append(opts, c.dockerOpts...)
 
@@ -87,6 +83,10 @@ func (c *Client) initOnce(_ context.Context) error {
 			filepath.Join(c.cfg.CertPath, tlsCertFile),
 			filepath.Join(c.cfg.CertPath, tlsKeyFile),
 		))
+	}
+	if c.cfg.Host != "" {
+		// apply the host from the config if it is set
+		opts = append(opts, client.WithHost(c.cfg.Host))
 	}
 
 	httpHeaders := make(map[string]string)
