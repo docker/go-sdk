@@ -69,7 +69,7 @@ jobs:
     uses: ./.github/workflows/ci-test-go.yml
     with:
       go-version: ${{ matrix.go-version }}
-      platforms: '["ubuntu-latest", "macos-latest", "windows-latest"]'
+      platforms: '["ubuntu-latest", "macos-13", "windows-latest"]'
       project-directory: "${{ matrix.package }}"
     secrets: inherit
 
