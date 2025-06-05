@@ -3,6 +3,8 @@ package dockerclient
 import (
 	"context"
 	"fmt"
+	"io"
+	"log/slog"
 	"path/filepath"
 
 	"github.com/docker/docker/api/types/system"
@@ -30,6 +32,12 @@ const (
 // E.g.
 //
 //	cli, err := dockerclient.New(context.Background(), dockerclient.FromDockerOpt(client.WithHost("tcp://foobar:2375")))
+//
+// The client uses a logger that is initialized to [io.Discard]; you can change it by
+// providing the [WithLogger] option.
+// E.g.
+//
+//	cli, err := dockerclient.New(context.Background(), dockerclient.WithLogger(slog.Default()))
 //
 // The client is safe for concurrent use by multiple goroutines.
 func New(ctx context.Context, options ...ClientOption) (*Client, error) {
@@ -60,6 +68,10 @@ func (c *Client) initOnce(_ context.Context) error {
 
 	c.mtx.Lock()
 	defer c.mtx.Unlock()
+
+	if c.log == nil {
+		c.log = slog.New(slog.NewTextHandler(io.Discard, nil))
+	}
 
 	dockerHost, err := dockercontext.CurrentDockerHost()
 	if err != nil {
