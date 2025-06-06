@@ -18,6 +18,7 @@ This project is designed to be:
 
 ## Features
 
+- Initialize a Docker client, using the current Docker context to resolve the Docker host and socket
 - Parse and load Docker CLI config (`~/.docker/config.json`)
 - Handle credential helpers
 - Read and manage Docker contexts
@@ -30,6 +31,16 @@ go get github.com/docker/go-sdk
 ```
 
 ## Usage
+
+### dockerclient
+
+```go
+cli, err := dockerclient.New(context.Background())
+if err != nil {
+    log.Fatalf("failed to create docker client: %v", err)
+}
+
+```
 
 ### dockerconfig
 

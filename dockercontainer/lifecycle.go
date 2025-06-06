@@ -10,7 +10,6 @@ import (
 )
 
 type LifecycleHooks struct {
-	PostBuilds     []DefinitionHook
 	PreCreates     []DefinitionHook
 	PostCreates    []ContainerHook
 	PreStarts      []ContainerHook
@@ -47,12 +46,6 @@ type ContainerHook func(ctx context.Context, ctr *Container) error
 // DefaultLoggingHook is a hook that will log the container lifecycle events
 var DefaultLoggingHook = func(logger *slog.Logger) LifecycleHooks {
 	return LifecycleHooks{
-		PostBuilds: []DefinitionHook{
-			func(_ context.Context, def *Definition) error {
-				logger.Info("Built image", "image", def.Image)
-				return nil
-			},
-		},
 		PreCreates: []DefinitionHook{
 			func(_ context.Context, def *Definition) error {
 				logger.Info("Creating container", "image", def.Image)
@@ -116,6 +109,11 @@ var DefaultLoggingHook = func(logger *slog.Logger) LifecycleHooks {
 // The order of hooks is the following:
 // - Pre-hooks run the default hooks first then the user-defined hooks
 // - Post-hooks run the user-defined hooks first then the default hooks
+// The order of execution will be:
+// - default pre-hooks
+// - user-defined pre-hooks
+// - user-defined post-hooks
+// - default post-hooks
 func combineContainerHooks(defaultHooks, userDefinedHooks []LifecycleHooks) LifecycleHooks {
 	// We use reflection here to ensure that any new hooks are handled.
 	var hooks LifecycleHooks

@@ -5,105 +5,113 @@ import (
 	"bytes"
 	"compress/gzip"
 	"errors"
-	"fmt"
 	"io"
 	"log/slog"
 	"os"
+	"path"
 	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 )
 
-func Test_IsDir(t *testing.T) {
-	type cases struct {
-		filepath string
-		expected bool
-		err      error
-	}
+func TestFile_validate(t *testing.T) {
+	t.Run("empty-reader", func(t *testing.T) {
+		file := File{}
+		err := file.validate()
+		require.Error(t, err)
+	})
 
-	tests := []cases{
-		{
-			filepath: "testdata",
-			expected: true,
-			err:      nil,
-		},
-		{
-			filepath: "docker.go",
-			expected: false,
-			err:      nil,
-		},
-		{
-			filepath: "foobar.doc",
-			expected: false,
-			err:      errors.New("does not exist"),
-		},
-	}
+	t.Run("empty-container-path", func(t *testing.T) {
+		file := File{
+			Reader: bytes.NewReader([]byte("test")),
+		}
+		err := file.validate()
+		require.Error(t, err)
+	})
 
-	for _, test := range tests {
-		t.Run(test.filepath, func(t *testing.T) {
-			result, err := isDir(test.filepath)
-			if test.err != nil {
-				require.Error(t, err, "expected error")
-			} else {
-				require.NoError(t, err, "not expected error")
-			}
-			require.Equal(t, test.expected, result)
-		})
-	}
+	t.Run("valid", func(t *testing.T) {
+		file := File{
+			Reader:        bytes.NewReader([]byte("test")),
+			ContainerPath: "test",
+		}
+		err := file.validate()
+		require.NoError(t, err)
+	})
 }
 
-func Test_TarDir(t *testing.T) {
-	originalSrc := filepath.Join(".", "testdata")
-	tests := []struct {
-		abs bool
-	}{
-		{
-			abs: false,
-		},
-		{
-			abs: true,
-		},
+func TestIsDir(t *testing.T) {
+	testIsDir := func(t *testing.T, filePath string, expected bool, err error) {
+		t.Helper()
+
+		result, err := isDir(filePath)
+		if err != nil {
+			require.Error(t, err, "expected error")
+		} else {
+			require.NoError(t, err, "not expected error")
+		}
+		require.Equal(t, expected, result)
 	}
+
+	t.Run("dir", func(t *testing.T) {
+		testIsDir(t, "testdata", true, nil)
+	})
+
+	t.Run("dile", func(t *testing.T) {
+		testIsDir(t, path.Join("testdata/Dockerfile"), false, nil)
+	})
+
+	t.Run("not-exist", func(t *testing.T) {
+		testIsDir(t, "does-not-exist.go", false, errors.New("does not exist"))
+	})
+}
+
+func TestTarDir(t *testing.T) {
+	originalSrc := filepath.Join(".", "testdata")
 
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
 
-	for _, test := range tests {
-		t.Run(fmt.Sprintf("TarDir with abs=%t", test.abs), func(t *testing.T) {
-			src := originalSrc
-			if test.abs {
-				absSrc, err := filepath.Abs(src)
-				require.NoError(t, err)
+	testTarDir := func(t *testing.T, abs bool) {
+		src := originalSrc
+		if abs {
+			absSrc, err := filepath.Abs(src)
+			require.NoError(t, err)
 
-				src = absSrc
+			src = absSrc
+		}
+
+		buff, err := tarDir(logger, src, 0o755)
+		require.NoError(t, err)
+
+		tmpDir := filepath.Join(t.TempDir(), "subfolder")
+		err = untar(tmpDir, bytes.NewReader(buff.Bytes()))
+		require.NoError(t, err)
+
+		srcFiles, err := os.ReadDir(src)
+		require.NoError(t, err)
+
+		for _, srcFile := range srcFiles {
+			if srcFile.IsDir() {
+				continue
 			}
-
-			buff, err := tarDir(logger, src, 0o755)
+			srcBytes, err := os.ReadFile(filepath.Join(src, srcFile.Name()))
 			require.NoError(t, err)
 
-			tmpDir := filepath.Join(t.TempDir(), "subfolder")
-			err = untar(tmpDir, bytes.NewReader(buff.Bytes()))
+			untarBytes, err := os.ReadFile(filepath.Join(tmpDir, "testdata", srcFile.Name()))
 			require.NoError(t, err)
-
-			srcFiles, err := os.ReadDir(src)
-			require.NoError(t, err)
-
-			for _, srcFile := range srcFiles {
-				if srcFile.IsDir() {
-					continue
-				}
-				srcBytes, err := os.ReadFile(filepath.Join(src, srcFile.Name()))
-				require.NoError(t, err)
-
-				untarBytes, err := os.ReadFile(filepath.Join(tmpDir, "testdata", srcFile.Name()))
-				require.NoError(t, err)
-				require.Equal(t, srcBytes, untarBytes)
-			}
-		})
+			require.Equal(t, srcBytes, untarBytes)
+		}
 	}
+
+	t.Run("absolute", func(t *testing.T) {
+		testTarDir(t, true)
+	})
+	t.Run("relative", func(t *testing.T) {
+		testTarDir(t, false)
+	})
 }
 
-func Test_TarFile(t *testing.T) {
+func TestTarFile(t *testing.T) {
 	b, err := os.ReadFile(filepath.Join(".", "testdata", "Dockerfile"))
 	require.NoError(t, err)
 

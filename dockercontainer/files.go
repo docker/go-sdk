@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"compress/gzip"
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"log/slog"
@@ -15,6 +16,33 @@ import (
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/go-sdk/dockerclient"
 )
+
+// File represents a file that will be copied when container starts
+type File struct {
+	// Reader the reader to read the file from
+	Reader io.Reader
+
+	// ContainerPath the path to the file in the container.
+	// Use the slash character that matches the path separator of the operating system
+	// for the container.
+	ContainerPath string
+
+	// Mode the mode of the file
+	Mode int64
+}
+
+// validate validates the [File]
+func (f *File) validate() error {
+	if f.Reader == nil {
+		return errors.New("reader must be specified")
+	}
+
+	if f.ContainerPath == "" {
+		return errors.New("container path must be specified")
+	}
+
+	return nil
+}
 
 // FileFromContainer implements io.ReadCloser and tar.Reader for a single file in a container.
 type FileFromContainer struct {
