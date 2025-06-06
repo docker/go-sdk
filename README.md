@@ -21,6 +21,7 @@ This project is designed to be:
 - Parse and load Docker CLI config (`~/.docker/config.json`)
 - Handle credential helpers
 - Read and manage Docker contexts
+- Pull images from a remote registry, retrying on non-permanent errors
 
 ## Installation
 
@@ -52,6 +53,17 @@ if err != nil {
     log.Fatalf("failed to get current docker host: %v", err)
 }
 ```
+
+### dockerimage
+
+```go
+err := dockerimage.Pull(ctx, mockImageClient, "someTag", image.PullOptions{})
+if err != nil {
+    log.Fatalf("failed to pull image: %v", err)
+}
+
+```
+
 
 More usage examples are coming soon!
 
