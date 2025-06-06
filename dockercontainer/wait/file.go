@@ -93,7 +93,7 @@ func (ws *FileStrategy) WaitUntilReady(ctx context.Context, target StrategyTarge
 
 // matchFile tries to copy the file from the container and match it.
 func (ws *FileStrategy) matchFile(ctx context.Context, target StrategyTarget) error {
-	rc, err := target.CopyFileFromContainer(ctx, ws.file)
+	rc, err := target.CopyFromContainer(ctx, ws.file)
 	if err != nil {
 		return fmt.Errorf("copy from container: %w", err)
 	}

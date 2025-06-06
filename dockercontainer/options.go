@@ -71,18 +71,6 @@ func WithHostConfigModifier(modifier func(hostConfig *container.HostConfig)) Cus
 	}
 }
 
-// WithHostPortAccess allows to expose the host ports to the container
-func WithHostPortAccess(ports ...int) CustomizeDefinitionOption {
-	return func(def *Definition) error {
-		if def.HostAccessPorts == nil {
-			def.HostAccessPorts = []int{}
-		}
-
-		def.HostAccessPorts = append(def.HostAccessPorts, ports...)
-		return nil
-	}
-}
-
 // WithName will set the name of the container.
 func WithName(containerName string) CustomizeDefinitionOption {
 	return func(def *Definition) error {
@@ -163,7 +151,7 @@ func WithStartupCommand(execs ...Executable) CustomizeDefinitionOption {
 		}
 
 		for _, exec := range execs {
-			execFn := func(ctx context.Context, c Container) error {
+			execFn := func(ctx context.Context, c *Container) error {
 				_, _, err := c.Exec(ctx, exec.AsCommand(), exec.Options()...)
 				return err
 			}
@@ -185,7 +173,7 @@ func WithAfterReadyCommand(execs ...Executable) CustomizeDefinitionOption {
 		postReadiesHook := []ContainerHook{}
 
 		for _, exec := range execs {
-			execFn := func(ctx context.Context, c Container) error {
+			execFn := func(ctx context.Context, c *Container) error {
 				_, _, err := c.Exec(ctx, exec.AsCommand(), exec.Options()...)
 				return err
 			}

@@ -33,9 +33,6 @@ type Definition struct {
 	// HostConfigModifier the modifier for the host config before container creation
 	HostConfigModifier func(*container.HostConfig)
 
-	// HostAccessPorts the ports opened on the host that are accessible to the container.
-	HostAccessPorts []int
-
 	// ImageSubstitutors the image substitutors to use for the container.
 	ImageSubstitutors []ImageSubstitutor
 

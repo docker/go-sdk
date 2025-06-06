@@ -43,7 +43,7 @@ func TestForFile(t *testing.T) {
 
 	t.Run("not-found", func(t *testing.T) {
 		target := newRunningTarget()
-		target.EXPECT().CopyFileFromContainer(anyContext, testFilename).Return(nil, errNotFound)
+		target.EXPECT().CopyFromContainer(anyContext, testFilename).Return(nil, errNotFound)
 		err := testForFile().WaitUntilReady(ctx, target)
 		require.EqualError(t, err, context.DeadlineExceeded.Error())
 	})
@@ -51,7 +51,7 @@ func TestForFile(t *testing.T) {
 	t.Run("other-error", func(t *testing.T) {
 		otherErr := errors.New("other error")
 		target := newRunningTarget()
-		target.EXPECT().CopyFileFromContainer(anyContext, testFilename).Return(nil, otherErr)
+		target.EXPECT().CopyFromContainer(anyContext, testFilename).Return(nil, otherErr)
 		err := testForFile().WaitUntilReady(ctx, target)
 		require.ErrorIs(t, err, otherErr)
 	})
@@ -60,8 +60,8 @@ func TestForFile(t *testing.T) {
 		data := "my content\nwibble"
 		file := bytes.NewBufferString(data)
 		target := newRunningTarget()
-		target.EXPECT().CopyFileFromContainer(anyContext, testFilename).Once().Return(nil, errNotFound)
-		target.EXPECT().CopyFileFromContainer(anyContext, testFilename).Return(io.NopCloser(file), nil)
+		target.EXPECT().CopyFromContainer(anyContext, testFilename).Once().Return(nil, errNotFound)
+		target.EXPECT().CopyFromContainer(anyContext, testFilename).Return(io.NopCloser(file), nil)
 		var out bytes.Buffer
 		err := testForFile().WithMatcher(func(r io.Reader) error {
 			if _, err := io.Copy(&out, r); err != nil {

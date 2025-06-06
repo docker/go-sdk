@@ -57,7 +57,7 @@ func (st *healthStrategyTarget) setState(health *container.Health) {
 	st.state.Health = health
 }
 
-func (st *healthStrategyTarget) CopyFileFromContainer(_ context.Context, _ string) (io.ReadCloser, error) {
+func (st *healthStrategyTarget) CopyFromContainer(_ context.Context, _ string) (io.ReadCloser, error) {
 	return nil, errors.New("not implemented")
 }
 

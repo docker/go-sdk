@@ -46,30 +46,30 @@ type NopStrategyTarget struct {
 	ContainerState container.State
 }
 
-func (st NopStrategyTarget) Host(_ context.Context) (string, error) {
+func (st *NopStrategyTarget) Host(_ context.Context) (string, error) {
 	return "", nil
 }
 
-func (st NopStrategyTarget) Inspect(_ context.Context) (*container.InspectResponse, error) {
+func (st *NopStrategyTarget) Inspect(_ context.Context) (*container.InspectResponse, error) {
 	return nil, nil
 }
 
-func (st NopStrategyTarget) MappedPort(_ context.Context, n nat.Port) (nat.Port, error) {
+func (st *NopStrategyTarget) MappedPort(_ context.Context, n nat.Port) (nat.Port, error) {
 	return n, nil
 }
 
-func (st NopStrategyTarget) Logs(_ context.Context) (io.ReadCloser, error) {
+func (st *NopStrategyTarget) Logs(_ context.Context) (io.ReadCloser, error) {
 	return st.ReaderCloser, nil
 }
 
-func (st NopStrategyTarget) Exec(_ context.Context, _ []string, _ ...exec.ProcessOption) (int, io.Reader, error) {
+func (st *NopStrategyTarget) Exec(_ context.Context, _ []string, _ ...exec.ProcessOption) (int, io.Reader, error) {
 	return 0, nil, nil
 }
 
-func (st NopStrategyTarget) State(_ context.Context) (*container.State, error) {
+func (st *NopStrategyTarget) State(_ context.Context) (*container.State, error) {
 	return &st.ContainerState, nil
 }
 
-func (st NopStrategyTarget) CopyFileFromContainer(context.Context, string) (io.ReadCloser, error) {
+func (st *NopStrategyTarget) CopyFromContainer(ctx context.Context, filePath string) (io.ReadCloser, error) {
 	return st.ReaderCloser, nil
 }

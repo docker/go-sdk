@@ -29,12 +29,12 @@ func (_m *mockStrategyTarget) EXPECT() *mockStrategyTarget_Expecter {
 	return &mockStrategyTarget_Expecter{mock: &_m.Mock}
 }
 
-// CopyFileFromContainer provides a mock function with given fields: ctx, filePath
-func (_m *mockStrategyTarget) CopyFileFromContainer(ctx context.Context, filePath string) (io.ReadCloser, error) {
+// CopyFromContainer provides a mock function with given fields: ctx, filePath
+func (_m *mockStrategyTarget) CopyFromContainer(ctx context.Context, filePath string) (io.ReadCloser, error) {
 	ret := _m.Called(ctx, filePath)
 
 	if len(ret) == 0 {
-		panic("no return value specified for CopyFileFromContainer")
+		panic("no return value specified for CopyFromContainer")
 	}
 
 	var r0 io.ReadCloser
@@ -59,31 +59,31 @@ func (_m *mockStrategyTarget) CopyFileFromContainer(ctx context.Context, filePat
 	return r0, r1
 }
 
-// mockStrategyTarget_CopyFileFromContainer_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CopyFileFromContainer'
-type mockStrategyTarget_CopyFileFromContainer_Call struct {
+// mockStrategyTarget_CopyFromContainer_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CopyFromContainer'
+type mockStrategyTarget_CopyFromContainer_Call struct {
 	*mock.Call
 }
 
-// CopyFileFromContainer is a helper method to define mock.On call
+// CopyFromContainer is a helper method to define mock.On call
 //   - ctx context.Context
 //   - filePath string
-func (_e *mockStrategyTarget_Expecter) CopyFileFromContainer(ctx interface{}, filePath interface{}) *mockStrategyTarget_CopyFileFromContainer_Call {
-	return &mockStrategyTarget_CopyFileFromContainer_Call{Call: _e.mock.On("CopyFileFromContainer", ctx, filePath)}
+func (_e *mockStrategyTarget_Expecter) CopyFromContainer(ctx interface{}, filePath interface{}) *mockStrategyTarget_CopyFromContainer_Call {
+	return &mockStrategyTarget_CopyFromContainer_Call{Call: _e.mock.On("CopyFromContainer", ctx, filePath)}
 }
 
-func (_c *mockStrategyTarget_CopyFileFromContainer_Call) Run(run func(ctx context.Context, filePath string)) *mockStrategyTarget_CopyFileFromContainer_Call {
+func (_c *mockStrategyTarget_CopyFromContainer_Call) Run(run func(ctx context.Context, filePath string)) *mockStrategyTarget_CopyFromContainer_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		run(args[0].(context.Context), args[1].(string))
 	})
 	return _c
 }
 
-func (_c *mockStrategyTarget_CopyFileFromContainer_Call) Return(_a0 io.ReadCloser, _a1 error) *mockStrategyTarget_CopyFileFromContainer_Call {
+func (_c *mockStrategyTarget_CopyFromContainer_Call) Return(_a0 io.ReadCloser, _a1 error) *mockStrategyTarget_CopyFromContainer_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *mockStrategyTarget_CopyFileFromContainer_Call) RunAndReturn(run func(context.Context, string) (io.ReadCloser, error)) *mockStrategyTarget_CopyFileFromContainer_Call {
+func (_c *mockStrategyTarget_CopyFromContainer_Call) RunAndReturn(run func(context.Context, string) (io.ReadCloser, error)) *mockStrategyTarget_CopyFromContainer_Call {
 	_c.Call.Return(run)
 	return _c
 }

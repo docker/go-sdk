@@ -144,35 +144,6 @@ func TestWithEnv(t *testing.T) {
 	})
 }
 
-func TestWithHostPortAccess(t *testing.T) {
-	testHostPorts := func(t *testing.T, initial []int, add []int, expected []int) {
-		t.Helper()
-
-		def := dockercontainer.Definition{
-			HostAccessPorts: initial,
-		}
-		opt := dockercontainer.WithHostPortAccess(add...)
-		require.NoError(t, opt.Customize(&def))
-		require.Equal(t, expected, def.HostAccessPorts)
-	}
-
-	t.Run("add-to-existing", func(t *testing.T) {
-		testHostPorts(t,
-			[]int{1, 2},
-			[]int{3, 4},
-			[]int{1, 2, 3, 4},
-		)
-	})
-
-	t.Run("add-to-nil", func(t *testing.T) {
-		testHostPorts(t,
-			nil,
-			[]int{3, 4},
-			[]int{3, 4},
-		)
-	})
-}
-
 func TestWithEntrypoint(t *testing.T) {
 	testEntrypoint := func(t *testing.T, initial []string, add []string, expected []string) {
 		t.Helper()

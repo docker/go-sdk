@@ -63,7 +63,7 @@ func (st mockExecTarget) State(_ context.Context) (*container.State, error) {
 	return nil, errors.New("not implemented")
 }
 
-func (st mockExecTarget) CopyFileFromContainer(_ context.Context, _ string) (io.ReadCloser, error) {
+func (st mockExecTarget) CopyFromContainer(_ context.Context, _ string) (io.ReadCloser, error) {
 	return nil, errors.New("not implemented")
 }
 

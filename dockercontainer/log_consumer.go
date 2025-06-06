@@ -30,3 +30,26 @@ type LogConsumerConfig struct {
 	Opts      []LogProductionOption // options for the production of logs
 	Consumers []LogConsumer         // consumers for the logs
 }
+
+// logConsumerWriter is a writer that writes to a LogConsumer.
+type logConsumerWriter struct {
+	log       Log
+	consumers []LogConsumer
+}
+
+// newLogConsumerWriter creates a new logConsumerWriter for logType that sends messages to all consumers.
+func newLogConsumerWriter(logType string, consumers []LogConsumer) *logConsumerWriter {
+	return &logConsumerWriter{
+		log:       Log{LogType: logType},
+		consumers: consumers,
+	}
+}
+
+// Write writes the p content to all consumers.
+func (lw logConsumerWriter) Write(p []byte) (int, error) {
+	lw.log.Content = p
+	for _, consumer := range lw.consumers {
+		consumer.Accept(lw.log)
+	}
+	return len(p), nil
+}
