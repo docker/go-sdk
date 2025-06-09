@@ -13,6 +13,8 @@ import (
 	"github.com/docker/go-sdk/dockercontainer"
 )
 
+const nginxAlpineImage = "nginx:alpine"
+
 func TestCreateContainer(t *testing.T) {
 	t.Run("no-image", func(t *testing.T) {
 		ctr, err := dockercontainer.Create(context.Background())
@@ -35,7 +37,7 @@ func TestCreateContainer(t *testing.T) {
 		require.NoError(t, err)
 
 		ctr, err := dockercontainer.Create(context.Background(),
-			dockercontainer.WithImage("nginx:alpine"),
+			dockercontainer.WithImage(nginxAlpineImage),
 			dockercontainer.WithDockerClient(dockerClient),
 		)
 		dockercontainer.CleanupContainer(t, ctr)
@@ -45,7 +47,7 @@ func TestCreateContainer(t *testing.T) {
 
 	t.Run("no-dockerclient-uses-default", func(t *testing.T) {
 		ctr, err := dockercontainer.Create(context.Background(),
-			dockercontainer.WithImage("nginx:alpine"),
+			dockercontainer.WithImage(nginxAlpineImage),
 		)
 		dockercontainer.CleanupContainer(t, ctr)
 		require.NoError(t, err)
@@ -59,7 +61,7 @@ func TestCreateContainer_addSDKLabels(t *testing.T) {
 
 	ctr, err := dockercontainer.Create(context.Background(),
 		dockercontainer.WithDockerClient(dockerClient),
-		dockercontainer.WithImage("nginx:alpine"),
+		dockercontainer.WithImage(nginxAlpineImage),
 	)
 	dockercontainer.CleanupContainer(t, ctr)
 	require.NoError(t, err)
@@ -82,7 +84,7 @@ func TestCreateContainerWithLifecycleHooks(t *testing.T) {
 
 	ctr, err := dockercontainer.Create(context.Background(),
 		dockercontainer.WithDockerClient(dockerClient),
-		dockercontainer.WithImage("nginx:alpine"),
+		dockercontainer.WithImage(nginxAlpineImage),
 		dockercontainer.WithLifecycleHooks(
 			dockercontainer.LifecycleHooks{
 				PreCreates: []dockercontainer.DefinitionHook{

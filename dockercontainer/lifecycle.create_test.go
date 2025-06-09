@@ -12,6 +12,8 @@ import (
 	"github.com/docker/go-sdk/dockerclient"
 )
 
+const nginxAlpineImage = "nginx:alpine"
+
 func TestMergePortBindings(t *testing.T) {
 	type arg struct {
 		configPortMap nat.PortMap
@@ -110,7 +112,7 @@ func TestPreCreateModifierHook(t *testing.T) {
 
 	t.Run("no-exposed-ports", func(t *testing.T) {
 		def := &Definition{
-			image: "nginx:alpine", // alpine image does expose port 80
+			image: nginxAlpineImage, // alpine image does expose port 80
 			ConfigModifier: func(config *container.Config) {
 				config.Env = []string{"a=b"}
 			},
@@ -167,7 +169,7 @@ func TestPreCreateModifierHook(t *testing.T) {
 
 	t.Run("no-exposed-ports-and-network-mode-is-container", func(t *testing.T) {
 		def := &Definition{
-			image: "nginx:alpine", // alpine image does expose port 80
+			image: nginxAlpineImage, // alpine image does expose port 80
 			HostConfigModifier: func(hostConfig *container.HostConfig) {
 				hostConfig.PortBindings = nat.PortMap{
 					"80/tcp": []nat.PortBinding{
@@ -211,7 +213,7 @@ func TestPreCreateModifierHook(t *testing.T) {
 		nw := testCreateNetwork(t, networkName)
 
 		def := &Definition{
-			image:    "nginx:alpine", // alpine image does expose port 80
+			image:    nginxAlpineImage, // alpine image does expose port 80
 			Networks: []string{networkName, "bar"},
 			NetworkAliases: map[string][]string{
 				networkName: {"foo1"}, // network aliases are needed at the moment there is a network
@@ -249,7 +251,7 @@ func TestPreCreateModifierHook(t *testing.T) {
 		nw := testCreateNetwork(t, networkName)
 
 		def := &Definition{
-			image:    "nginx:alpine", // alpine image does expose port 80
+			image:    nginxAlpineImage, // alpine image does expose port 80
 			Networks: []string{networkName, "bar"},
 		}
 
@@ -280,7 +282,7 @@ func TestPreCreateModifierHook(t *testing.T) {
 
 	t.Run("definition-contains-exposed-port-modifiers-without-protocol", func(t *testing.T) {
 		def := &Definition{
-			image: "nginx:alpine", // alpine image does expose port 80
+			image: nginxAlpineImage, // alpine image does expose port 80
 			HostConfigModifier: func(hostConfig *container.HostConfig) {
 				hostConfig.PortBindings = nat.PortMap{
 					"80/tcp": []nat.PortBinding{
@@ -311,7 +313,7 @@ func TestPreCreateModifierHook(t *testing.T) {
 
 	t.Run("definition-contains-exposed-port-modifiers-with-protocol", func(t *testing.T) {
 		def := &Definition{
-			image: "nginx:alpine", // alpine image does expose port 80
+			image: nginxAlpineImage, // alpine image does expose port 80
 			HostConfigModifier: func(hostConfig *container.HostConfig) {
 				hostConfig.PortBindings = nat.PortMap{
 					"80/tcp": []nat.PortBinding{
