@@ -1,3 +1,6 @@
+name: Run benchmarks for a Go project
+run-name: "${{ inputs.project-directory }}"
+
 on:
   workflow_call:
     inputs:
@@ -8,14 +11,9 @@ on:
         description: "The directory where the Go project is located."
 
 permissions:
-  # deployments permission to deploy GitHub pages website
-  deployments: write
-  # contents permission to update benchmark contents in gh-pages branch
-  contents: write
-  # allow posting comments to pull request
-  pull-requests: write
+  # we need write permission to be able to post comments to pull request
+  pull-requests: read
 
-name: Benchmark
 jobs:
   Compare:
     runs-on: ubuntu-latest
