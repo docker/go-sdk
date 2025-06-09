@@ -48,8 +48,8 @@ func TestNew(t *testing.T) {
 		t.Setenv("DOCKER_CERT_PATH", filepath.Join("testdata", "certificates"))
 
 		cli, err := dockerclient.New(context.Background())
-		require.NoError(t, err)
-		require.NotNil(t, cli)
+		require.Error(t, err)
+		require.Nil(t, cli)
 	})
 
 	t.Run("success/apply-option", func(t *testing.T) {
@@ -77,9 +77,42 @@ func TestNew(t *testing.T) {
 		require.Nil(t, cli)
 	})
 
+	t.Run("healthcheck/nil", func(t *testing.T) {
+		cli, err := dockerclient.New(context.Background(), dockerclient.WithHealthCheck(nil))
+		require.ErrorContains(t, err, "health check is nil")
+		require.Nil(t, cli)
+	})
+
+	t.Run("healthcheck/noop", func(t *testing.T) {
+		noopHealthCheck := func(_ context.Context) func(c *dockerclient.Client) error {
+			return func(_ *dockerclient.Client) error {
+				return nil
+			}
+		}
+
+		cli, err := dockerclient.New(context.Background(), dockerclient.WithHealthCheck(noopHealthCheck))
+		require.NoError(t, err)
+		require.NotNil(t, cli)
+	})
+
+	t.Run("healthcheck/info", func(t *testing.T) {
+		t.Setenv(dockercontext.EnvOverrideHost, "tcp://foobar:2375") // this URL is parseable, although not reachable
+
+		infoHealthCheck := func(ctx context.Context) func(c *dockerclient.Client) error {
+			return func(c *dockerclient.Client) error {
+				_, err := c.Info(ctx)
+				return err
+			}
+		}
+
+		cli, err := dockerclient.New(context.Background(), dockerclient.WithHealthCheck(infoHealthCheck))
+		require.Error(t, err)
+		require.Nil(t, cli)
+	})
+
 	t.Run("docker-host/precedence", func(t *testing.T) {
 		t.Run("env-var-wins", func(t *testing.T) {
-			t.Setenv(dockercontext.EnvOverrideHost, "tcp://foobar:2375") // this URL is parseable, although ignored
+			t.Setenv(dockercontext.EnvOverrideHost, "tcp://foobar:2375") // this URL is parseable, although not reachable
 			cli, err := dockerclient.New(context.Background())
 			require.NoError(t, err)
 			require.NotNil(t, cli)

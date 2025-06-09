@@ -6,6 +6,7 @@ import (
 	"io"
 	"log/slog"
 	"path/filepath"
+	"time"
 
 	"github.com/docker/docker/api/types/system"
 	"github.com/docker/docker/client"
@@ -50,6 +51,15 @@ func New(ctx context.Context, options ...ClientOption) (*Client, error) {
 
 	if err := client.initOnce(ctx); err != nil {
 		return nil, fmt.Errorf("load config: %w", err)
+	}
+
+	healthCheck := client.healthCheck
+	if healthCheck == nil {
+		// use the default health check if not set
+		healthCheck = defaultHealthCheck
+	}
+	if err := healthCheck(ctx)(client); err != nil {
+		return nil, fmt.Errorf("health check: %w", err)
 	}
 
 	return client, nil
@@ -155,4 +165,29 @@ func (c *Client) Logger() *slog.Logger {
 	c.mtx.RLock()
 	defer c.mtx.RUnlock()
 	return c.log
+}
+
+// defaultHealthCheck is the default health check for the client.
+// It retries the ping to the docker daemon until it is ready.
+func defaultHealthCheck(ctx context.Context) func(c *Client) error {
+	return func(c *Client) error {
+		// Add a retry mechanism to ensure Docker daemon is ready
+		var pingErr error
+		for i := range 3 { // Try up to 3 times
+			_, pingErr = c.client.Ping(ctx)
+			if pingErr == nil {
+				break
+			}
+			select {
+			case <-ctx.Done():
+				return ctx.Err()
+			case <-time.After(time.Millisecond * time.Duration(i+1) * 100): // Exponential backoff
+				continue
+			}
+		}
+		if pingErr != nil {
+			return fmt.Errorf("docker daemon not ready: %w", pingErr)
+		}
+		return nil
+	}
 }

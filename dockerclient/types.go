@@ -46,6 +46,10 @@ type Client struct {
 	// cached docker info
 	dockerInfo    system.Info
 	dockerInfoSet bool
+
+	// healthCheck is a function that returns the health of the docker daemon.
+	// If not set, the default health check will be used.
+	healthCheck func(ctx context.Context) func(c *Client) error
 }
 
 // implements SystemAPIClient interface

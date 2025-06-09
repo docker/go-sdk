@@ -1,6 +1,8 @@
 package dockerclient
 
 import (
+	"context"
+	"errors"
 	"log/slog"
 
 	"github.com/docker/docker/client"
@@ -47,6 +49,20 @@ func NewClientOption(f func(*Client) error) ClientOption {
 func WithExtraHeaders(headers map[string]string) ClientOption {
 	return NewClientOption(func(c *Client) error {
 		c.extraHeaders = headers
+		return nil
+	})
+}
+
+// WithHealthCheck returns a client option that sets the health check for the client.
+// If not set, the default health check will be used, which retries the ping to the
+// docker daemon until it is ready, three times, or the context is done.
+func WithHealthCheck(healthCheck func(ctx context.Context) func(c *Client) error) ClientOption {
+	return NewClientOption(func(c *Client) error {
+		if healthCheck == nil {
+			return errors.New("health check is nil")
+		}
+
+		c.healthCheck = healthCheck
 		return nil
 	})
 }
