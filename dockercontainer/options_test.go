@@ -433,7 +433,6 @@ func TestWithFiles(t *testing.T) {
 }
 
 func TestWithName(t *testing.T) {
-	t.Parallel()
 	def := Definition{}
 
 	opt := WithName("pg-test")
@@ -449,7 +448,6 @@ func TestWithName(t *testing.T) {
 }
 
 func TestWithNoStart(t *testing.T) {
-	t.Parallel()
 	def := Definition{}
 
 	opt := WithNoStart()
