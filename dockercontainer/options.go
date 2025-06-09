@@ -103,7 +103,7 @@ func WithNoStart() CustomizeDefinitionOption {
 // WithImage sets the image for a container
 func WithImage(image string) CustomizeDefinitionOption {
 	return func(def *Definition) error {
-		def.Image = image
+		def.image = image
 
 		return nil
 	}

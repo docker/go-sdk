@@ -1,4 +1,4 @@
-package dockercontainer_test
+package dockercontainer
 
 import (
 	"bytes"
@@ -7,7 +7,6 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/docker/go-sdk/dockercontainer"
 	"github.com/docker/go-sdk/dockercontainer/exec"
 	"github.com/docker/go-sdk/dockercontainer/wait"
 )
@@ -17,19 +16,19 @@ type msgsLogConsumer struct {
 }
 
 // Accept prints the log to stdout
-func (lc *msgsLogConsumer) Accept(l dockercontainer.Log) {
+func (lc *msgsLogConsumer) Accept(l Log) {
 	lc.msgs = append(lc.msgs, string(l.Content))
 }
 
 func TestWithLogConsumers(t *testing.T) {
 	lc := &msgsLogConsumer{}
-	def := dockercontainer.Definition{
-		Image:      "mysql:8.0.36",
+	def := Definition{
+		image:      "mysql:8.0.36",
 		WaitingFor: wait.ForLog("port: 3306  MySQL Community Server - GPL"),
 		Started:    true,
 	}
 
-	err := dockercontainer.WithLogConsumers(lc)(&def)
+	err := WithLogConsumers(lc)(&def)
 	require.NoError(t, err)
 }
 
@@ -37,45 +36,45 @@ func TestWithLogConsumerConfig(t *testing.T) {
 	lc := &msgsLogConsumer{}
 
 	t.Run("add-to-nil", func(t *testing.T) {
-		def := dockercontainer.Definition{
-			Image: "alpine",
+		def := Definition{
+			image: "alpine",
 		}
 
-		err := dockercontainer.WithLogConsumerConfig(&dockercontainer.LogConsumerConfig{
-			Consumers: []dockercontainer.LogConsumer{lc},
+		err := WithLogConsumerConfig(&LogConsumerConfig{
+			Consumers: []LogConsumer{lc},
 		})(&def)
 		require.NoError(t, err)
 
-		require.Equal(t, []dockercontainer.LogConsumer{lc}, def.LogConsumerCfg.Consumers)
+		require.Equal(t, []LogConsumer{lc}, def.LogConsumerCfg.Consumers)
 	})
 
 	t.Run("replace-existing", func(t *testing.T) {
-		def := dockercontainer.Definition{
-			Image: "alpine",
-			LogConsumerCfg: &dockercontainer.LogConsumerConfig{
-				Consumers: []dockercontainer.LogConsumer{dockercontainer.NewFooLogConsumer(t)},
+		def := Definition{
+			image: "alpine",
+			LogConsumerCfg: &LogConsumerConfig{
+				Consumers: []LogConsumer{NewFooLogConsumer(t)},
 			},
 		}
 
-		err := dockercontainer.WithLogConsumerConfig(&dockercontainer.LogConsumerConfig{
-			Consumers: []dockercontainer.LogConsumer{lc},
+		err := WithLogConsumerConfig(&LogConsumerConfig{
+			Consumers: []LogConsumer{lc},
 		})(&def)
 		require.NoError(t, err)
 
-		require.Equal(t, []dockercontainer.LogConsumer{lc}, def.LogConsumerCfg.Consumers)
+		require.Equal(t, []LogConsumer{lc}, def.LogConsumerCfg.Consumers)
 	})
 }
 
 func TestWithStartupCommand(t *testing.T) {
-	def := dockercontainer.Definition{
-		Image:      "alpine",
+	def := Definition{
+		image:      "alpine",
 		Entrypoint: []string{"tail", "-f", "/dev/null"},
 		Started:    true,
 	}
 
 	testExec := exec.NewRawCommand([]string{"touch", ".testcontainers"}, exec.WithWorkingDir("/tmp"))
 
-	err := dockercontainer.WithStartupCommand(testExec)(&def)
+	err := WithStartupCommand(testExec)(&def)
 	require.NoError(t, err)
 
 	require.Len(t, def.LifecycleHooks, 1)
@@ -83,15 +82,15 @@ func TestWithStartupCommand(t *testing.T) {
 }
 
 func TestWithAfterReadyCommand(t *testing.T) {
-	def := dockercontainer.Definition{
-		Image:      "alpine",
+	def := Definition{
+		image:      "alpine",
 		Entrypoint: []string{"tail", "-f", "/dev/null"},
 		Started:    true,
 	}
 
 	testExec := exec.NewRawCommand([]string{"touch", "/tmp/.testcontainers"})
 
-	err := dockercontainer.WithAfterReadyCommand(testExec)(&def)
+	err := WithAfterReadyCommand(testExec)(&def)
 	require.NoError(t, err)
 
 	require.Len(t, def.LifecycleHooks, 1)
@@ -102,10 +101,10 @@ func TestWithEnv(t *testing.T) {
 	testEnv := func(t *testing.T, initial map[string]string, add map[string]string, expected map[string]string) {
 		t.Helper()
 
-		def := dockercontainer.Definition{
+		def := Definition{
 			Env: initial,
 		}
-		opt := dockercontainer.WithEnv(add)
+		opt := WithEnv(add)
 		require.NoError(t, opt.Customize(&def))
 		require.Equal(t, expected, def.Env)
 	}
@@ -148,10 +147,10 @@ func TestWithEntrypoint(t *testing.T) {
 	testEntrypoint := func(t *testing.T, initial []string, add []string, expected []string) {
 		t.Helper()
 
-		def := dockercontainer.Definition{
+		def := Definition{
 			Entrypoint: initial,
 		}
-		opt := dockercontainer.WithEntrypoint(add...)
+		opt := WithEntrypoint(add...)
 		require.NoError(t, opt.Customize(&def))
 		require.Equal(t, expected, def.Entrypoint)
 	}
@@ -177,10 +176,10 @@ func TestWithEntrypointArgs(t *testing.T) {
 	testEntrypoint := func(t *testing.T, initial []string, add []string, expected []string) {
 		t.Helper()
 
-		def := dockercontainer.Definition{
+		def := Definition{
 			Entrypoint: initial,
 		}
-		opt := dockercontainer.WithEntrypointArgs(add...)
+		opt := WithEntrypointArgs(add...)
 		require.NoError(t, opt.Customize(&def))
 		require.Equal(t, expected, def.Entrypoint)
 	}
@@ -206,10 +205,10 @@ func TestWithExposedPorts(t *testing.T) {
 	testPorts := func(t *testing.T, initial []string, add []string, expected []string) {
 		t.Helper()
 
-		def := dockercontainer.Definition{
+		def := Definition{
 			ExposedPorts: initial,
 		}
-		opt := dockercontainer.WithExposedPorts(add...)
+		opt := WithExposedPorts(add...)
 		require.NoError(t, opt.Customize(&def))
 		require.Equal(t, expected, def.ExposedPorts)
 	}
@@ -235,10 +234,10 @@ func TestWithCmd(t *testing.T) {
 	testCmd := func(t *testing.T, initial []string, add []string, expected []string) {
 		t.Helper()
 
-		def := dockercontainer.Definition{
+		def := Definition{
 			Cmd: initial,
 		}
-		opt := dockercontainer.WithCmd(add...)
+		opt := WithCmd(add...)
 		require.NoError(t, opt.Customize(&def))
 		require.Equal(t, expected, def.Cmd)
 	}
@@ -261,21 +260,21 @@ func TestWithCmd(t *testing.T) {
 }
 
 func TestWithAlwaysPull(t *testing.T) {
-	def := dockercontainer.Definition{
-		Image: "alpine",
+	def := Definition{
+		image: "alpine",
 	}
 
-	opt := dockercontainer.WithAlwaysPull()
+	opt := WithAlwaysPull()
 	require.NoError(t, opt.Customize(&def))
 	require.True(t, def.AlwaysPullImage)
 }
 
 func TestWithImagePlatform(t *testing.T) {
-	def := dockercontainer.Definition{
-		Image: "alpine",
+	def := Definition{
+		image: "alpine",
 	}
 
-	opt := dockercontainer.WithImagePlatform("linux/amd64")
+	opt := WithImagePlatform("linux/amd64")
 	require.NoError(t, opt.Customize(&def))
 	require.Equal(t, "linux/amd64", def.ImagePlatform)
 }
@@ -284,10 +283,10 @@ func TestWithCmdArgs(t *testing.T) {
 	testCmd := func(t *testing.T, initial []string, add []string, expected []string) {
 		t.Helper()
 
-		def := dockercontainer.Definition{
+		def := Definition{
 			Cmd: initial,
 		}
-		opt := dockercontainer.WithCmdArgs(add...)
+		opt := WithCmdArgs(add...)
 		require.NoError(t, opt.Customize(&def))
 		require.Equal(t, expected, def.Cmd)
 	}
@@ -313,10 +312,10 @@ func TestWithLabels(t *testing.T) {
 	testLabels := func(t *testing.T, initial map[string]string, add map[string]string, expected map[string]string) {
 		t.Helper()
 
-		def := dockercontainer.Definition{
+		def := Definition{
 			Labels: initial,
 		}
-		opt := dockercontainer.WithLabels(add)
+		opt := WithLabels(add)
 		require.NoError(t, opt.Customize(&def))
 		require.Equal(t, expected, def.Labels)
 	}
@@ -339,20 +338,20 @@ func TestWithLabels(t *testing.T) {
 }
 
 func TestWithLifecycleHooks(t *testing.T) {
-	testHook := dockercontainer.DefaultLoggingHook(nil)
+	testHook := DefaultLoggingHook(nil)
 
-	testLifecycleHooks := func(t *testing.T, replace bool, initial []dockercontainer.LifecycleHooks, add []dockercontainer.LifecycleHooks, expected []dockercontainer.LifecycleHooks) {
+	testLifecycleHooks := func(t *testing.T, replace bool, initial []LifecycleHooks, add []LifecycleHooks, expected []LifecycleHooks) {
 		t.Helper()
 
-		def := dockercontainer.Definition{
+		def := Definition{
 			LifecycleHooks: initial,
 		}
 
-		var opt dockercontainer.CustomizeDefinitionOption
+		var opt CustomizeDefinitionOption
 		if replace {
-			opt = dockercontainer.WithLifecycleHooks(add...)
+			opt = WithLifecycleHooks(add...)
 		} else {
-			opt = dockercontainer.WithAdditionalLifecycleHooks(add...)
+			opt = WithAdditionalLifecycleHooks(add...)
 		}
 		require.NoError(t, opt.Customize(&def))
 		require.Len(t, def.LifecycleHooks, len(expected))
@@ -365,17 +364,17 @@ func TestWithLifecycleHooks(t *testing.T) {
 		testLifecycleHooks(t,
 			true,
 			nil,
-			[]dockercontainer.LifecycleHooks{testHook},
-			[]dockercontainer.LifecycleHooks{testHook},
+			[]LifecycleHooks{testHook},
+			[]LifecycleHooks{testHook},
 		)
 	})
 
 	t.Run("replace-existing", func(t *testing.T) {
 		testLifecycleHooks(t,
 			true,
-			[]dockercontainer.LifecycleHooks{testHook},
-			[]dockercontainer.LifecycleHooks{testHook},
-			[]dockercontainer.LifecycleHooks{testHook},
+			[]LifecycleHooks{testHook},
+			[]LifecycleHooks{testHook},
+			[]LifecycleHooks{testHook},
 		)
 	})
 
@@ -383,29 +382,29 @@ func TestWithLifecycleHooks(t *testing.T) {
 		testLifecycleHooks(t,
 			false,
 			nil,
-			[]dockercontainer.LifecycleHooks{testHook},
-			[]dockercontainer.LifecycleHooks{testHook},
+			[]LifecycleHooks{testHook},
+			[]LifecycleHooks{testHook},
 		)
 	})
 
 	t.Run("add-to-existing", func(t *testing.T) {
 		testLifecycleHooks(t,
 			false,
-			[]dockercontainer.LifecycleHooks{testHook},
-			[]dockercontainer.LifecycleHooks{testHook},
-			[]dockercontainer.LifecycleHooks{testHook, testHook},
+			[]LifecycleHooks{testHook},
+			[]LifecycleHooks{testHook},
+			[]LifecycleHooks{testHook, testHook},
 		)
 	})
 }
 
 func TestWithFiles(t *testing.T) {
-	testFiles := func(t *testing.T, initial []dockercontainer.File, add []dockercontainer.File, expected []dockercontainer.File) {
+	testFiles := func(t *testing.T, initial []File, add []File, expected []File) {
 		t.Helper()
 
-		def := dockercontainer.Definition{
+		def := Definition{
 			Files: initial,
 		}
-		opt := dockercontainer.WithFiles(add...)
+		opt := WithFiles(add...)
 		require.NoError(t, opt.Customize(&def))
 		require.Equal(t, expected, def.Files)
 	}
@@ -415,9 +414,9 @@ func TestWithFiles(t *testing.T) {
 
 	t.Run("add-to-existing", func(t *testing.T) {
 		testFiles(t,
-			[]dockercontainer.File{{Reader: reader1, ContainerPath: "/container/file1"}},
-			[]dockercontainer.File{{Reader: reader2, ContainerPath: "/container/file2"}},
-			[]dockercontainer.File{
+			[]File{{Reader: reader1, ContainerPath: "/container/file1"}},
+			[]File{{Reader: reader2, ContainerPath: "/container/file2"}},
+			[]File{
 				{Reader: reader1, ContainerPath: "/container/file1"},
 				{Reader: reader2, ContainerPath: "/container/file2"},
 			},
@@ -427,33 +426,33 @@ func TestWithFiles(t *testing.T) {
 	t.Run("add-to-nil", func(t *testing.T) {
 		testFiles(t,
 			nil,
-			[]dockercontainer.File{{Reader: reader1, ContainerPath: "/container/file1"}},
-			[]dockercontainer.File{{Reader: reader1, ContainerPath: "/container/file1"}},
+			[]File{{Reader: reader1, ContainerPath: "/container/file1"}},
+			[]File{{Reader: reader1, ContainerPath: "/container/file1"}},
 		)
 	})
 }
 
 func TestWithName(t *testing.T) {
 	t.Parallel()
-	def := dockercontainer.Definition{}
+	def := Definition{}
 
-	opt := dockercontainer.WithName("pg-test")
+	opt := WithName("pg-test")
 	require.NoError(t, opt.Customize(&def))
 	require.Equal(t, "pg-test", def.Name)
 
 	t.Run("empty", func(t *testing.T) {
-		def := dockercontainer.Definition{}
+		def := Definition{}
 
-		opt := dockercontainer.WithName("")
-		require.ErrorIs(t, opt.Customize(&def), dockercontainer.ErrReuseEmptyName)
+		opt := WithName("")
+		require.ErrorIs(t, opt.Customize(&def), ErrReuseEmptyName)
 	})
 }
 
 func TestWithNoStart(t *testing.T) {
 	t.Parallel()
-	def := dockercontainer.Definition{}
+	def := Definition{}
 
-	opt := dockercontainer.WithNoStart()
+	opt := WithNoStart()
 	require.NoError(t, opt.Customize(&def))
 	require.False(t, def.Started)
 }
@@ -468,20 +467,20 @@ func TestWithWaitStrategy(t *testing.T) {
 	testWaitFor := func(t *testing.T, replace bool, customDuration *time.Duration, initial wait.Strategy, add wait.Strategy, expected wait.Strategy) {
 		t.Helper()
 
-		def := dockercontainer.Definition{
+		def := Definition{
 			WaitingFor: initial,
 		}
 
-		var opt dockercontainer.CustomizeDefinitionOption
+		var opt CustomizeDefinitionOption
 		if replace {
-			opt = dockercontainer.WithWaitStrategy(add)
+			opt = WithWaitStrategy(add)
 			if customDuration != nil {
-				opt = dockercontainer.WithWaitStrategyAndDeadline(*customDuration, add)
+				opt = WithWaitStrategyAndDeadline(*customDuration, add)
 			}
 		} else {
-			opt = dockercontainer.WithAdditionalWaitStrategy(add)
+			opt = WithAdditionalWaitStrategy(add)
 			if customDuration != nil {
-				opt = dockercontainer.WithAdditionalWaitStrategyAndDeadline(*customDuration, add)
+				opt = WithAdditionalWaitStrategyAndDeadline(*customDuration, add)
 			}
 		}
 		require.NoError(t, opt.Customize(&def))

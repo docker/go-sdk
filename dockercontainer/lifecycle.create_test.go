@@ -110,7 +110,7 @@ func TestPreCreateModifierHook(t *testing.T) {
 
 	t.Run("no-exposed-ports", func(t *testing.T) {
 		def := &Definition{
-			Image: "nginx:alpine", // alpine image does expose port 80
+			image: "nginx:alpine", // alpine image does expose port 80
 			ConfigModifier: func(config *container.Config) {
 				config.Env = []string{"a=b"}
 			},
@@ -134,7 +134,7 @@ func TestPreCreateModifierHook(t *testing.T) {
 
 		// define empty inputs to be overwritten by the pre create hook
 		inputConfig := &container.Config{
-			Image: def.Image,
+			Image: def.image,
 		}
 		inputHostConfig := &container.HostConfig{}
 		inputNetworkingConfig := &network.NetworkingConfig{}
@@ -167,7 +167,7 @@ func TestPreCreateModifierHook(t *testing.T) {
 
 	t.Run("no-exposed-ports-and-network-mode-is-container", func(t *testing.T) {
 		def := &Definition{
-			Image: "nginx:alpine", // alpine image does expose port 80
+			image: "nginx:alpine", // alpine image does expose port 80
 			HostConfigModifier: func(hostConfig *container.HostConfig) {
 				hostConfig.PortBindings = nat.PortMap{
 					"80/tcp": []nat.PortBinding{
@@ -183,7 +183,7 @@ func TestPreCreateModifierHook(t *testing.T) {
 
 		// define empty inputs to be overwritten by the pre create hook
 		inputConfig := &container.Config{
-			Image: def.Image,
+			Image: def.image,
 		}
 		inputHostConfig := &container.HostConfig{}
 		inputNetworkingConfig := &network.NetworkingConfig{}
@@ -211,7 +211,7 @@ func TestPreCreateModifierHook(t *testing.T) {
 		nw := testCreateNetwork(t, networkName)
 
 		def := &Definition{
-			Image:    "nginx:alpine", // alpine image does expose port 80
+			image:    "nginx:alpine", // alpine image does expose port 80
 			Networks: []string{networkName, "bar"},
 			NetworkAliases: map[string][]string{
 				networkName: {"foo1"}, // network aliases are needed at the moment there is a network
@@ -220,7 +220,7 @@ func TestPreCreateModifierHook(t *testing.T) {
 
 		// define empty inputs to be overwritten by the pre create hook
 		inputConfig := &container.Config{
-			Image: def.Image,
+			Image: def.image,
 		}
 		inputHostConfig := &container.HostConfig{}
 		inputNetworkingConfig := &network.NetworkingConfig{}
@@ -249,13 +249,13 @@ func TestPreCreateModifierHook(t *testing.T) {
 		nw := testCreateNetwork(t, networkName)
 
 		def := &Definition{
-			Image:    "nginx:alpine", // alpine image does expose port 80
+			image:    "nginx:alpine", // alpine image does expose port 80
 			Networks: []string{networkName, "bar"},
 		}
 
 		// define empty inputs to be overwritten by the pre create hook
 		inputConfig := &container.Config{
-			Image: def.Image,
+			Image: def.image,
 		}
 		inputHostConfig := &container.HostConfig{}
 		inputNetworkingConfig := &network.NetworkingConfig{}
@@ -280,7 +280,7 @@ func TestPreCreateModifierHook(t *testing.T) {
 
 	t.Run("definition-contains-exposed-port-modifiers-without-protocol", func(t *testing.T) {
 		def := &Definition{
-			Image: "nginx:alpine", // alpine image does expose port 80
+			image: "nginx:alpine", // alpine image does expose port 80
 			HostConfigModifier: func(hostConfig *container.HostConfig) {
 				hostConfig.PortBindings = nat.PortMap{
 					"80/tcp": []nat.PortBinding{
@@ -296,7 +296,7 @@ func TestPreCreateModifierHook(t *testing.T) {
 
 		// define empty inputs to be overwritten by the pre create hook
 		inputConfig := &container.Config{
-			Image: def.Image,
+			Image: def.image,
 		}
 		inputHostConfig := &container.HostConfig{}
 		inputNetworkingConfig := &network.NetworkingConfig{}
@@ -311,7 +311,7 @@ func TestPreCreateModifierHook(t *testing.T) {
 
 	t.Run("definition-contains-exposed-port-modifiers-with-protocol", func(t *testing.T) {
 		def := &Definition{
-			Image: "nginx:alpine", // alpine image does expose port 80
+			image: "nginx:alpine", // alpine image does expose port 80
 			HostConfigModifier: func(hostConfig *container.HostConfig) {
 				hostConfig.PortBindings = nat.PortMap{
 					"80/tcp": []nat.PortBinding{
@@ -327,7 +327,7 @@ func TestPreCreateModifierHook(t *testing.T) {
 
 		// define empty inputs to be overwritten by the pre create hook
 		inputConfig := &container.Config{
-			Image: def.Image,
+			Image: def.image,
 		}
 		inputHostConfig := &container.HostConfig{}
 		inputNetworkingConfig := &network.NetworkingConfig{}

@@ -48,7 +48,7 @@ var DefaultLoggingHook = func(logger *slog.Logger) LifecycleHooks {
 	return LifecycleHooks{
 		PreCreates: []DefinitionHook{
 			func(_ context.Context, def *Definition) error {
-				logger.Info("Creating container", "image", def.Image)
+				logger.Info("Creating container", "image", def.image)
 				return nil
 			},
 		},

@@ -58,8 +58,8 @@ type Definition struct {
 	// ExposedPorts the ports exposed by the container.
 	ExposedPorts []string
 
-	// Image the image to use for the container.
-	Image string
+	// image the image to use for the container.
+	image string
 
 	// ImagePlatform the platform of the image
 	ImagePlatform string

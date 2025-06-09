@@ -27,7 +27,7 @@ func Create(ctx context.Context, opts ...ContainerCustomizer) (*Container, error
 		}
 	}
 
-	if def.Image == "" {
+	if def.image == "" {
 		return nil, fmt.Errorf("image is required")
 	}
 
@@ -61,14 +61,14 @@ func Create(ctx context.Context, opts ...ContainerCustomizer) (*Container, error
 	}
 
 	for _, is := range def.ImageSubstitutors {
-		modifiedTag, err := is.Substitute(def.Image)
+		modifiedTag, err := is.Substitute(def.image)
 		if err != nil {
-			return nil, fmt.Errorf("failed to substitute image %s with %s: %w", def.Image, is.Description(), err)
+			return nil, fmt.Errorf("failed to substitute image %s with %s: %w", def.image, is.Description(), err)
 		}
 
-		if modifiedTag != def.Image {
-			def.DockerClient.Logger().Info("Replacing image", "description", is.Description(), "from", def.Image, "to", modifiedTag)
-			def.Image = modifiedTag
+		if modifiedTag != def.image {
+			def.DockerClient.Logger().Info("Replacing image", "description", is.Description(), "from", def.image, "to", modifiedTag)
+			def.image = modifiedTag
 		}
 	}
 
@@ -85,7 +85,7 @@ func Create(ctx context.Context, opts ...ContainerCustomizer) (*Container, error
 	if def.AlwaysPullImage {
 		shouldPullImage = true // If requested always attempt to pull image
 	} else {
-		img, err := def.DockerClient.Client().ImageInspect(ctx, def.Image)
+		img, err := def.DockerClient.Client().ImageInspect(ctx, def.image)
 		if err != nil {
 			if !errdefs.IsNotFound(err) {
 				return nil, err
@@ -101,7 +101,7 @@ func Create(ctx context.Context, opts ...ContainerCustomizer) (*Container, error
 		pullOpt := image.PullOptions{
 			Platform: def.ImagePlatform, // may be empty
 		}
-		if err := dockerimage.Pull(ctx, def.DockerClient, def.Image, pullOpt); err != nil {
+		if err := dockerimage.Pull(ctx, def.DockerClient, def.image, pullOpt); err != nil {
 			return nil, err
 		}
 	}
@@ -111,7 +111,7 @@ func Create(ctx context.Context, opts ...ContainerCustomizer) (*Container, error
 
 	dockerInput := &container.Config{
 		Entrypoint: def.Entrypoint,
-		Image:      def.Image,
+		Image:      def.image,
 		Env:        env,
 		Labels:     def.Labels,
 		Cmd:        def.Cmd,
@@ -170,7 +170,7 @@ func Create(ctx context.Context, opts ...ContainerCustomizer) (*Container, error
 		ID:             resp.ID,
 		shortID:        resp.ID[:12],
 		WaitingFor:     def.WaitingFor,
-		Image:          def.Image,
+		Image:          def.image,
 		exposedPorts:   def.ExposedPorts,
 		logger:         def.DockerClient.Logger(),
 		lifecycleHooks: def.LifecycleHooks,
