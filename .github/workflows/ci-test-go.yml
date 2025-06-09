@@ -56,8 +56,7 @@ jobs:
       # On Windows, ensure Docker is in Linux mode
       - name: Switch Docker to Linux containers
         if: runner.os == 'Windows'
-        run: |
-          & 'C:\Program Files\Docker\Docker\DockerCli.exe' -SwitchLinuxEngine
+        run: docker desktop engine use linux
         shell: pwsh
 
       - name: go test

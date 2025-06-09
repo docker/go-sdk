@@ -29,6 +29,12 @@ jobs:
           go-version-file: ${{ inputs.project-directory }}/go.mod
           cache-dependency-path: ${{ inputs.project-directory }}/go.sum
 
+      # On Windows, ensure Docker is in Linux mode
+      - name: Switch Docker to Linux containers
+        if: runner.os == 'Windows'
+        run: docker desktop engine use linux
+        shell: pwsh
+
       - name: Run Benchmark
         working-directory: ${{ inputs.project-directory }}
         run: set -o pipefail; go test ./... -benchmem -run=^$ -bench . | tee output.txt
