@@ -30,6 +30,26 @@ func TestCreateContainer(t *testing.T) {
 		require.Nil(t, ctr)
 	})
 
+	t.Run("with-image-platform", func(t *testing.T) {
+		ctr, err := dockercontainer.Create(context.Background(),
+			dockercontainer.WithImage(nginxAlpineImage),
+			dockercontainer.WithImagePlatform("linux/amd64"),
+		)
+		dockercontainer.CleanupContainer(t, ctr)
+		require.NoError(t, err)
+		require.NotNil(t, ctr)
+	})
+
+	t.Run("with-image-platform/invalid", func(t *testing.T) {
+		ctr, err := dockercontainer.Create(context.Background(),
+			dockercontainer.WithImage(nginxAlpineImage),
+			dockercontainer.WithImagePlatform("invalid"),
+		)
+		dockercontainer.CleanupContainer(t, ctr)
+		require.Error(t, err)
+		require.Nil(t, ctr)
+	})
+
 	t.Run("with-image", func(t *testing.T) {
 		ctr, err := dockercontainer.Create(context.Background(),
 			dockercontainer.WithImage(nginxAlpineImage),
