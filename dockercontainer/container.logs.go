@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log/slog"
 	"net"
 	"time"
 
@@ -23,6 +24,11 @@ var (
 	// errLogProductionStop is the cause for stopping log production.
 	errLogProductionStop = errors.New("log production stopped")
 )
+
+// Logger returns the logger for the container.
+func (c *Container) Logger() *slog.Logger {
+	return c.logger
+}
 
 // Logs will fetch both STDOUT and STDERR from the current container. Returns a
 // ReadCloser and leaves it up to the caller to extract what it wants.

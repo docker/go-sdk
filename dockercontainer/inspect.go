@@ -8,7 +8,6 @@ import (
 
 // Inspect returns the container's raw info
 func (c *Container) Inspect(ctx context.Context) (*container.InspectResponse, error) {
-	defer c.dockerClient.Close()
 	inspect, err := c.dockerClient.Client().ContainerInspect(ctx, c.ID)
 	if err != nil {
 		return nil, err

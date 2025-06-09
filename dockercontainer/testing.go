@@ -35,7 +35,7 @@ type unwrapErrs interface {
 // [Create](...) in a test to ensure the
 // container is pruned when the function ends.
 // If the container is nil, it's a no-op.
-func CleanupContainer(tb testing.TB, ctr Container, options ...TerminateOption) {
+func CleanupContainer(tb testing.TB, ctr *Container, options ...TerminateOption) {
 	tb.Helper()
 
 	tb.Cleanup(func() {

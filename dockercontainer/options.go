@@ -7,6 +7,7 @@ import (
 
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/network"
+	"github.com/docker/go-sdk/dockerclient"
 	"github.com/docker/go-sdk/dockercontainer/exec"
 	"github.com/docker/go-sdk/dockercontainer/wait"
 )
@@ -26,6 +27,15 @@ type CustomizeDefinitionOption func(def *Definition) error
 // Customize implements the ContainerCustomizer interface.
 func (opt CustomizeDefinitionOption) Customize(def *Definition) error {
 	return opt(def)
+}
+
+// WithDockerClient sets the docker client for a container
+func WithDockerClient(dockerClient *dockerclient.Client) CustomizeDefinitionOption {
+	return func(def *Definition) error {
+		def.DockerClient = dockerClient
+
+		return nil
+	}
 }
 
 // WithConfigModifier allows to override the default container config

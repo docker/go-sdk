@@ -1,15 +1,17 @@
 package dockercontainer
 
 import (
-	"log"
-
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/network"
+	"github.com/docker/go-sdk/dockerclient"
 	"github.com/docker/go-sdk/dockercontainer/wait"
 )
 
 // Definition is the Definition of a container.
 type Definition struct {
+	// DockerClient the docker client to use for the container.
+	DockerClient *dockerclient.Client
+
 	// ConfigModifier the modifier for the config before container creation
 	ConfigModifier func(*container.Config)
 
@@ -70,7 +72,4 @@ type Definition struct {
 
 	// Started whether to auto-start the container.
 	Started bool
-
-	// Logger the logger to use for the container.
-	Logger log.Logger
 }

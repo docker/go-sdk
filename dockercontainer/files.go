@@ -105,7 +105,6 @@ func (c *Container) CopyToContainer(ctx context.Context, fileContent []byte, con
 	if err != nil {
 		return fmt.Errorf("copy to container: %w", err)
 	}
-	defer dockerClient.Close()
 
 	return nil
 }

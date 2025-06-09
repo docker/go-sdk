@@ -91,7 +91,7 @@ func RemoveVolumes(volumes ...string) TerminateOption {
 //
 // This should be called as a defer directly after [Create](...)
 // to ensure the container is terminated when the function ends.
-func TerminateContainer(ctr Container, options ...TerminateOption) error {
+func TerminateContainer(ctr *Container, options ...TerminateOption) error {
 	if isNil(ctr) {
 		return nil
 	}
