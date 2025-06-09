@@ -36,7 +36,8 @@ jobs:
       # On Windows, ensure Docker is in Linux mode
       - name: Switch Docker to Linux containers
         if: ${{ runner.os == 'Windows' }}
-        run: docker desktop engine use linux
+        run: |
+          & 'C:\hostedtoolcache\windows\docker-archive-stable\28.2.2\x64\docker.exe' -SwitchLinuxEngine
         shell: pwsh
 
       - name: Run Benchmark
