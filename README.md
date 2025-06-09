@@ -86,6 +86,6 @@ We welcome contributions! Please read the [CONTRIBUTING](./CONTRIBUTING.md) file
 
 This project is licensed under the [Apache License 2.0](./LICENSE).
 
-It includes portions of code derived from the other open source projects which are licensed under the MIT License. Their original licenses are preserved [here](./third_party), and attribution is provided in the [NOTICE](./NOTICE) file.
+It includes portions of code derived from other open source projects which are licensed under the MIT License. Their original licenses are preserved [here](./third_party), and attribution is provided in the [NOTICE](./NOTICE) file.
 
 Modifications have been made to this code as part of its integration into this project.
