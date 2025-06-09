@@ -50,15 +50,8 @@ func Create(ctx context.Context, opts ...ContainerCustomizer) (*Container, error
 		def.Labels = make(map[string]string)
 	}
 
-	var platform *specs.Platform
-
 	defaultHooks := []LifecycleHooks{
 		DefaultLoggingHook(def.DockerClient.Logger()),
-	}
-
-	origLifecycleHooks := def.LifecycleHooks
-	def.LifecycleHooks = []LifecycleHooks{
-		combineContainerHooks(defaultHooks, def.LifecycleHooks),
 	}
 
 	for _, is := range def.ImageSubstitutors {
@@ -72,6 +65,8 @@ func Create(ctx context.Context, opts ...ContainerCustomizer) (*Container, error
 			def.image = modifiedTag
 		}
 	}
+
+	var platform *specs.Platform
 
 	if def.ImagePlatform != "" {
 		p, err := platforms.Parse(def.ImagePlatform)
@@ -131,6 +126,7 @@ func Create(ctx context.Context, opts ...ContainerCustomizer) (*Container, error
 	)
 
 	// Combine with the original LifecycleHooks to avoid duplicate logging hooks.
+	origLifecycleHooks := def.LifecycleHooks
 	def.LifecycleHooks = []LifecycleHooks{
 		combineContainerHooks(defaultHooks, origLifecycleHooks),
 	}
