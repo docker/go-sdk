@@ -349,9 +349,7 @@ func testCreateNetwork(t *testing.T, networkName string) network.CreateResponse 
 	dockerClient, err := dockerclient.New(context.Background())
 	require.NoError(t, err)
 
-	nw, err := dockerClient.Client().NetworkCreate(context.Background(), networkName, network.CreateOptions{
-		Driver: "bridge",
-	})
+	nw, err := dockerClient.Client().NetworkCreate(context.Background(), networkName, network.CreateOptions{})
 	require.NoError(t, err)
 
 	t.Cleanup(func() {
