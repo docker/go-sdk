@@ -5,6 +5,7 @@ import (
 	"context"
 	"log/slog"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 
@@ -13,18 +14,43 @@ import (
 )
 
 func TestCreateContainer(t *testing.T) {
-	// Initialize the docker client. It will be closed when the container is terminated,
-	// so no need to close it during the entire container lifecycle.
-	dockerClient, err := dockerclient.New(context.Background())
-	require.NoError(t, err)
+	t.Run("no-image", func(t *testing.T) {
+		ctr, err := dockercontainer.Create(context.Background())
+		require.Error(t, err)
+		require.Nil(t, ctr)
+	})
 
-	ctr, err := dockercontainer.Create(context.Background(),
-		dockercontainer.WithImage("nginx:alpine"),
-		dockercontainer.WithDockerClient(dockerClient),
-	)
-	dockercontainer.CleanupContainer(t, ctr)
-	require.NoError(t, err)
-	require.NotNil(t, ctr)
+	t.Run("invalid-ports", func(t *testing.T) {
+		ctr, err := dockercontainer.Create(context.Background(),
+			dockercontainer.WithExposedPorts("invalid-port"),
+		)
+		require.Error(t, err)
+		require.Nil(t, ctr)
+	})
+
+	t.Run("with-image", func(t *testing.T) {
+		// Initialize the docker client. It will be closed when the container is terminated,
+		// so no need to close it during the entire container lifecycle.
+		dockerClient, err := dockerclient.New(context.Background())
+		require.NoError(t, err)
+
+		ctr, err := dockercontainer.Create(context.Background(),
+			dockercontainer.WithImage("nginx:alpine"),
+			dockercontainer.WithDockerClient(dockerClient),
+		)
+		dockercontainer.CleanupContainer(t, ctr)
+		require.NoError(t, err)
+		require.NotNil(t, ctr)
+	})
+
+	t.Run("no-dockerclient-uses-default", func(t *testing.T) {
+		ctr, err := dockercontainer.Create(context.Background(),
+			dockercontainer.WithImage("nginx:alpine"),
+		)
+		dockercontainer.CleanupContainer(t, ctr)
+		require.NoError(t, err)
+		require.NotNil(t, ctr)
+	})
 }
 
 func TestCreateContainer_addSDKLabels(t *testing.T) {
@@ -60,55 +86,55 @@ func TestCreateContainerWithLifecycleHooks(t *testing.T) {
 		dockercontainer.WithLifecycleHooks(
 			dockercontainer.LifecycleHooks{
 				PreCreates: []dockercontainer.DefinitionHook{
-					func(ctx context.Context, def *dockercontainer.Definition) error {
+					func(_ context.Context, def *dockercontainer.Definition) error {
 						def.DockerClient.Logger().Info("pre-create hook")
 						return nil
 					},
 				},
 				PostCreates: []dockercontainer.ContainerHook{
-					func(ctx context.Context, ctr *dockercontainer.Container) error {
+					func(_ context.Context, ctr *dockercontainer.Container) error {
 						ctr.Logger().Info("post-create hook")
 						return nil
 					},
 				},
 				PreStarts: []dockercontainer.ContainerHook{
-					func(ctx context.Context, ctr *dockercontainer.Container) error {
+					func(_ context.Context, ctr *dockercontainer.Container) error {
 						ctr.Logger().Info("pre-start hook")
 						return nil
 					},
 				},
 				PostStarts: []dockercontainer.ContainerHook{
-					func(ctx context.Context, ctr *dockercontainer.Container) error {
+					func(_ context.Context, ctr *dockercontainer.Container) error {
 						ctr.Logger().Info("post-start hook")
 						return nil
 					},
 				},
 				PostReadies: []dockercontainer.ContainerHook{
-					func(ctx context.Context, ctr *dockercontainer.Container) error {
+					func(_ context.Context, ctr *dockercontainer.Container) error {
 						ctr.Logger().Info("post-ready hook")
 						return nil
 					},
 				},
 				PreStops: []dockercontainer.ContainerHook{
-					func(ctx context.Context, ctr *dockercontainer.Container) error {
+					func(_ context.Context, ctr *dockercontainer.Container) error {
 						ctr.Logger().Info("pre-stop hook")
 						return nil
 					},
 				},
 				PostStops: []dockercontainer.ContainerHook{
-					func(ctx context.Context, ctr *dockercontainer.Container) error {
+					func(_ context.Context, ctr *dockercontainer.Container) error {
 						ctr.Logger().Info("post-stop hook")
 						return nil
 					},
 				},
 				PreTerminates: []dockercontainer.ContainerHook{
-					func(ctx context.Context, ctr *dockercontainer.Container) error {
+					func(_ context.Context, ctr *dockercontainer.Container) error {
 						ctr.Logger().Info("pre-terminate hook")
 						return nil
 					},
 				},
 				PostTerminates: []dockercontainer.ContainerHook{
-					func(ctx context.Context, ctr *dockercontainer.Container) error {
+					func(_ context.Context, ctr *dockercontainer.Container) error {
 						ctr.Logger().Info("post-terminate hook")
 						return nil
 					},

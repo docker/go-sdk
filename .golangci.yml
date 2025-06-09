@@ -27,7 +27,7 @@ linters:
         - name: blank-imports
         - name: context-as-argument
           arguments:
-            - allowTypesBefore: '*testing.T'
+            - allowTypesBefore: '*testing.T,*testing.B'
         - name: context-keys-type
         - name: dot-imports
         - name: early-return

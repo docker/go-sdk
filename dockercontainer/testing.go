@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	"github.com/containerd/errdefs"
-
 	"github.com/stretchr/testify/require"
 )
 

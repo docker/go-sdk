@@ -2,6 +2,7 @@ package dockercontainer
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/containerd/errdefs"
@@ -28,7 +29,7 @@ func Create(ctx context.Context, opts ...ContainerCustomizer) (*Container, error
 	}
 
 	if def.image == "" {
-		return nil, fmt.Errorf("image is required")
+		return nil, errors.New("image is required")
 	}
 
 	if def.DockerClient == nil {
