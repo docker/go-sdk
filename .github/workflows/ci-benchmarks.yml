@@ -11,6 +11,7 @@ on:
         description: "The directory where the Go project is located."
 
 permissions:
+  contents: read
   # we need write permission to be able to post comments to pull request
   pull-requests: read
 
