@@ -16,6 +16,18 @@ import (
 const nginxAlpineImage = "nginx:alpine"
 
 func TestCreateContainer(t *testing.T) {
+	// Run this test the first time to ensure the image is pulled,
+	// which is needed for cross-platform tests. This way Windows
+	// workers will pull the image with the correct platform.
+	ctr, err := dockercontainer.Create(context.Background(),
+		dockercontainer.WithImage(nginxAlpineImage),
+		dockercontainer.WithImagePlatform("linux/amd64"),
+		dockercontainer.WithAlwaysPull(),
+	)
+	dockercontainer.CleanupContainer(t, ctr)
+	require.NoError(t, err)
+	require.NotNil(t, ctr)
+
 	t.Run("error", func(t *testing.T) {
 		t.Run("no-image", func(t *testing.T) {
 			ctr, err := dockercontainer.Create(context.Background())
@@ -40,16 +52,6 @@ func TestCreateContainer(t *testing.T) {
 			require.Error(t, err)
 			require.Nil(t, ctr)
 		})
-	})
-
-	t.Run("with-image-platform", func(t *testing.T) {
-		ctr, err := dockercontainer.Create(context.Background(),
-			dockercontainer.WithImage(nginxAlpineImage),
-			dockercontainer.WithImagePlatform("linux/amd64"),
-		)
-		dockercontainer.CleanupContainer(t, ctr)
-		require.NoError(t, err)
-		require.NotNil(t, ctr)
 	})
 
 	t.Run("with-image", func(t *testing.T) {
