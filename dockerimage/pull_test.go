@@ -15,6 +15,7 @@ func TestPull(t *testing.T) {
 	ctx := context.Background()
 	dockerClient, err := dockerclient.New(ctx)
 	require.NoError(t, err)
+	defer dockerClient.Close()
 
 	err = dockerimage.Pull(ctx, dockerClient, "nginx:alpine", image.PullOptions{})
 	require.NoError(t, err)

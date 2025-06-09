@@ -51,7 +51,6 @@ func Pull(ctx context.Context, imagePullCli ImagePullClient, imageName string, p
 				}
 				return err
 			}
-			defer imagePullCli.Close()
 
 			return nil
 		},

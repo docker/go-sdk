@@ -76,6 +76,7 @@ func TestPull(t *testing.T) {
 		} else {
 			require.NoError(t, err)
 		}
+		defer mockImageClient.Close()
 
 		require.Positive(t, m.imagePullCount)
 		require.Equal(t, shouldRetry, m.imagePullCount > 1)
