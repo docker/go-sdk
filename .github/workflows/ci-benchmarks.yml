@@ -53,6 +53,7 @@ jobs:
           echo "MODULE_NAME=$MODULE_NAME" >> $GITHUB_ENV
 
       - name: Identify Duplicate Benchmark Names
+        working-directory: ${{ inputs.project-directory }}
         run: |
           awk '/^Benchmark/ {print $1}' output.txt | sort | uniq -d > duplicate_benchmarks.txt
 
@@ -93,7 +94,7 @@ jobs:
         uses: actions/cache/restore@5a3ec84eff668545956fd18022155c47e93e2684 # v4
         with:
           path: ./cache
-          key: ${{ steps.get-main-branch-sha.outputs.sha }}-${{ runner.os }}-${{ steps.system-info.outputs.cpu-model }}-benchmark
+          key: ${{ steps.get-main-branch-sha.outputs.sha }}-${{ runner.os }}-${{ steps.system-info.outputs.cpu-model }}-${{ inputs.project-directory }}-benchmark
 
       # This will only run if we have Benchmark Results from main branch
       - name: Compare PR Benchmark Results with main branch
@@ -131,4 +132,4 @@ jobs:
         if: ${{ github.ref_name == 'main' }}
         with:
           path: ./${{ inputs.project-directory }}/cache
-          key: ${{ steps.get-main-branch-sha.outputs.sha }}-${{ runner.os }}-${{ steps.system-info.outputs.cpu-model }}-benchmark
+          key: ${{ steps.get-main-branch-sha.outputs.sha }}-${{ runner.os }}-${{ steps.system-info.outputs.cpu-model }}-${{ inputs.project-directory }}-benchmark
