@@ -15,8 +15,8 @@ import (
 	"github.com/docker/go-sdk/dockerimage"
 )
 
-// CreateContainer fulfils a request for a container without starting it
-func CreateContainer(ctx context.Context, def *Definition) (ctr *Container, err error) {
+// Create fulfils a request for a container without starting it
+func Create(ctx context.Context, def *Definition) (*Container, error) {
 	imageName := def.Image
 
 	env := []string{}
@@ -30,6 +30,8 @@ func CreateContainer(ctx context.Context, def *Definition) (ctr *Container, err 
 
 	var platform *specs.Platform
 
+	// Initialize the docker client. It will be closed when the container is terminated,
+	// so no need to close it during the entire container lifecycle.
 	dockerClient, err := dockerclient.New(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("new docker client: %w", err)
@@ -149,7 +151,7 @@ func CreateContainer(ctx context.Context, def *Definition) (ctr *Container, err 
 	}
 
 	// This should match the fields set in ContainerFromDockerResponse.
-	c := &Container{
+	ctr := &Container{
 		dockerClient:   dockerClient,
 		ID:             resp.ID,
 		shortID:        resp.ID[:12],
@@ -165,5 +167,5 @@ func CreateContainer(ctx context.Context, def *Definition) (ctr *Container, err 
 		return ctr, fmt.Errorf("created hook: %w", err)
 	}
 
-	return c, nil
+	return ctr, nil
 }

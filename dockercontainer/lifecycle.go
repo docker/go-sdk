@@ -176,6 +176,10 @@ func applyDefinitionHooks(ctx context.Context, hooks []DefinitionHook, def *Defi
 
 // applyLifecycleHooks calls hook on all LifecycleHooks.
 func (def *Definition) applyLifecycleHooks(hook func(lifecycleHooks LifecycleHooks) error) error {
+	if def.LifecycleHooks == nil {
+		return nil
+	}
+
 	var errs []error
 	for _, lifecycleHooks := range def.LifecycleHooks {
 		if err := hook(lifecycleHooks); err != nil {
@@ -188,6 +192,10 @@ func (def *Definition) applyLifecycleHooks(hook func(lifecycleHooks LifecycleHoo
 
 // applyLifecycleHooks applies all lifecycle hooks reporting the container logs on error if logError is true.
 func (c *Container) applyLifecycleHooks(ctx context.Context, logError bool, hook func(lifecycleHooks LifecycleHooks) error) error {
+	if c.lifecycleHooks == nil {
+		return nil
+	}
+
 	var errs []error
 	for _, lifecycleHooks := range c.lifecycleHooks {
 		if err := hook(lifecycleHooks); err != nil {
