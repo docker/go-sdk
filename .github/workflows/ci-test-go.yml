@@ -53,6 +53,13 @@ jobs:
         shell: bash
         run: docker context ls
 
+      # On Windows, ensure Docker is in Linux mode
+      - name: Switch Docker to Linux containers
+        if: runner.os == 'Windows'
+        run: |
+          & 'C:\Program Files\Docker\Docker\DockerCli.exe' -SwitchLinuxEngine
+        shell: pwsh
+
       - name: go test
         if: ${{ runner.os != 'macos' }}
         working-directory: ./${{ inputs.project-directory }}
