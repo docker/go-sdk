@@ -46,26 +46,17 @@ jobs:
         working-directory: ./${{ inputs.project-directory }}
         run: go build ./...
 
-      - name: Set up Docker
-        if: ${{ runner.os == 'Windows' }}
-        uses: docker/setup-docker-action@b60f85385d03ac8acfca6d9996982511d8620a19 #v4
-
       - name: debug
-        if: ${{ runner.os != 'macos' }}
+        if: ${{ matrix.platform == 'ubuntu-latest' }}
         working-directory: ./${{ inputs.project-directory }}
         timeout-minutes: 30
         shell: bash
         run: docker context ls
 
-      # On Windows, ensure Docker is in Linux mode
-      - name: Switch Docker to Linux containers
-        if: ${{ runner.os == 'Windows' }}
-        run: |
-          & 'C:\hostedtoolcache\windows\docker-archive-stable\28.2.2\x64\docker.exe' -SwitchLinuxEngine
-        shell: pwsh
-
       - name: go test
-        if: ${{ runner.os != 'macos' }}
+        # TODO: we need a way to put Linux-containers mode on the Windows workers,
+        # which can be achieved using a self-hosted Windows instance.
+        if: ${{ matrix.platform == 'ubuntu-latest' }}
         working-directory: ./${{ inputs.project-directory }}
         timeout-minutes: 30
         shell: bash
