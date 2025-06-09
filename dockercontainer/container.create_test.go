@@ -16,18 +16,30 @@ import (
 const nginxAlpineImage = "nginx:alpine"
 
 func TestCreateContainer(t *testing.T) {
-	t.Run("no-image", func(t *testing.T) {
-		ctr, err := dockercontainer.Create(context.Background())
-		require.Error(t, err)
-		require.Nil(t, ctr)
-	})
+	t.Run("error", func(t *testing.T) {
+		t.Run("no-image", func(t *testing.T) {
+			ctr, err := dockercontainer.Create(context.Background())
+			require.Error(t, err)
+			require.Nil(t, ctr)
+		})
 
-	t.Run("invalid-ports", func(t *testing.T) {
-		ctr, err := dockercontainer.Create(context.Background(),
-			dockercontainer.WithExposedPorts("invalid-port"),
-		)
-		require.Error(t, err)
-		require.Nil(t, ctr)
+		t.Run("invalid-ports", func(t *testing.T) {
+			ctr, err := dockercontainer.Create(context.Background(),
+				dockercontainer.WithExposedPorts("invalid-port"),
+			)
+			require.Error(t, err)
+			require.Nil(t, ctr)
+		})
+
+		t.Run("invalid-with-image-platform", func(t *testing.T) {
+			ctr, err := dockercontainer.Create(context.Background(),
+				dockercontainer.WithImage(nginxAlpineImage),
+				dockercontainer.WithImagePlatform("invalid"),
+			)
+			dockercontainer.CleanupContainer(t, ctr)
+			require.Error(t, err)
+			require.Nil(t, ctr)
+		})
 	})
 
 	t.Run("with-image-platform", func(t *testing.T) {
@@ -38,16 +50,6 @@ func TestCreateContainer(t *testing.T) {
 		dockercontainer.CleanupContainer(t, ctr)
 		require.NoError(t, err)
 		require.NotNil(t, ctr)
-	})
-
-	t.Run("with-image-platform/invalid", func(t *testing.T) {
-		ctr, err := dockercontainer.Create(context.Background(),
-			dockercontainer.WithImage(nginxAlpineImage),
-			dockercontainer.WithImagePlatform("invalid"),
-		)
-		dockercontainer.CleanupContainer(t, ctr)
-		require.Error(t, err)
-		require.Nil(t, ctr)
 	})
 
 	t.Run("with-image", func(t *testing.T) {
