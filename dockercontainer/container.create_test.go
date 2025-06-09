@@ -31,14 +31,23 @@ func TestCreateContainer(t *testing.T) {
 	})
 
 	t.Run("with-image", func(t *testing.T) {
+		ctr, err := dockercontainer.Create(context.Background(),
+			dockercontainer.WithImage(nginxAlpineImage),
+		)
+		dockercontainer.CleanupContainer(t, ctr)
+		require.NoError(t, err)
+		require.NotNil(t, ctr)
+	})
+
+	t.Run("with-dockerclient", func(t *testing.T) {
 		// Initialize the docker client. It will be closed when the container is terminated,
 		// so no need to close it during the entire container lifecycle.
 		dockerClient, err := dockerclient.New(context.Background())
 		require.NoError(t, err)
 
 		ctr, err := dockercontainer.Create(context.Background(),
-			dockercontainer.WithImage(nginxAlpineImage),
 			dockercontainer.WithDockerClient(dockerClient),
+			dockercontainer.WithImage(nginxAlpineImage),
 		)
 		dockercontainer.CleanupContainer(t, ctr)
 		require.NoError(t, err)

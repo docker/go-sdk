@@ -19,7 +19,6 @@ func (c *Client) DaemonHost(ctx context.Context) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	defer c.Close()
 
 	var host string
 
