@@ -6,7 +6,6 @@ import (
 	"io"
 	"log/slog"
 	"path/filepath"
-	"runtime"
 	"time"
 
 	"github.com/docker/docker/api/types/system"
@@ -138,16 +137,6 @@ func (c *Client) Close() error {
 
 	if c.client == nil {
 		return nil
-	}
-
-	// Get caller information
-	pc, file, line, ok := runtime.Caller(1)
-	if ok {
-		// Get function name
-		fn := runtime.FuncForPC(pc)
-		// Get just the filename without the full path
-		_, filename := filepath.Split(file)
-		fmt.Printf(">> Close called from %s:%d in function %s\n", filename, line, fn.Name())
 	}
 
 	// Store the error before clearing the client
