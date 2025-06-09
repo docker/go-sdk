@@ -41,11 +41,11 @@ func TestFile_validate(t *testing.T) {
 }
 
 func TestIsDir(t *testing.T) {
-	testIsDir := func(t *testing.T, filePath string, expected bool, err error) {
+	testIsDir := func(t *testing.T, filePath string, expected bool, expectedErr error) {
 		t.Helper()
 
 		result, err := isDir(filePath)
-		if err != nil {
+		if expectedErr != nil {
 			require.Error(t, err, "expected error")
 		} else {
 			require.NoError(t, err, "not expected error")
@@ -72,6 +72,8 @@ func TestTarDir(t *testing.T) {
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
 
 	testTarDir := func(t *testing.T, abs bool) {
+		t.Helper()
+
 		src := originalSrc
 		if abs {
 			absSrc, err := filepath.Abs(src)

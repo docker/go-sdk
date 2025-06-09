@@ -70,6 +70,6 @@ func (st *NopStrategyTarget) State(_ context.Context) (*container.State, error) 
 	return &st.ContainerState, nil
 }
 
-func (st *NopStrategyTarget) CopyFromContainer(ctx context.Context, filePath string) (io.ReadCloser, error) {
+func (st *NopStrategyTarget) CopyFromContainer(_ context.Context, _ string) (io.ReadCloser, error) {
 	return st.ReaderCloser, nil
 }

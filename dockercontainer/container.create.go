@@ -16,7 +16,7 @@ import (
 )
 
 // CreateContainer fulfils a request for a container without starting it
-func CreateContainer(ctx context.Context, def Definition) (ctr *Container, err error) {
+func CreateContainer(ctx context.Context, def *Definition) (ctr *Container, err error) {
 	imageName := def.Image
 
 	env := []string{}

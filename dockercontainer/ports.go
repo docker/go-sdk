@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/containerd/errdefs"
+
 	"github.com/docker/go-connections/nat"
 )
 
