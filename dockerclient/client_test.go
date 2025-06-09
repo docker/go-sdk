@@ -114,12 +114,8 @@ func TestNew(t *testing.T) {
 		t.Run("env-var-wins", func(t *testing.T) {
 			t.Setenv(dockercontext.EnvOverrideHost, "tcp://foobar:2375") // this URL is parseable, although not reachable
 			cli, err := dockerclient.New(context.Background())
-			require.NoError(t, err)
-			require.NotNil(t, cli)
-
-			// Ping fails because the host is invalid
-			_, err = cli.Info(context.Background())
 			require.Error(t, err)
+			require.Nil(t, cli)
 		})
 
 		t.Run("context-wins/found", func(t *testing.T) {
