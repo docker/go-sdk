@@ -159,3 +159,152 @@ func TestCreateContainerWithLifecycleHooks(t *testing.T) {
 	require.NotContains(t, bufLogger.String(), "pre-terminate hook")
 	require.NotContains(t, bufLogger.String(), "post-terminate hook")
 }
+
+// BenchmarkCreateContainer measures container creation time
+func BenchmarkCreateContainer(b *testing.B) {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
+	defer cancel()
+
+	b.Run("minimal", func(b *testing.B) {
+		benchmarkContainerCreation(b, ctx, []dockercontainer.ContainerCustomizer{
+			dockercontainer.WithImage(nginxAlpineImage),
+		})
+	})
+
+	b.Run("with-env", func(b *testing.B) {
+		benchmarkContainerCreation(b, ctx, []dockercontainer.ContainerCustomizer{
+			dockercontainer.WithImage(nginxAlpineImage),
+			dockercontainer.WithEnv(map[string]string{
+				"ENV1": "value1",
+				"ENV2": "value2",
+			}),
+		})
+	})
+
+	b.Run("with-ports", func(b *testing.B) {
+		benchmarkContainerCreation(b, ctx, []dockercontainer.ContainerCustomizer{
+			dockercontainer.WithImage(nginxAlpineImage),
+			dockercontainer.WithExposedPorts("80/tcp", "443/tcp"),
+		})
+	})
+
+	b.Run("with-lifecycle-hooks", func(b *testing.B) {
+		benchmarkContainerCreation(b, ctx, []dockercontainer.ContainerCustomizer{
+			dockercontainer.WithImage(nginxAlpineImage),
+			dockercontainer.WithLifecycleHooks(dockercontainer.LifecycleHooks{
+				PreCreates: []dockercontainer.DefinitionHook{
+					func(_ context.Context, _ *dockercontainer.Definition) error {
+						return nil
+					},
+				},
+				PostCreates: []dockercontainer.ContainerHook{
+					func(_ context.Context, _ *dockercontainer.Container) error {
+						return nil
+					},
+				},
+				PreStarts: []dockercontainer.ContainerHook{
+					func(_ context.Context, _ *dockercontainer.Container) error {
+						return nil
+					},
+				},
+				PostStarts: []dockercontainer.ContainerHook{
+					func(_ context.Context, _ *dockercontainer.Container) error {
+						return nil
+					},
+				},
+				PostReadies: []dockercontainer.ContainerHook{
+					func(_ context.Context, _ *dockercontainer.Container) error {
+						return nil
+					},
+				},
+				PreStops: []dockercontainer.ContainerHook{
+					func(_ context.Context, _ *dockercontainer.Container) error {
+						return nil
+					},
+				},
+				PostStops: []dockercontainer.ContainerHook{
+					func(_ context.Context, _ *dockercontainer.Container) error {
+						return nil
+					},
+				},
+				PreTerminates: []dockercontainer.ContainerHook{
+					func(_ context.Context, _ *dockercontainer.Container) error {
+						return nil
+					},
+				},
+				PostTerminates: []dockercontainer.ContainerHook{
+					func(_ context.Context, _ *dockercontainer.Container) error {
+						return nil
+					},
+				},
+			}),
+		})
+	})
+}
+
+// BenchmarkContainerCleanup measures container cleanup time
+func BenchmarkContainerCleanup(b *testing.B) {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
+	defer cancel()
+
+	b.Run("minimal", func(b *testing.B) {
+		benchmarkContainerCleanup(b, ctx, []dockercontainer.ContainerCustomizer{
+			dockercontainer.WithImage(nginxAlpineImage),
+		})
+	})
+
+	b.Run("with-env", func(b *testing.B) {
+		benchmarkContainerCleanup(b, ctx, []dockercontainer.ContainerCustomizer{
+			dockercontainer.WithImage(nginxAlpineImage),
+			dockercontainer.WithEnv(map[string]string{
+				"ENV1": "value1",
+				"ENV2": "value2",
+			}),
+		})
+	})
+
+	b.Run("with-ports", func(b *testing.B) {
+		benchmarkContainerCleanup(b, ctx, []dockercontainer.ContainerCustomizer{
+			dockercontainer.WithImage(nginxAlpineImage),
+			dockercontainer.WithExposedPorts("80/tcp", "443/tcp"),
+		})
+	})
+}
+
+// benchmarkContainerCreation is a helper function to benchmark container creation
+func benchmarkContainerCreation(b *testing.B, ctx context.Context, opts []dockercontainer.ContainerCustomizer) {
+	b.Helper()
+	b.ReportAllocs()
+
+	for i := 0; i < b.N; i++ {
+		ctr, err := dockercontainer.Create(ctx, opts...)
+		dockercontainer.CleanupContainer(b, ctr)
+		require.NoError(b, err)
+	}
+}
+
+// benchmarkContainerCleanup is a helper function to benchmark container cleanup
+func benchmarkContainerCleanup(b *testing.B, ctx context.Context, opts []dockercontainer.ContainerCustomizer) {
+	b.Helper()
+	b.ReportAllocs()
+
+	// Create containers first
+	containers := make([]*dockercontainer.Container, b.N)
+	for i := 0; i < b.N; i++ {
+		ctr, err := dockercontainer.Create(ctx, opts...)
+		require.NoError(b, err)
+		containers[i] = ctr
+	}
+
+	// Now benchmark cleanup
+	b.ResetTimer()
+	var cleanupErr error
+	for i := 0; i < b.N; i++ {
+		cleanupCtx, cleanupCancel := context.WithTimeout(context.Background(), 10*time.Second)
+		cleanupErr = containers[i].Terminate(cleanupCtx)
+		cleanupCancel()
+	}
+	b.StopTimer()
+
+	require.NoError(b, cleanupErr)
+}
