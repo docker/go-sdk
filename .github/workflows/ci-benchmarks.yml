@@ -57,6 +57,7 @@ jobs:
           awk '/^Benchmark/ {print $1}' output.txt | sort | uniq -d > duplicate_benchmarks.txt
 
       - name: Add Normalized Package Prefix to Duplicate Benchmark Names
+        working-directory: ${{ inputs.project-directory }}
         run: |
           awk -v MODULE_NAME="$MODULE_NAME" '
             FNR==NR {duplicates[$1]; next}
@@ -100,8 +101,8 @@ jobs:
         if: steps.cache.outputs.cache-hit == 'true'
         with:
           tool: 'go'
-          output-file-path: output.txt
-          external-data-json-path: ./cache/benchmark-data.json
+          output-file-path: ./${{ inputs.project-directory }}/output.txt
+          external-data-json-path: ./${{ inputs.project-directory }}/cache/benchmark-data.json
           # Do not save the data (This allows comparing benchmarks)
           save-data-file: false
           fail-on-alert: true
@@ -116,8 +117,8 @@ jobs:
         if: ${{ github.ref_name == 'main' }}
         with:
           tool: 'go'
-          output-file-path: output.txt
-          external-data-json-path: ./cache/benchmark-data.json
+          output-file-path: ./${{ inputs.project-directory }}/output.txt
+          external-data-json-path: ./${{ inputs.project-directory }}/cache/benchmark-data.json
           # Save the data to external file (cache)
           save-data-file: true
           fail-on-alert: false
@@ -129,5 +130,5 @@ jobs:
         uses: actions/cache/save@5a3ec84eff668545956fd18022155c47e93e2684 # v4
         if: ${{ github.ref_name == 'main' }}
         with:
-          path: ./cache
+          path: ./${{ inputs.project-directory }}/cache
           key: ${{ steps.get-main-branch-sha.outputs.sha }}-${{ runner.os }}-${{ steps.system-info.outputs.cpu-model }}-benchmark
