@@ -417,6 +417,7 @@ func TestRunContainerWithWaitStrategy(t *testing.T) {
 		}
 
 		ctr, err := dockercontainer.Run(context.Background(), opts...)
+		dockercontainer.CleanupContainer(t, ctr)
 		if expectError {
 			require.Error(t, err)
 			require.Nil(t, ctr)
