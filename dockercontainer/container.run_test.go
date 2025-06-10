@@ -521,25 +521,18 @@ func benchmarkRunContainerCleanup(b *testing.B, ctx context.Context, opts []dock
 	b.Helper()
 	b.ReportAllocs()
 
-	// Run containers first
-	containers := make([]*dockercontainer.Container, b.N)
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
+		// Create and immediately terminate one container at a time
 		ctr, err := dockercontainer.Run(ctx, opts...)
 		require.NoError(b, err)
-		containers[i] = ctr
-	}
 
-	// Now benchmark cleanup
-	b.ResetTimer()
-	var cleanupErr error
-	for i := 0; i < b.N; i++ {
 		cleanupCtx, cleanupCancel := context.WithTimeout(context.Background(), 30*time.Second)
-		cleanupErr = containers[i].Terminate(cleanupCtx, dockercontainer.TerminateTimeout(30*time.Second))
+		err = ctr.Terminate(cleanupCtx, dockercontainer.TerminateTimeout(30*time.Second))
 		cleanupCancel()
+		require.NoError(b, err)
 	}
 	b.StopTimer()
-
-	require.NoError(b, cleanupErr)
 }
 
 func testCreateNetwork(t *testing.T, networkName string) network.CreateResponse {
