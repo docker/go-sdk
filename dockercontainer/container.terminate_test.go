@@ -31,5 +31,4 @@ func TestTerminateOptions(t *testing.T) {
 		opts := NewTerminateOptions(ctx, TerminateTimeout(10*time.Second), RemoveVolumes("vol1", "vol2"))
 		require.Equal(t, ctx, opts.Context())
 	})
-
 }

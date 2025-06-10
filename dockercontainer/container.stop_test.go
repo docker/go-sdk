@@ -20,5 +20,4 @@ func TestStopOptions(t *testing.T) {
 		opts := NewStopOptions(ctx, StopTimeout(10*time.Second))
 		require.Equal(t, ctx, opts.Context())
 	})
-
 }
