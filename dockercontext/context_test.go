@@ -115,7 +115,7 @@ func TestCurrentDockerHost(t *testing.T) {
 // It generates the specified number of contexts, setting the current context to the one specified by currentContextIndex.
 // Finally it always adds a context with an empty host, to validate the behavior when the host is not set.
 // This empty context can be used setting the currentContextIndex to a number greater than contextsCount.
-func setupDockerContexts(t *testing.T, currentContextIndex int, contextsCount int) {
+func setupDockerContexts(t testing.TB, currentContextIndex int, contextsCount int) {
 	t.Helper()
 
 	tmpDir := t.TempDir()
@@ -158,7 +158,7 @@ func setupDockerContexts(t *testing.T, currentContextIndex int, contextsCount in
 }
 
 // createDockerContext creates a Docker context with the specified name and host
-func createDockerContext(t *testing.T, metaDir, baseContext string, index int, host string) {
+func createDockerContext(t testing.TB, metaDir, baseContext string, index int, host string) {
 	t.Helper()
 
 	contextDir := filepath.Join(metaDir, fmt.Sprintf("context%d", index))
@@ -170,7 +170,7 @@ func createDockerContext(t *testing.T, metaDir, baseContext string, index int, h
 	require.NoError(t, err)
 }
 
-func tempMkdirAll(t *testing.T, dir string) {
+func tempMkdirAll(t testing.TB, dir string) {
 	t.Helper()
 
 	err := os.MkdirAll(dir, 0o755)
