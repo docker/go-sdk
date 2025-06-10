@@ -264,7 +264,7 @@ func TestRunContainerWithLifecycleHooks(t *testing.T) {
 			require.Contains(t, bufLogger.String(), "post-ready hook")
 
 			// force the container lifecycle methods to be called
-			err = ctr.Stop(context.Background(), nil)
+			err = ctr.Stop(context.Background())
 			require.NoError(t, err)
 			require.Contains(t, bufLogger.String(), "pre-stop hook")
 			require.Contains(t, bufLogger.String(), "post-stop hook")

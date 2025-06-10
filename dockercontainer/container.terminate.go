@@ -13,9 +13,8 @@ import (
 
 // TerminateOptions is a type that holds the options for terminating a container.
 type TerminateOptions struct {
-	ctx         context.Context
-	stopTimeout *time.Duration
-	volumes     []string
+	*StopOptions
+	volumes []string
 }
 
 // TerminateOption is a type that represents an option for terminating a container.
@@ -24,25 +23,13 @@ type TerminateOption func(*TerminateOptions)
 // NewTerminateOptions returns a fully initialised TerminateOptions.
 // Defaults: StopTimeout: 10 seconds.
 func NewTerminateOptions(ctx context.Context, opts ...TerminateOption) *TerminateOptions {
-	timeout := time.Second * 10
 	options := &TerminateOptions{
-		stopTimeout: &timeout,
-		ctx:         ctx,
+		StopOptions: NewStopOptions(ctx),
 	}
 	for _, opt := range opts {
 		opt(options)
 	}
 	return options
-}
-
-// Context returns the context to use during a Terminate.
-func (o *TerminateOptions) Context() context.Context {
-	return o.ctx
-}
-
-// StopTimeout returns the stop timeout to use during a Terminate.
-func (o *TerminateOptions) StopTimeout() *time.Duration {
-	return o.stopTimeout
 }
 
 // Cleanup performs any clean up needed
@@ -61,19 +48,11 @@ func (o *TerminateOptions) Cleanup(cli *dockerclient.Client) error {
 	return errors.Join(errs...)
 }
 
-// StopContext returns a TerminateOption that sets the context.
-// Default: context.Background().
-func StopContext(ctx context.Context) TerminateOption {
-	return func(c *TerminateOptions) {
-		c.ctx = ctx
-	}
-}
-
-// StopTimeout returns a TerminateOption that sets the timeout.
+// TerminateTimeout returns a TerminateOption that sets the timeout.
 // Default: See [Container.Stop].
-func StopTimeout(timeout time.Duration) TerminateOption {
+func TerminateTimeout(timeout time.Duration) TerminateOption {
 	return func(c *TerminateOptions) {
-		c.stopTimeout = &timeout
+		c.stopTimeout = timeout
 	}
 }
 
@@ -130,7 +109,7 @@ func isNil(val any) bool {
 // Default: timeout is 10 seconds.
 func (c *Container) Terminate(ctx context.Context, opts ...TerminateOption) error {
 	options := NewTerminateOptions(ctx, opts...)
-	err := c.Stop(options.Context(), options.StopTimeout())
+	err := c.Stop(options.Context(), StopTimeout(options.StopTimeout()))
 	if err != nil && !isCleanupSafe(err) {
 		return fmt.Errorf("stop: %w", err)
 	}
