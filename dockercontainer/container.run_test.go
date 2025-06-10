@@ -527,9 +527,7 @@ func benchmarkRunContainerCleanup(b *testing.B, ctx context.Context, opts []dock
 		ctr, err := dockercontainer.Run(ctx, opts...)
 		require.NoError(b, err)
 
-		cleanupCtx, cleanupCancel := context.WithTimeout(context.Background(), 30*time.Second)
-		err = ctr.Terminate(cleanupCtx, dockercontainer.TerminateTimeout(30*time.Second))
-		cleanupCancel()
+		err = dockercontainer.TerminateContainer(ctr, dockercontainer.TerminateTimeout(30*time.Second))
 		require.NoError(b, err)
 	}
 	b.StopTimer()
