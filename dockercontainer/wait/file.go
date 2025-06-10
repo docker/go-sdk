@@ -63,7 +63,7 @@ func (ws *FileStrategy) Timeout() *time.Duration {
 
 // WaitUntilReady waits until the file exists in the container and copies it to the target.
 func (ws *FileStrategy) WaitUntilReady(ctx context.Context, target StrategyTarget) error {
-	timeout := defaultStartupTimeout()
+	timeout := defaultTimeout()
 	if ws.timeout != nil {
 		timeout = *ws.timeout
 	}

@@ -135,7 +135,7 @@ func (hp *HostPortStrategy) detectInternalPort(ctx context.Context, target Strat
 
 // WaitUntilReady implements Strategy.WaitUntilReady
 func (hp *HostPortStrategy) WaitUntilReady(ctx context.Context, target StrategyTarget) error {
-	timeout := defaultStartupTimeout()
+	timeout := defaultTimeout()
 	if hp.timeout != nil {
 		timeout = *hp.timeout
 	}

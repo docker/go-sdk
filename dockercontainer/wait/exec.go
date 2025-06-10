@@ -77,7 +77,7 @@ func (ws *ExecStrategy) Timeout() *time.Duration {
 }
 
 func (ws *ExecStrategy) WaitUntilReady(ctx context.Context, target StrategyTarget) error {
-	timeout := defaultStartupTimeout()
+	timeout := defaultTimeout()
 	if ws.timeout != nil {
 		timeout = *ws.timeout
 	}

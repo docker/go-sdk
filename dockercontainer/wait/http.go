@@ -156,7 +156,7 @@ func (ws *HTTPStrategy) Timeout() *time.Duration {
 
 // WaitUntilReady implements Strategy.WaitUntilReady
 func (ws *HTTPStrategy) WaitUntilReady(ctx context.Context, target StrategyTarget) error {
-	timeout := defaultStartupTimeout()
+	timeout := defaultTimeout()
 	if ws.timeout != nil {
 		timeout = *ws.timeout
 	}

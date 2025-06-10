@@ -54,7 +54,7 @@ func checkState(state *container.State) error {
 	}
 }
 
-func defaultStartupTimeout() time.Duration {
+func defaultTimeout() time.Duration {
 	return 60 * time.Second
 }
 

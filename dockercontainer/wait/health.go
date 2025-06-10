@@ -62,7 +62,7 @@ func (ws *HealthStrategy) Timeout() *time.Duration {
 
 // WaitUntilReady implements Strategy.WaitUntilReady
 func (ws *HealthStrategy) WaitUntilReady(ctx context.Context, target StrategyTarget) error {
-	timeout := defaultStartupTimeout()
+	timeout := defaultTimeout()
 	if ws.timeout != nil {
 		timeout = *ws.timeout
 	}
