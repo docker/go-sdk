@@ -10,6 +10,8 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/docker/docker/api/types/container"
+	"github.com/docker/docker/api/types/network"
 	"github.com/docker/go-sdk/dockerclient"
 	"github.com/docker/go-sdk/dockercontainer"
 	"github.com/docker/go-sdk/dockercontainer/exec"
@@ -95,6 +97,16 @@ echo "done"
 			require.NoError(t, err)
 
 			require.Equal(t, "done\n", buf.String())
+
+			// Verify that the file can be copied out of the container.
+			rc, err := ctr.CopyFromContainer(context.Background(), "/tmp/hello.txt")
+			require.NoError(t, err)
+
+			buf = &bytes.Buffer{}
+			_, err = io.Copy(buf, rc)
+			require.NoError(t, err)
+
+			require.Equal(t, "hello world\n", buf.String())
 		})
 
 		t.Run("error", func(t *testing.T) {
@@ -109,6 +121,70 @@ echo "done"
 			dockercontainer.CleanupContainer(t, ctr)
 			require.Error(t, err)
 		})
+	})
+
+	t.Run("with-config-modifier", func(t *testing.T) {
+		ctr, err := dockercontainer.Run(context.Background(),
+			dockercontainer.WithImage(nginxAlpineImage),
+			dockercontainer.WithConfigModifier(func(c *container.Config) {
+				c.Env = append(c.Env, "ENV1=value1", "ENV2=value2")
+				c.Hostname = "test-hostname"
+			}),
+		)
+		dockercontainer.CleanupContainer(t, ctr)
+		require.NoError(t, err)
+		require.NotNil(t, ctr)
+
+		inspect, err := ctr.Inspect(context.Background())
+		require.NoError(t, err)
+		require.NotNil(t, inspect)
+
+		require.Contains(t, inspect.Config.Env, "ENV1=value1")
+		require.Contains(t, inspect.Config.Env, "ENV2=value2")
+		require.Equal(t, "test-hostname", inspect.Config.Hostname)
+	})
+
+	t.Run("with-host-config-modifier", func(t *testing.T) {
+		ctr, err := dockercontainer.Run(context.Background(),
+			dockercontainer.WithImage(nginxAlpineImage),
+			dockercontainer.WithHostConfigModifier(func(hc *container.HostConfig) {
+				hc.CapDrop = []string{"NET_ADMIN"}
+			}),
+		)
+		dockercontainer.CleanupContainer(t, ctr)
+		require.NoError(t, err)
+		require.NotNil(t, ctr)
+
+		inspect, err := ctr.Inspect(context.Background())
+		require.NoError(t, err)
+		require.NotNil(t, inspect)
+
+		require.Contains(t, inspect.HostConfig.CapDrop, "CAP_NET_ADMIN")
+	})
+
+	t.Run("with-endpoint-settings-modifier", func(t *testing.T) {
+		name := "network-name"
+		_ = testCreateNetwork(t, name)
+
+		ctr, err := dockercontainer.Run(context.Background(),
+			dockercontainer.WithImage(nginxAlpineImage),
+			dockercontainer.WithEndpointSettingsModifier(func(settings map[string]*network.EndpointSettings) {
+				settings[name] = &network.EndpointSettings{
+					Aliases: []string{"alias1", "alias2"},
+				}
+			}),
+		)
+		dockercontainer.CleanupContainer(t, ctr)
+		require.NoError(t, err)
+		require.NotNil(t, ctr)
+
+		inspect, err := ctr.Inspect(context.Background())
+		require.NoError(t, err)
+		require.NotNil(t, inspect)
+
+		require.Contains(t, inspect.NetworkSettings.Networks, name)
+		require.Contains(t, inspect.NetworkSettings.Networks[name].Aliases, "alias1")
+		require.Contains(t, inspect.NetworkSettings.Networks[name].Aliases, "alias2")
 	})
 
 	t.Run("no-dockerclient-uses-default", func(t *testing.T) {
@@ -149,6 +225,38 @@ echo "done"
 			port1, err := ctr.MappedPort(context.Background(), "80/tcp")
 			require.NoError(t, err)
 			require.NotNil(t, port1)
+		})
+
+		t.Run("state", func(t *testing.T) {
+			c, err := dockercontainer.Run(context.Background(),
+				dockercontainer.WithImage(nginxAlpineImage),
+				dockercontainer.WithImagePlatform("linux/amd64"),
+				dockercontainer.WithAlwaysPull(),
+			)
+			dockercontainer.CleanupContainer(t, c)
+			require.NoError(t, err)
+			require.NotNil(t, c)
+
+			state, err := c.State(context.Background())
+			require.NoError(t, err)
+			require.NotNil(t, state)
+
+			require.Equal(t, "running", state.Status)
+
+			err = c.Stop(context.Background())
+			require.NoError(t, err)
+
+			state, err = c.State(context.Background())
+			require.NoError(t, err)
+			require.NotNil(t, state)
+			require.Equal(t, "exited", state.Status)
+
+			err = c.Terminate(context.Background())
+			require.NoError(t, err)
+
+			state, err = c.State(context.Background())
+			require.Error(t, err)
+			require.Nil(t, state)
 		})
 	})
 }
@@ -432,4 +540,22 @@ func benchmarkRunContainerCleanup(b *testing.B, ctx context.Context, opts []dock
 	b.StopTimer()
 
 	require.NoError(b, cleanupErr)
+}
+
+func testCreateNetwork(t *testing.T, networkName string) network.CreateResponse {
+	t.Helper()
+
+	dockerClient, err := dockerclient.New(context.Background())
+	require.NoError(t, err)
+
+	nw, err := dockerClient.NetworkCreate(context.Background(), networkName, network.CreateOptions{})
+	require.NoError(t, err)
+
+	t.Cleanup(func() {
+		err := dockerClient.NetworkRemove(context.Background(), nw.ID)
+		require.NoError(t, err)
+		require.NoError(t, dockerClient.Close())
+	})
+
+	return nw
 }
