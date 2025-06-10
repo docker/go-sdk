@@ -5,6 +5,7 @@ import (
 	"context"
 	"io"
 	"log/slog"
+	"strings"
 	"testing"
 	"time"
 
@@ -15,6 +16,7 @@ import (
 	"github.com/docker/go-sdk/dockerclient"
 	"github.com/docker/go-sdk/dockercontainer"
 	"github.com/docker/go-sdk/dockercontainer/exec"
+	"github.com/docker/go-sdk/dockercontainer/wait"
 )
 
 func TestRunContainer(t *testing.T) {
@@ -391,6 +393,63 @@ func TestRunContainerWithLifecycleHooks(t *testing.T) {
 	t.Run("run-container", func(t *testing.T) {
 		testRun(t, true)
 	})
+}
+
+func TestRunContainerWithWaitStrategy(t *testing.T) {
+	testRun := func(t *testing.T, strategy wait.Strategy, expectError bool) {
+		t.Helper()
+
+		bufLogger := &bytes.Buffer{}
+		logger := slog.New(slog.NewTextHandler(bufLogger, nil))
+
+		dockerClient, err := dockerclient.New(context.Background(), dockerclient.WithLogger(logger))
+		require.NoError(t, err)
+
+		opts := []dockercontainer.ContainerCustomizer{
+			dockercontainer.WithDockerClient(dockerClient),
+			dockercontainer.WithImage(nginxAlpineImage),
+			dockercontainer.WithFiles(dockercontainer.File{
+				ContainerPath: "/tmp/hello.txt",
+				Reader:        strings.NewReader(`hello world`),
+				Mode:          0o644,
+			}),
+			dockercontainer.WithWaitStrategy(strategy),
+		}
+
+		ctr, err := dockercontainer.Run(context.Background(), opts...)
+		if expectError {
+			require.Error(t, err)
+			require.Nil(t, ctr)
+		} else {
+			require.NoError(t, err)
+			require.NotNil(t, ctr)
+		}
+	}
+
+	t.Run("for-listening-port", func(t *testing.T) {
+		testRun(t, wait.ForListeningPort("80/tcp"), false)
+	})
+
+	t.Run("for-mapped-port", func(t *testing.T) {
+		testRun(t, wait.ForMappedPort("80/tcp"), false)
+	})
+
+	t.Run("for-exposed-port", func(t *testing.T) {
+		testRun(t, wait.ForExposedPort(), false)
+	})
+
+	t.Run("for-exec", func(t *testing.T) {
+		testRun(t, wait.ForExec([]string{"ls", "-l"}), false)
+	})
+
+	t.Run("for-file-exists", func(t *testing.T) {
+		testRun(t, wait.ForFile("/tmp/hello.txt"), false)
+	})
+
+	t.Run("for-file-does-not-exist", func(t *testing.T) {
+		testRun(t, wait.ForFile("/tmp/foo.txt").WithTimeout(1*time.Second), true)
+	})
+
 }
 
 // BenchmarkRunContainer measures container creation time

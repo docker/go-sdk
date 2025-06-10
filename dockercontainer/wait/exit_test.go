@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"io"
+	"log/slog"
 	"testing"
 	"time"
 
@@ -44,6 +45,10 @@ func (st *exitStrategyTarget) State(_ context.Context) (*container.State, error)
 
 func (st *exitStrategyTarget) CopyFromContainer(context.Context, string) (io.ReadCloser, error) {
 	return nil, errors.New("not implemented")
+}
+
+func (st *exitStrategyTarget) Logger() *slog.Logger {
+	return slog.Default()
 }
 
 func TestWaitForExit(t *testing.T) {

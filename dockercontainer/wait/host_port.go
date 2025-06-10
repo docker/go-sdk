@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"github.com/docker/go-connections/nat"
-	"github.com/docker/go-sdk/dockercontainer/log"
 )
 
 const (
@@ -187,7 +186,7 @@ func (hp *HostPortStrategy) WaitUntilReady(ctx context.Context, target StrategyT
 			}
 			port, err = target.MappedPort(ctx, internalPort)
 			if err != nil {
-				log.Printf("mapped port: retries: %d, port: %q, err: %s\n", i, port, err)
+				target.Logger().Error("mapped port", "retries:", i, "port", port, "error", err)
 			}
 		}
 	}
@@ -210,10 +209,10 @@ func (hp *HostPortStrategy) WaitUntilReady(ctx context.Context, target StrategyT
 	if err = internalCheck(ctx, internalPort, target); err != nil {
 		switch {
 		case errors.Is(err, errShellNotExecutable):
-			log.Printf("Shell not executable in container, only external port validated")
+			target.Logger().Warn("Shell not executable in container, only external port validated", "error", err)
 			return nil
 		case errors.Is(err, errShellNotFound):
-			log.Printf("Shell not found in container")
+			target.Logger().Warn("Shell not found in container", "error", err)
 			return nil
 		default:
 			return fmt.Errorf("internal check: %w", err)

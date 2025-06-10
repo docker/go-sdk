@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"io"
+	"log/slog"
 	"sync"
 	"testing"
 	"time"
@@ -59,6 +60,10 @@ func (st *healthStrategyTarget) setState(health *container.Health) {
 
 func (st *healthStrategyTarget) CopyFromContainer(_ context.Context, _ string) (io.ReadCloser, error) {
 	return nil, errors.New("not implemented")
+}
+
+func (st *healthStrategyTarget) Logger() *slog.Logger {
+	return slog.Default()
 }
 
 // TestWaitForHealthTimesOutForUnhealthy confirms that an unhealthy container will eventually

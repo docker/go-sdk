@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"io"
+	slog "log/slog"
 
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/go-connections/nat"
@@ -21,6 +22,7 @@ type MockStrategyTarget struct {
 	ExecImpl              func(context.Context, []string, ...exec.ProcessOption) (int, io.Reader, error)
 	StateImpl             func(context.Context) (*container.State, error)
 	CopyFromContainerImpl func(context.Context, string) (io.ReadCloser, error)
+	LoggerImpl            func() *slog.Logger
 }
 
 func (st *MockStrategyTarget) Host(ctx context.Context) (string, error) {
@@ -49,4 +51,8 @@ func (st *MockStrategyTarget) State(ctx context.Context) (*container.State, erro
 
 func (st *MockStrategyTarget) CopyFromContainer(ctx context.Context, filePath string) (io.ReadCloser, error) {
 	return st.CopyFromContainerImpl(ctx, filePath)
+}
+
+func (st *MockStrategyTarget) Logger() *slog.Logger {
+	return st.LoggerImpl()
 }
