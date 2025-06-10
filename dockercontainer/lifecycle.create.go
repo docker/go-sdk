@@ -150,7 +150,7 @@ func preCreateContainerHook(ctx context.Context, dockerClient *dockerclient.Clie
 	if len(def.Networks) > 0 {
 		attachContainerTo := def.Networks[0]
 
-		nwInspect, err := dockerClient.Client().NetworkInspect(ctx, def.Networks[0], network.InspectOptions{
+		nwInspect, err := dockerClient.NetworkInspect(ctx, def.Networks[0], network.InspectOptions{
 			Verbose: true,
 		})
 		if err != nil {

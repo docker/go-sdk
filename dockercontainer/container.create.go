@@ -81,7 +81,7 @@ func Create(ctx context.Context, opts ...ContainerCustomizer) (*Container, error
 	if def.AlwaysPullImage {
 		shouldPullImage = true // If requested always attempt to pull image
 	} else {
-		img, err := def.DockerClient.Client().ImageInspect(ctx, def.image)
+		img, err := def.DockerClient.ImageInspect(ctx, def.image)
 		if err != nil {
 			if !errdefs.IsNotFound(err) {
 				return nil, err
@@ -136,7 +136,7 @@ func Create(ctx context.Context, opts ...ContainerCustomizer) (*Container, error
 		return nil, err
 	}
 
-	resp, err := def.DockerClient.Client().ContainerCreate(ctx, dockerInput, hostConfig, networkingConfig, platform, def.Name)
+	resp, err := def.DockerClient.ContainerCreate(ctx, dockerInput, hostConfig, networkingConfig, platform, def.Name)
 	if err != nil {
 		return nil, fmt.Errorf("container create: %w", err)
 	}
@@ -144,7 +144,7 @@ func Create(ctx context.Context, opts ...ContainerCustomizer) (*Container, error
 	// If there is more than one network specified in the request attach newly created container to them one by one
 	if len(def.Networks) > 1 {
 		for _, n := range def.Networks[1:] {
-			nwInspect, err := def.DockerClient.Client().NetworkInspect(ctx, n, network.InspectOptions{
+			nwInspect, err := def.DockerClient.NetworkInspect(ctx, n, network.InspectOptions{
 				Verbose: true,
 			})
 			if err != nil {
@@ -154,7 +154,7 @@ func Create(ctx context.Context, opts ...ContainerCustomizer) (*Container, error
 			endpointSetting := network.EndpointSettings{
 				Aliases: def.NetworkAliases[n],
 			}
-			err = def.DockerClient.Client().NetworkConnect(ctx, nwInspect.ID, resp.ID, &endpointSetting)
+			err = def.DockerClient.NetworkConnect(ctx, nwInspect.ID, resp.ID, &endpointSetting)
 			if err != nil {
 				return nil, fmt.Errorf("network connect: %w", err)
 			}

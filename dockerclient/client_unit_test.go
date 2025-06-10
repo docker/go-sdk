@@ -17,7 +17,7 @@ func TestNew_internal_state(t *testing.T) {
 
 		require.Empty(t, client.extraHeaders)
 		require.NotNil(t, client.cfg)
-		require.NotNil(t, client.client)
+		require.NotNil(t, client.Client)
 		require.NotNil(t, client.log)
 		require.Equal(t, slog.New(slog.NewTextHandler(io.Discard, nil)), client.log)
 		require.False(t, client.dockerInfoSet)

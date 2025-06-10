@@ -40,7 +40,7 @@ func (c *Container) Logs(ctx context.Context) (io.ReadCloser, error) {
 		ShowStderr: true,
 	}
 
-	rc, err := c.dockerClient.Client().ContainerLogs(ctx, c.ID, options)
+	rc, err := c.dockerClient.ContainerLogs(ctx, c.ID, options)
 	if err != nil {
 		return nil, err
 	}
@@ -86,7 +86,7 @@ func (c *Container) Logs(ctx context.Context) (io.ReadCloser, error) {
 
 // copyLogs copies logs from the container to stdout and stderr.
 func (c *Container) copyLogs(ctx context.Context, stdout, stderr io.Writer, options container.LogsOptions) error {
-	rc, err := c.dockerClient.Client().ContainerLogs(ctx, c.ID, options)
+	rc, err := c.dockerClient.ContainerLogs(ctx, c.ID, options)
 	if err != nil {
 		return fmt.Errorf("container logs: %w", err)
 	}

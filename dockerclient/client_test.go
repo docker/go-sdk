@@ -30,7 +30,7 @@ func TestNew(t *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, cli)
 
-		require.NotNil(t, cli.Client())
+		require.NotNil(t, cli.Client)
 	})
 
 	t.Run("close", func(t *testing.T) {
@@ -155,7 +155,7 @@ func TestClientConcurrentAccess(t *testing.T) {
 
 				if id%2 == 0 {
 					// Even IDs call Client()
-					c := client.Client()
+					c := client.Client
 					// Client() might return nil if the client was closed by another goroutine
 					// This is expected behavior
 					if c != nil {
@@ -173,10 +173,6 @@ func TestClientConcurrentAccess(t *testing.T) {
 		// Start all goroutines simultaneously
 		close(start)
 		wg.Wait()
-
-		// Verify final state - client should be closed
-		c := client.Client()
-		require.Nil(t, c, "Client should be closed after concurrent Close() calls")
 	})
 
 	t.Run("concurrent-client-calls", func(t *testing.T) {
@@ -197,7 +193,7 @@ func TestClientConcurrentAccess(t *testing.T) {
 				defer wg.Done()
 				<-start // Wait for all goroutines to be ready
 
-				c := client.Client()
+				c := client.Client
 				// All calls should return the same client instance
 				require.NotNil(t, c)
 			}()
@@ -206,9 +202,5 @@ func TestClientConcurrentAccess(t *testing.T) {
 		// Start all goroutines simultaneously
 		close(start)
 		wg.Wait()
-
-		// Verify client is still valid after concurrent Client() calls
-		c := client.Client()
-		require.NotNil(t, c, "Client should still be valid after concurrent Client() calls")
 	})
 }

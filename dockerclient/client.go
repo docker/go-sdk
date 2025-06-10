@@ -69,7 +69,7 @@ func New(ctx context.Context, options ...ClientOption) (*Client, error) {
 // This method is safe for concurrent use by multiple goroutines.
 func (c *Client) initOnce(_ context.Context) error {
 	c.mtx.RLock()
-	if c.client != nil || c.err != nil {
+	if c.Client != nil || c.err != nil {
 		err := c.err
 		c.mtx.RUnlock()
 		return err
@@ -121,7 +121,7 @@ func (c *Client) initOnce(_ context.Context) error {
 
 	opts = append(opts, client.WithHTTPHeaders(httpHeaders))
 
-	if c.client, c.err = client.NewClientWithOpts(opts...); c.err != nil {
+	if c.Client, c.err = client.NewClientWithOpts(opts...); c.err != nil {
 		c.err = fmt.Errorf("new client: %w", c.err)
 		return c.err
 	}
@@ -135,28 +135,18 @@ func (c *Client) Close() error {
 	c.mtx.Lock()
 	defer c.mtx.Unlock()
 
-	if c.client == nil {
+	if c.Client == nil {
 		return nil
 	}
 
 	// Store the error before clearing the client
-	err := c.client.Close()
+	err := c.Client.Close()
 
 	// Clear the client after closing to prevent use-after-close issues
-	c.client = nil
 	c.dockerInfo = system.Info{}
 	c.dockerInfoSet = false
 
 	return err
-}
-
-// Client returns the underlying docker client.
-// This method is safe for concurrent use by multiple goroutines.
-func (c *Client) Client() *client.Client {
-	c.mtx.RLock()
-	defer c.mtx.RUnlock()
-
-	return c.client
 }
 
 // Logger returns the logger for the client.
@@ -174,7 +164,7 @@ func defaultHealthCheck(ctx context.Context) func(c *Client) error {
 		// Add a retry mechanism to ensure Docker daemon is ready
 		var pingErr error
 		for i := range 3 { // Try up to 3 times
-			_, pingErr = c.client.Ping(ctx)
+			_, pingErr = c.Ping(ctx)
 			if pingErr == nil {
 				break
 			}

@@ -6,9 +6,6 @@ import (
 	"log/slog"
 	"sync"
 
-	"github.com/docker/docker/api/types"
-	"github.com/docker/docker/api/types/events"
-	"github.com/docker/docker/api/types/registry"
 	"github.com/docker/docker/api/types/system"
 	"github.com/docker/docker/client"
 	"github.com/docker/go-sdk/dockercontext"
@@ -28,8 +25,9 @@ type Client struct {
 	// mtx is a mutex for synchronizing access to the fields below.
 	mtx sync.RWMutex
 
-	// client is the underlying docker client.
-	client *client.Client
+	// client is the underlying docker client, embedded to avoid
+	// having to re-implement all the methods.
+	*client.Client
 
 	// cfg is the configuration for the client, obtained from the environment variables.
 	cfg *config
@@ -55,11 +53,6 @@ type Client struct {
 // implements SystemAPIClient interface
 var _ client.SystemAPIClient = &Client{}
 
-// Events returns a channel to listen to events that happen to the docker daemon.
-func (c *Client) Events(ctx context.Context, options events.ListOptions) (<-chan events.Message, <-chan error) {
-	return c.client.Events(ctx, options)
-}
-
 // Info returns information about the docker server. The result of Info is cached
 // and reused every time Info is called.
 // It will also print out the docker server info, and the resolved Docker paths, to the default logger.
@@ -71,7 +64,7 @@ func (c *Client) Info(ctx context.Context) (system.Info, error) {
 		return c.dockerInfo, nil
 	}
 
-	info, err := c.client.Info(ctx)
+	info, err := c.Client.Info(ctx)
 	if err != nil {
 		return info, fmt.Errorf("docker info: %w", err)
 	}
@@ -100,7 +93,7 @@ func (c *Client) Info(ctx context.Context) (system.Info, error) {
 	c.log.Info("Connected to docker",
 		"package", packagePath,
 		"server_version", c.dockerInfo.ServerVersion,
-		"client_version", c.client.ClientVersion(),
+		"client_version", c.ClientVersion(),
 		"operating_system", c.dockerInfo.OperatingSystem,
 		"mem_total", c.dockerInfo.MemTotal/1024/1024,
 		"labels", infoLabels,
@@ -109,19 +102,4 @@ func (c *Client) Info(ctx context.Context) (system.Info, error) {
 	)
 
 	return c.dockerInfo, nil
-}
-
-// RegistryLogin logs into a Docker registry.
-func (c *Client) RegistryLogin(ctx context.Context, auth registry.AuthConfig) (registry.AuthenticateOKBody, error) {
-	return c.client.RegistryLogin(ctx, auth)
-}
-
-// DiskUsage returns the disk usage of all images.
-func (c *Client) DiskUsage(ctx context.Context, options types.DiskUsageOptions) (types.DiskUsage, error) {
-	return c.client.DiskUsage(ctx, options)
-}
-
-// Ping pings the docker server.
-func (c *Client) Ping(ctx context.Context) (types.Ping, error) {
-	return c.client.Ping(ctx)
 }

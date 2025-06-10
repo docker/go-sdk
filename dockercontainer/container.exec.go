@@ -26,12 +26,12 @@ func (c *Container) Exec(ctx context.Context, cmd []string, options ...exec.Proc
 		o.Apply(processOptions)
 	}
 
-	response, err := c.dockerClient.Client().ContainerExecCreate(ctx, c.ID, processOptions.ExecConfig)
+	response, err := c.dockerClient.ContainerExecCreate(ctx, c.ID, processOptions.ExecConfig)
 	if err != nil {
 		return 0, nil, fmt.Errorf("container exec create: %w", err)
 	}
 
-	hijack, err := c.dockerClient.Client().ContainerExecAttach(ctx, response.ID, container.ExecAttachOptions{})
+	hijack, err := c.dockerClient.ContainerExecAttach(ctx, response.ID, container.ExecAttachOptions{})
 	if err != nil {
 		return 0, nil, fmt.Errorf("container exec attach: %w", err)
 	}
@@ -46,7 +46,7 @@ func (c *Container) Exec(ctx context.Context, cmd []string, options ...exec.Proc
 
 	var exitCode int
 	for {
-		execResp, err := c.dockerClient.Client().ContainerExecInspect(ctx, response.ID)
+		execResp, err := c.dockerClient.ContainerExecInspect(ctx, response.ID)
 		if err != nil {
 			return 0, nil, fmt.Errorf("container exec inspect: %w", err)
 		}

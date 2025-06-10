@@ -54,7 +54,7 @@ func (o *TerminateOptions) Cleanup(cli *dockerclient.Client) error {
 	// Best effort to remove all volumes.
 	var errs []error
 	for _, volume := range o.volumes {
-		if errRemove := cli.Client().VolumeRemove(o.ctx, volume, true); errRemove != nil {
+		if errRemove := cli.VolumeRemove(o.ctx, volume, true); errRemove != nil {
 			errs = append(errs, fmt.Errorf("volume remove %q: %w", volume, errRemove))
 		}
 	}
@@ -139,7 +139,7 @@ func (c *Container) Terminate(ctx context.Context, opts ...TerminateOption) erro
 	// run the terminated hook?
 	errs := []error{
 		c.terminatingHook(ctx),
-		c.dockerClient.Client().ContainerRemove(ctx, c.ID, container.RemoveOptions{
+		c.dockerClient.ContainerRemove(ctx, c.ID, container.RemoveOptions{
 			RemoveVolumes: true,
 			Force:         true,
 		}),

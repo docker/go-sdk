@@ -349,11 +349,11 @@ func testCreateNetwork(t *testing.T, networkName string) network.CreateResponse 
 	dockerClient, err := dockerclient.New(context.Background())
 	require.NoError(t, err)
 
-	nw, err := dockerClient.Client().NetworkCreate(context.Background(), networkName, network.CreateOptions{})
+	nw, err := dockerClient.NetworkCreate(context.Background(), networkName, network.CreateOptions{})
 	require.NoError(t, err)
 
 	t.Cleanup(func() {
-		err := dockerClient.Client().NetworkRemove(context.Background(), nw.ID)
+		err := dockerClient.NetworkRemove(context.Background(), nw.ID)
 		require.NoError(t, err)
 		require.NoError(t, dockerClient.Close())
 	})

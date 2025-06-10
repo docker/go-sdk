@@ -15,7 +15,7 @@ var dockerEnvFile = "/.dockerenv"
 
 func (c *Client) DaemonHost(ctx context.Context) (string, error) {
 	// infer from Docker host
-	daemonURL, err := url.Parse(c.client.DaemonHost())
+	daemonURL, err := url.Parse(c.Client.DaemonHost())
 	if err != nil {
 		return "", err
 	}
@@ -43,7 +43,7 @@ func (c *Client) DaemonHost(ctx context.Context) (string, error) {
 }
 
 func (c *Client) getGatewayIP(ctx context.Context, defaultNetwork string) (string, error) {
-	nw, err := c.client.NetworkInspect(ctx, defaultNetwork, network.InspectOptions{})
+	nw, err := c.NetworkInspect(ctx, defaultNetwork, network.InspectOptions{})
 	if err != nil {
 		return "", err
 	}
