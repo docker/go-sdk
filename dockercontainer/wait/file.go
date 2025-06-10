@@ -30,8 +30,8 @@ func NewFileStrategy(file string) *FileStrategy {
 	}
 }
 
-// WithStartupTimeout can be used to change the default startup timeout
-func (ws *FileStrategy) WithStartupTimeout(startupTimeout time.Duration) *FileStrategy {
+// WithTimeout can be used to change the default startup timeout
+func (ws *FileStrategy) WithTimeout(startupTimeout time.Duration) *FileStrategy {
 	ws.timeout = &startupTimeout
 	return ws
 }

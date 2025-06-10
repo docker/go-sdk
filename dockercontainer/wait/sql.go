@@ -39,8 +39,8 @@ type waitForSQL struct {
 	query          string
 }
 
-// WithStartupTimeout can be used to change the default startup timeout
-func (w *waitForSQL) WithStartupTimeout(timeout time.Duration) *waitForSQL {
+// WithTimeout can be used to change the default startup timeout
+func (w *waitForSQL) WithTimeout(timeout time.Duration) *waitForSQL {
 	w.timeout = &timeout
 	return w
 }

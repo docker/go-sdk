@@ -70,7 +70,7 @@ func (st mockExecTarget) CopyFromContainer(_ context.Context, _ string) (io.Read
 func TestExecStrategyWaitUntilReady(t *testing.T) {
 	target := mockExecTarget{}
 	wg := wait.NewExecStrategy([]string{"true"}).
-		WithStartupTimeout(30 * time.Second)
+		WithTimeout(30 * time.Second)
 	err := wg.WaitUntilReady(context.Background(), target)
 	require.NoError(t, err)
 }
@@ -122,13 +122,13 @@ func TestExecStrategyWaitUntilReady_withExitCode(t *testing.T) {
 	}
 	wg := wait.NewExecStrategy([]string{"true"}).WithExitCode(10)
 	// Default is 60. Let's shorten that
-	wg.WithStartupTimeout(time.Second * 2)
+	wg.WithTimeout(time.Second * 2)
 	err := wg.WaitUntilReady(context.Background(), target)
 	require.NoError(t, err)
 
 	// Ensure we aren't spuriously returning on any code
 	wg = wait.NewExecStrategy([]string{"true"}).WithExitCode(0)
-	wg.WithStartupTimeout(time.Second * 2)
+	wg.WithTimeout(time.Second * 2)
 	err = wg.WaitUntilReady(context.Background(), target)
 	require.Errorf(t, err, "Expected strategy to timeout out")
 }

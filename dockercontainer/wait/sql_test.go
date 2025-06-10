@@ -97,7 +97,7 @@ func TestWaitForSQLSucceeds(t *testing.T) {
 	}
 
 	wg := ForSQL("3306", "mock", func(_ string, _ nat.Port) string { return "" }).
-		WithStartupTimeout(500 * time.Millisecond).
+		WithTimeout(500 * time.Millisecond).
 		WithPollInterval(100 * time.Millisecond)
 
 	err := wg.WaitUntilReady(context.Background(), target)
@@ -125,7 +125,7 @@ func TestWaitForSQLFailsWhileGettingPortDueToOOMKilledContainer(t *testing.T) {
 	}
 
 	wg := ForSQL("3306", "mock", func(_ string, _ nat.Port) string { return "" }).
-		WithStartupTimeout(500 * time.Millisecond).
+		WithTimeout(500 * time.Millisecond).
 		WithPollInterval(100 * time.Millisecond)
 
 	{
@@ -156,7 +156,7 @@ func TestWaitForSQLFailsWhileGettingPortDueToExitedContainer(t *testing.T) {
 	}
 
 	wg := ForSQL("3306", "mock", func(_ string, _ nat.Port) string { return "" }).
-		WithStartupTimeout(500 * time.Millisecond).
+		WithTimeout(500 * time.Millisecond).
 		WithPollInterval(100 * time.Millisecond)
 
 	{
@@ -186,7 +186,7 @@ func TestWaitForSQLFailsWhileGettingPortDueToUnexpectedContainerStatus(t *testin
 	}
 
 	wg := ForSQL("3306", "mock", func(_ string, _ nat.Port) string { return "" }).
-		WithStartupTimeout(500 * time.Millisecond).
+		WithTimeout(500 * time.Millisecond).
 		WithPollInterval(100 * time.Millisecond)
 
 	{
@@ -211,7 +211,7 @@ func TestWaitForSQLFailsWhileQueryExecutingDueToOOMKilledContainer(t *testing.T)
 	}
 
 	wg := ForSQL("3306", "mock", func(_ string, _ nat.Port) string { return "" }).
-		WithStartupTimeout(500 * time.Millisecond).
+		WithTimeout(500 * time.Millisecond).
 		WithPollInterval(100 * time.Millisecond)
 
 	{
@@ -237,7 +237,7 @@ func TestWaitForSQLFailsWhileQueryExecutingDueToExitedContainer(t *testing.T) {
 	}
 
 	wg := ForSQL("3306", "mock", func(_ string, _ nat.Port) string { return "" }).
-		WithStartupTimeout(500 * time.Millisecond).
+		WithTimeout(500 * time.Millisecond).
 		WithPollInterval(100 * time.Millisecond)
 
 	{
@@ -262,7 +262,7 @@ func TestWaitForSQLFailsWhileQueryExecutingDueToUnexpectedContainerStatus(t *tes
 	}
 
 	wg := ForSQL("3306", "mock", func(_ string, _ nat.Port) string { return "" }).
-		WithStartupTimeout(500 * time.Millisecond).
+		WithTimeout(500 * time.Millisecond).
 		WithPollInterval(100 * time.Millisecond)
 
 	{

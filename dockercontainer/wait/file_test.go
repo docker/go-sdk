@@ -33,7 +33,7 @@ func newRunningTarget() *mockStrategyTarget {
 // testForFile creates a new FileStrategy for testing.
 func testForFile() *wait.FileStrategy {
 	return wait.ForFile(testFilename).
-		WithStartupTimeout(time.Millisecond * 50).
+		WithTimeout(time.Millisecond * 50).
 		WithPollInterval(time.Millisecond)
 }
 

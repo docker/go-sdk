@@ -50,7 +50,7 @@ func TestHttpStrategyFailsWhileGettingPortDueToOOMKilledContainer(t *testing.T) 
 	}
 
 	wg := wait.ForHTTP("/").
-		WithStartupTimeout(500 * time.Millisecond).
+		WithTimeout(500 * time.Millisecond).
 		WithPollInterval(100 * time.Millisecond)
 
 	err := wg.WaitUntilReady(context.Background(), target)
@@ -96,7 +96,7 @@ func TestHttpStrategyFailsWhileGettingPortDueToExitedContainer(t *testing.T) {
 	}
 
 	wg := wait.ForHTTP("/").
-		WithStartupTimeout(500 * time.Millisecond).
+		WithTimeout(500 * time.Millisecond).
 		WithPollInterval(100 * time.Millisecond)
 
 	err := wg.WaitUntilReady(context.Background(), target)
@@ -141,7 +141,7 @@ func TestHttpStrategyFailsWhileGettingPortDueToUnexpectedContainerStatus(t *test
 	}
 
 	wg := wait.ForHTTP("/").
-		WithStartupTimeout(500 * time.Millisecond).
+		WithTimeout(500 * time.Millisecond).
 		WithPollInterval(100 * time.Millisecond)
 
 	err := wg.WaitUntilReady(context.Background(), target)
@@ -181,7 +181,7 @@ func TestHTTPStrategyFailsWhileRequestSendingDueToOOMKilledContainer(t *testing.
 	}
 
 	wg := wait.ForHTTP("/").
-		WithStartupTimeout(500 * time.Millisecond).
+		WithTimeout(500 * time.Millisecond).
 		WithPollInterval(100 * time.Millisecond)
 
 	err := wg.WaitUntilReady(context.Background(), target)
@@ -222,7 +222,7 @@ func TestHttpStrategyFailsWhileRequestSendingDueToExitedContainer(t *testing.T) 
 	}
 
 	wg := wait.ForHTTP("/").
-		WithStartupTimeout(500 * time.Millisecond).
+		WithTimeout(500 * time.Millisecond).
 		WithPollInterval(100 * time.Millisecond)
 
 	err := wg.WaitUntilReady(context.Background(), target)
@@ -262,7 +262,7 @@ func TestHttpStrategyFailsWhileRequestSendingDueToUnexpectedContainerStatus(t *t
 	}
 
 	wg := wait.ForHTTP("/").
-		WithStartupTimeout(500 * time.Millisecond).
+		WithTimeout(500 * time.Millisecond).
 		WithPollInterval(100 * time.Millisecond)
 
 	err := wg.WaitUntilReady(context.Background(), target)
@@ -301,7 +301,7 @@ func TestHttpStrategyFailsWhileGettingPortDueToNoExposedPorts(t *testing.T) {
 	}
 
 	wg := wait.ForHTTP("/").
-		WithStartupTimeout(500 * time.Millisecond).
+		WithTimeout(500 * time.Millisecond).
 		WithPollInterval(100 * time.Millisecond)
 
 	err := wg.WaitUntilReady(context.Background(), target)
@@ -347,7 +347,7 @@ func TestHttpStrategyFailsWhileGettingPortDueToOnlyUDPPorts(t *testing.T) {
 	}
 
 	wg := wait.ForHTTP("/").
-		WithStartupTimeout(500 * time.Millisecond).
+		WithTimeout(500 * time.Millisecond).
 		WithPollInterval(100 * time.Millisecond)
 
 	err := wg.WaitUntilReady(context.Background(), target)
@@ -388,7 +388,7 @@ func TestHttpStrategyFailsWhileGettingPortDueToExposedPortNoBindings(t *testing.
 	}
 
 	wg := wait.ForHTTP("/").
-		WithStartupTimeout(500 * time.Millisecond).
+		WithTimeout(500 * time.Millisecond).
 		WithPollInterval(100 * time.Millisecond)
 
 	err := wg.WaitUntilReady(context.Background(), target)

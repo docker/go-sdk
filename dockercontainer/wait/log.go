@@ -87,8 +87,8 @@ func (ws *LogStrategy) Submatch(callback func(pattern string, matches [][][]byte
 	return ws
 }
 
-// WithStartupTimeout can be used to change the default startup timeout
-func (ws *LogStrategy) WithStartupTimeout(timeout time.Duration) *LogStrategy {
+// WithTimeout can be used to change the default startup timeout
+func (ws *LogStrategy) WithTimeout(timeout time.Duration) *LogStrategy {
 	ws.timeout = &timeout
 	return ws
 }

@@ -98,8 +98,8 @@ func (hp *HostPortStrategy) SkipExternalCheck() *HostPortStrategy {
 	return hp
 }
 
-// WithStartupTimeout can be used to change the default startup timeout
-func (hp *HostPortStrategy) WithStartupTimeout(startupTimeout time.Duration) *HostPortStrategy {
+// WithTimeout can be used to change the default startup timeout
+func (hp *HostPortStrategy) WithTimeout(startupTimeout time.Duration) *HostPortStrategy {
 	hp.timeout = &startupTimeout
 	return hp
 }

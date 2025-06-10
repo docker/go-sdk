@@ -32,7 +32,7 @@ func TestWaitForLog(t *testing.T) {
 		target := wait.NopStrategyTarget{
 			ReaderCloser: readCloser("docker"),
 		}
-		wg := wait.NewLogStrategy("docker").WithStartupTimeout(100 * time.Millisecond)
+		wg := wait.NewLogStrategy("docker").WithTimeout(100 * time.Millisecond)
 		err := wg.WaitUntilReady(context.Background(), &target)
 		require.NoError(t, err)
 	})
@@ -43,7 +43,7 @@ func TestWaitForLog(t *testing.T) {
 		}
 
 		// get all words that start with "ip", end with "m" and has a whitespace before the "ip"
-		wg := wait.NewLogStrategy(`\sip[\w]+m`).WithStartupTimeout(100 * time.Millisecond).AsRegexp()
+		wg := wait.NewLogStrategy(`\sip[\w]+m`).WithTimeout(100 * time.Millisecond).AsRegexp()
 		err := wg.WaitUntilReady(context.Background(), &target)
 		require.NoError(t, err)
 	})
@@ -53,7 +53,7 @@ func TestWaitForLog(t *testing.T) {
 			ReaderCloser: readCloser("three matches: ip1m, ip2m, ip3m"),
 		}
 
-		wg := wait.NewLogStrategy(`ip(\d)m`).WithStartupTimeout(100 * time.Millisecond).Submatch(func(pattern string, submatches [][][]byte) error {
+		wg := wait.NewLogStrategy(`ip(\d)m`).WithTimeout(100 * time.Millisecond).Submatch(func(pattern string, submatches [][][]byte) error {
 			if len(submatches) != 3 {
 				return wait.NewPermanentError(fmt.Errorf("%q matched %d times, expected %d", pattern, len(submatches), 3))
 			}
@@ -68,7 +68,7 @@ func TestWaitForLog(t *testing.T) {
 			ReaderCloser: readCloser("single matches: ip1m"),
 		}
 
-		wg := wait.NewLogStrategy(`ip(\d)m`).WithStartupTimeout(100 * time.Millisecond).Submatch(func(pattern string, submatches [][][]byte) error {
+		wg := wait.NewLogStrategy(`ip(\d)m`).WithTimeout(100 * time.Millisecond).Submatch(func(pattern string, submatches [][][]byte) error {
 			if len(submatches) != 3 {
 				return wait.NewPermanentError(fmt.Errorf("%q matched %d times, expected %d", pattern, len(submatches), 3))
 			}
@@ -88,7 +88,7 @@ func TestWaitForLog(t *testing.T) {
 		expect.Logs(anyContext).Return(readCloser("ip1m, ip2m, ip3m"), nil).Once() // Three matches.
 		expect.Logs(anyContext).Return(readCloser("ip1m, ip2m, ip3m, ip4m"), nil)  // Four matches.
 
-		wg := wait.NewLogStrategy(`ip(\d)m`).WithStartupTimeout(400 * time.Second).Submatch(func(pattern string, submatches [][][]byte) error {
+		wg := wait.NewLogStrategy(`ip(\d)m`).WithTimeout(400 * time.Second).Submatch(func(pattern string, submatches [][][]byte) error {
 			switch len(submatches) {
 			case 0, 2:
 				// Too few matches.
@@ -112,7 +112,7 @@ func TestWaitWithExactNumberOfOccurrences(t *testing.T) {
 			ReaderCloser: readCloser("kubernetes\r\ndocker\n\rdocker"),
 		}
 		wg := wait.NewLogStrategy("docker").
-			WithStartupTimeout(100 * time.Millisecond).
+			WithTimeout(100 * time.Millisecond).
 			WithOccurrence(2)
 		err := wg.WaitUntilReady(context.Background(), &target)
 		require.NoError(t, err)
@@ -126,7 +126,7 @@ func TestWaitWithExactNumberOfOccurrences(t *testing.T) {
 		// get texts from "ip" to the next "m".
 		// there are three occurrences of this pattern in the string:
 		// one "ipsum mauris" and two "ipsum dolor sit am"
-		wg := wait.NewLogStrategy(`ip(.*)m`).WithStartupTimeout(100 * time.Millisecond).AsRegexp().WithOccurrence(3)
+		wg := wait.NewLogStrategy(`ip(.*)m`).WithTimeout(100 * time.Millisecond).AsRegexp().WithOccurrence(3)
 		err := wg.WaitUntilReady(context.Background(), &target)
 		require.NoError(t, err)
 	})
@@ -138,7 +138,7 @@ func TestWaitWithExactNumberOfOccurrencesButItWillNeverHappen(t *testing.T) {
 			ReaderCloser: readCloser("kubernetes\r\ndocker"),
 		}
 		wg := wait.NewLogStrategy("containerd").
-			WithStartupTimeout(logTimeout).
+			WithTimeout(logTimeout).
 			WithOccurrence(2)
 		err := wg.WaitUntilReady(context.Background(), &target)
 		require.Error(t, err)
@@ -151,7 +151,7 @@ func TestWaitWithExactNumberOfOccurrencesButItWillNeverHappen(t *testing.T) {
 
 		// get texts from "ip" to the next "m".
 		// there are only three occurrences matching
-		wg := wait.NewLogStrategy(`do(.*)ck.+`).WithStartupTimeout(100 * time.Millisecond).AsRegexp().WithOccurrence(4)
+		wg := wait.NewLogStrategy(`do(.*)ck.+`).WithTimeout(100 * time.Millisecond).AsRegexp().WithOccurrence(4)
 		err := wg.WaitUntilReady(context.Background(), &target)
 		require.Error(t, err)
 	})
@@ -163,7 +163,7 @@ func TestWaitShouldFailWithExactNumberOfOccurrences(t *testing.T) {
 			ReaderCloser: readCloser("kubernetes\r\ndocker"),
 		}
 		wg := wait.NewLogStrategy("docker").
-			WithStartupTimeout(logTimeout).
+			WithTimeout(logTimeout).
 			WithOccurrence(2)
 		err := wg.WaitUntilReady(context.Background(), &target)
 		require.Error(t, err)
@@ -176,7 +176,7 @@ func TestWaitShouldFailWithExactNumberOfOccurrences(t *testing.T) {
 
 		// get "Maecenas".
 		// there are only one occurrence matching
-		wg := wait.NewLogStrategy(`^Mae[\w]?enas\s`).WithStartupTimeout(100 * time.Millisecond).AsRegexp().WithOccurrence(2)
+		wg := wait.NewLogStrategy(`^Mae[\w]?enas\s`).WithTimeout(100 * time.Millisecond).AsRegexp().WithOccurrence(2)
 		err := wg.WaitUntilReady(context.Background(), &target)
 		require.Error(t, err)
 	})
@@ -195,7 +195,7 @@ func TestWaitForLogFailsDueToOOMKilledContainer(t *testing.T) {
 	}
 
 	t.Run("string", func(t *testing.T) {
-		wg := wait.ForLog("docker").WithStartupTimeout(logTimeout)
+		wg := wait.ForLog("docker").WithTimeout(logTimeout)
 
 		err := wg.WaitUntilReady(context.Background(), target)
 		expected := "container crashed with out-of-memory (OOMKilled)"
@@ -203,7 +203,7 @@ func TestWaitForLogFailsDueToOOMKilledContainer(t *testing.T) {
 	})
 
 	t.Run("regexp", func(t *testing.T) {
-		wg := wait.ForLog("docker").WithStartupTimeout(logTimeout).AsRegexp()
+		wg := wait.ForLog("docker").WithTimeout(logTimeout).AsRegexp()
 
 		err := wg.WaitUntilReady(context.Background(), target)
 		expected := "container crashed with out-of-memory (OOMKilled)"
@@ -225,7 +225,7 @@ func TestWaitForLogFailsDueToExitedContainer(t *testing.T) {
 	}
 
 	t.Run("string", func(t *testing.T) {
-		wg := wait.ForLog("docker").WithStartupTimeout(logTimeout)
+		wg := wait.ForLog("docker").WithTimeout(logTimeout)
 
 		err := wg.WaitUntilReady(context.Background(), target)
 		expected := "container exited with code 1"
@@ -233,7 +233,7 @@ func TestWaitForLogFailsDueToExitedContainer(t *testing.T) {
 	})
 
 	t.Run("regexp", func(t *testing.T) {
-		wg := wait.ForLog("docker").WithStartupTimeout(logTimeout).AsRegexp()
+		wg := wait.ForLog("docker").WithTimeout(logTimeout).AsRegexp()
 
 		err := wg.WaitUntilReady(context.Background(), target)
 		expected := "container exited with code 1"
@@ -254,7 +254,7 @@ func TestWaitForLogFailsDueToUnexpectedContainerStatus(t *testing.T) {
 	}
 
 	t.Run("string", func(t *testing.T) {
-		wg := wait.ForLog("docker").WithStartupTimeout(logTimeout)
+		wg := wait.ForLog("docker").WithTimeout(logTimeout)
 
 		err := wg.WaitUntilReady(context.Background(), target)
 		expected := "unexpected container status \"dead\""
@@ -262,7 +262,7 @@ func TestWaitForLogFailsDueToUnexpectedContainerStatus(t *testing.T) {
 	})
 
 	t.Run("regexp", func(t *testing.T) {
-		wg := wait.ForLog("docker").WithStartupTimeout(logTimeout).AsRegexp()
+		wg := wait.ForLog("docker").WithTimeout(logTimeout).AsRegexp()
 
 		err := wg.WaitUntilReady(context.Background(), target)
 		expected := "unexpected container status \"dead\""

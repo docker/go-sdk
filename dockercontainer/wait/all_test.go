@@ -78,7 +78,7 @@ func TestMultiStrategy_WaitUntilReady(t *testing.T) {
 						}
 						return nil
 					},
-				).WithStartupTimeout(2*time.Second),
+				).WithTimeout(2*time.Second),
 				ForLog("docker"),
 			).WithStartupTimeoutDefault(1 * time.Second),
 			args: args{

@@ -32,7 +32,7 @@ func (ws *NopStrategy) Timeout() *time.Duration {
 	return ws.timeout
 }
 
-func (ws *NopStrategy) WithStartupTimeout(timeout time.Duration) *NopStrategy {
+func (ws *NopStrategy) WithTimeout(timeout time.Duration) *NopStrategy {
 	ws.timeout = &timeout
 	return ws
 }

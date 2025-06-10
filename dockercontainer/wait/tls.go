@@ -77,8 +77,8 @@ func (ws *TLSStrategy) WithServerName(serverName string) *TLSStrategy {
 	return ws
 }
 
-// WithStartupTimeout can be used to change the default startup timeout.
-func (ws *TLSStrategy) WithStartupTimeout(startupTimeout time.Duration) *TLSStrategy {
+// WithTimeout can be used to change the default startup timeout.
+func (ws *TLSStrategy) WithTimeout(startupTimeout time.Duration) *TLSStrategy {
 	ws.timeout = &startupTimeout
 	return ws
 }

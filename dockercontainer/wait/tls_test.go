@@ -39,7 +39,7 @@ func testForTLSCert() *wait.TLSStrategy {
 	return wait.ForTLSCert(clientCertFilename, clientKeyFilename).
 		WithRootCAs(caFilename).
 		WithServerName(serverName).
-		WithStartupTimeout(time.Millisecond * 50).
+		WithTimeout(time.Millisecond * 50).
 		WithPollInterval(time.Millisecond)
 }
 

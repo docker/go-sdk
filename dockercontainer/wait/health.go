@@ -33,8 +33,8 @@ func NewHealthStrategy() *HealthStrategy {
 // since go has neither covariance nor generics, the return type must be the type of the concrete implementation
 // this is true for all properties, even the "shared" ones like startupTimeout
 
-// WithStartupTimeout can be used to change the default startup timeout
-func (ws *HealthStrategy) WithStartupTimeout(startupTimeout time.Duration) *HealthStrategy {
+// WithTimeout can be used to change the default startup timeout
+func (ws *HealthStrategy) WithTimeout(startupTimeout time.Duration) *HealthStrategy {
 	ws.timeout = &startupTimeout
 	return ws
 }

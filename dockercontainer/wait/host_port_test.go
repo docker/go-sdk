@@ -54,7 +54,7 @@ func TestWaitForListeningPortSucceeds(t *testing.T) {
 	}
 
 	wg := ForListeningPort("80").
-		WithStartupTimeout(5 * time.Second).
+		WithTimeout(5 * time.Second).
 		WithPollInterval(100 * time.Millisecond)
 
 	err = wg.WaitUntilReady(context.Background(), target)
@@ -99,7 +99,7 @@ func TestWaitForListeningPortInternallySucceeds(t *testing.T) {
 
 	wg := ForListeningPort(localPort).
 		SkipExternalCheck().
-		WithStartupTimeout(5 * time.Second).
+		WithTimeout(5 * time.Second).
 		WithPollInterval(100 * time.Millisecond)
 
 	err = wg.WaitUntilReady(context.Background(), target)
@@ -136,7 +136,7 @@ func TestWaitForMappedPortSucceeds(t *testing.T) {
 	}
 
 	wg := ForMappedPort(localPort).
-		WithStartupTimeout(5 * time.Second).
+		WithTimeout(5 * time.Second).
 		WithPollInterval(100 * time.Millisecond)
 
 	err = wg.WaitUntilReady(context.Background(), target)
@@ -207,7 +207,7 @@ func TestWaitForExposedPortSkipChecksSucceeds(t *testing.T) {
 	}
 
 	wg := ForExposedPort().
-		WithStartupTimeout(5 * time.Second).
+		WithTimeout(5 * time.Second).
 		WithPollInterval(100 * time.Millisecond)
 
 	err = wg.WaitUntilReady(context.Background(), target)
@@ -235,7 +235,7 @@ func TestHostPortStrategyFailsWhileGettingPortDueToOOMKilledContainer(t *testing
 	}
 
 	wg := NewHostPortStrategy("80").
-		WithStartupTimeout(5 * time.Second).
+		WithTimeout(5 * time.Second).
 		WithPollInterval(100 * time.Millisecond)
 
 	{
@@ -266,7 +266,7 @@ func TestHostPortStrategyFailsWhileGettingPortDueToExitedContainer(t *testing.T)
 	}
 
 	wg := NewHostPortStrategy("80").
-		WithStartupTimeout(5 * time.Second).
+		WithTimeout(5 * time.Second).
 		WithPollInterval(100 * time.Millisecond)
 
 	{
@@ -296,7 +296,7 @@ func TestHostPortStrategyFailsWhileGettingPortDueToUnexpectedContainerStatus(t *
 	}
 
 	wg := NewHostPortStrategy("80").
-		WithStartupTimeout(5 * time.Second).
+		WithTimeout(5 * time.Second).
 		WithPollInterval(100 * time.Millisecond)
 
 	{
@@ -321,7 +321,7 @@ func TestHostPortStrategyFailsWhileExternalCheckingDueToOOMKilledContainer(t *te
 	}
 
 	wg := NewHostPortStrategy("80").
-		WithStartupTimeout(5 * time.Second).
+		WithTimeout(5 * time.Second).
 		WithPollInterval(100 * time.Millisecond)
 
 	{
@@ -347,7 +347,7 @@ func TestHostPortStrategyFailsWhileExternalCheckingDueToExitedContainer(t *testi
 	}
 
 	wg := NewHostPortStrategy("80").
-		WithStartupTimeout(5 * time.Second).
+		WithTimeout(5 * time.Second).
 		WithPollInterval(100 * time.Millisecond)
 
 	{
@@ -372,7 +372,7 @@ func TestHostPortStrategyFailsWhileExternalCheckingDueToUnexpectedContainerStatu
 	}
 
 	wg := NewHostPortStrategy("80").
-		WithStartupTimeout(5 * time.Second).
+		WithTimeout(5 * time.Second).
 		WithPollInterval(100 * time.Millisecond)
 
 	{
@@ -412,7 +412,7 @@ func TestHostPortStrategyFailsWhileInternalCheckingDueToOOMKilledContainer(t *te
 	}
 
 	wg := NewHostPortStrategy("80").
-		WithStartupTimeout(5 * time.Second).
+		WithTimeout(5 * time.Second).
 		WithPollInterval(100 * time.Millisecond)
 
 	{
@@ -453,7 +453,7 @@ func TestHostPortStrategyFailsWhileInternalCheckingDueToExitedContainer(t *testi
 	}
 
 	wg := NewHostPortStrategy("80").
-		WithStartupTimeout(5 * time.Second).
+		WithTimeout(5 * time.Second).
 		WithPollInterval(100 * time.Millisecond)
 
 	{
@@ -493,7 +493,7 @@ func TestHostPortStrategyFailsWhileInternalCheckingDueToUnexpectedContainerStatu
 	}
 
 	wg := NewHostPortStrategy("80").
-		WithStartupTimeout(5 * time.Second).
+		WithTimeout(5 * time.Second).
 		WithPollInterval(100 * time.Millisecond)
 
 	{
@@ -609,7 +609,7 @@ func TestHostPortStrategySucceedsGivenShellIsNotFound(t *testing.T) {
 	}
 
 	wg := NewHostPortStrategy("80").
-		WithStartupTimeout(5 * time.Second).
+		WithTimeout(5 * time.Second).
 		WithPollInterval(100 * time.Millisecond)
 
 	oldLogger := tclog.Default()
