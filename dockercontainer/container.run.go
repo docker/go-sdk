@@ -2,12 +2,10 @@ package dockercontainer
 
 import (
 	"context"
-	"errors"
 	"fmt"
 
 	"github.com/containerd/errdefs"
 	"github.com/containerd/platforms"
-	specs "github.com/opencontainers/image-spec/specs-go/v1"
 
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/image"
@@ -16,10 +14,13 @@ import (
 	"github.com/docker/go-sdk/dockerimage"
 )
 
-// Create fulfils a request for a container without starting it
-func Create(ctx context.Context, opts ...ContainerCustomizer) (*Container, error) {
+// Run is a convenience function that creates a new container and starts it.
+// By default, the container is started after creation, unless requested otherwise
+// using the [WithNoStart] option.
+func Run(ctx context.Context, opts ...ContainerCustomizer) (*Container, error) {
 	def := Definition{
-		Env: make(map[string]string),
+		Env:     make(map[string]string),
+		Started: true,
 	}
 
 	for _, opt := range opts {
@@ -28,8 +29,8 @@ func Create(ctx context.Context, opts ...ContainerCustomizer) (*Container, error
 		}
 	}
 
-	if def.image == "" {
-		return nil, errors.New("image is required")
+	if err := def.validate(); err != nil {
+		return nil, fmt.Errorf("validate: %w", err)
 	}
 
 	if def.DockerClient == nil {
@@ -66,7 +67,7 @@ func Create(ctx context.Context, opts ...ContainerCustomizer) (*Container, error
 		}
 	}
 
-	var platform *specs.Platform
+	var platform *platforms.Platform
 
 	if def.ImagePlatform != "" {
 		p, err := platforms.Parse(def.ImagePlatform)
@@ -176,6 +177,12 @@ func Create(ctx context.Context, opts ...ContainerCustomizer) (*Container, error
 	if err = ctr.createdHook(ctx); err != nil {
 		// Return the container to allow caller to clean up.
 		return ctr, fmt.Errorf("created hook: %w", err)
+	}
+
+	if def.Started {
+		if err := ctr.Start(ctx); err != nil {
+			return nil, fmt.Errorf("start container: %w", err)
+		}
 	}
 
 	return ctr, nil

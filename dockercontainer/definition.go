@@ -1,6 +1,8 @@
 package dockercontainer
 
 import (
+	"errors"
+
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/network"
 	"github.com/docker/go-sdk/dockerclient"
@@ -72,4 +74,13 @@ type Definition struct {
 
 	// Started whether to auto-start the container.
 	Started bool
+}
+
+// validate validates the definition.
+func (d *Definition) validate() error {
+	if d.image == "" {
+		return errors.New("image is required")
+	}
+
+	return nil
 }

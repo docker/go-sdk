@@ -59,7 +59,7 @@ if ok {
 ### dockercontainer
 
 ```go
-ctr, err := dockercontainer.Create(context.Background(),
+ctr, err := dockercontainer.Run(context.Background(),
     dockercontainer.WithImage("nginx:alpine"),
     dockercontainer.WithImagePlatform("linux/amd64"),
     dockercontainer.WithAlwaysPull(),
@@ -67,7 +67,7 @@ ctr, err := dockercontainer.Create(context.Background(),
     dockercontainer.WithWaitStrategy(wait.ForListeningPort("80/tcp")),
 )
 if err != nil {
-    log.Fatalf("failed to create container: %v", err)
+    log.Fatalf("failed to run container: %v", err)
 }
 
 dockercontainer.TerminateContainer(ctr)
