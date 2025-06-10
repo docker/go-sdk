@@ -88,7 +88,7 @@ func (c *Container) CopyFromContainer(ctx context.Context, containerFilePath str
 func (c *Container) CopyToContainer(ctx context.Context, fileContent []byte, containerFilePath string, fileMode int64) error {
 	contentFn := func(tw io.Writer) error {
 		_, err := tw.Write(fileContent)
-		return fmt.Errorf("write file content: %w", err)
+		return err
 	}
 
 	buffer, err := tarFile(containerFilePath, contentFn, int64(len(fileContent)), fileMode)
@@ -221,10 +221,10 @@ func tarFile(basePath string, fileContent func(tw io.Writer) error, fileContentS
 		Size: fileContentSize,
 	}
 	if err := tw.WriteHeader(hdr); err != nil {
-		return buffer, err
+		return buffer, fmt.Errorf("write header: %w", err)
 	}
 	if err := fileContent(tw); err != nil {
-		return buffer, err
+		return buffer, fmt.Errorf("write file content: %w", err)
 	}
 
 	// produce tar

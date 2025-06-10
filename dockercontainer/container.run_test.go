@@ -3,6 +3,7 @@ package dockercontainer_test
 import (
 	"bytes"
 	"context"
+	"io"
 	"log/slog"
 	"testing"
 	"time"
@@ -11,6 +12,7 @@ import (
 
 	"github.com/docker/go-sdk/dockerclient"
 	"github.com/docker/go-sdk/dockercontainer"
+	"github.com/docker/go-sdk/dockercontainer/exec"
 )
 
 func TestRunContainer(t *testing.T) {
@@ -63,6 +65,50 @@ func TestRunContainer(t *testing.T) {
 		dockercontainer.CleanupContainer(t, ctr)
 		require.NoError(t, err)
 		require.NotNil(t, ctr)
+	})
+
+	t.Run("with-files", func(t *testing.T) {
+		t.Run("success", func(t *testing.T) {
+			helloSh := []byte(`#!/bin/sh
+echo "hello world" > /tmp/hello.txt
+echo "done"
+`)
+
+			ctr, err := dockercontainer.Run(context.Background(),
+				dockercontainer.WithImage(nginxAlpineImage),
+				dockercontainer.WithFiles(dockercontainer.File{
+					ContainerPath: "/tmp/hello.sh",
+					Reader:        bytes.NewReader(helloSh),
+					Mode:          0o755,
+				}),
+			)
+			dockercontainer.CleanupContainer(t, ctr)
+			require.NoError(t, err)
+			require.NotNil(t, ctr)
+
+			code, r, err := ctr.Exec(context.Background(), []string{"/tmp/hello.sh"}, exec.Multiplexed())
+			require.NoError(t, err)
+			require.Equal(t, 0, code)
+
+			buf := &bytes.Buffer{}
+			_, err = io.Copy(buf, r)
+			require.NoError(t, err)
+
+			require.Equal(t, "done\n", buf.String())
+		})
+
+		t.Run("error", func(t *testing.T) {
+			ctr, err := dockercontainer.Run(context.Background(),
+				dockercontainer.WithImage(nginxAlpineImage),
+				dockercontainer.WithFiles(dockercontainer.File{
+					ContainerPath: "/tmp/hello.sh",
+					Reader:        nil,
+					Mode:          0o755,
+				}),
+			)
+			dockercontainer.CleanupContainer(t, ctr)
+			require.Error(t, err)
+		})
 	})
 
 	t.Run("no-dockerclient-uses-default", func(t *testing.T) {
@@ -129,6 +175,8 @@ func TestRunContainer_addSDKLabels(t *testing.T) {
 
 func TestRunContainerWithLifecycleHooks(t *testing.T) {
 	testRun := func(t *testing.T, start bool) {
+		t.Helper()
+
 		bufLogger := &bytes.Buffer{}
 		logger := slog.New(slog.NewTextHandler(bufLogger, nil))
 
