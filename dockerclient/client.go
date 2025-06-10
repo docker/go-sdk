@@ -23,6 +23,31 @@ const (
 	tlsKeyFile    = "key.pem"
 )
 
+var (
+	defaultLogger = slog.New(slog.NewTextHandler(io.Discard, nil))
+
+	defaultUserAgent = "docker-go-sdk/" + Version()
+
+	defaultOpts = []client.Opt{client.FromEnv, client.WithAPIVersionNegotiation()}
+
+	defaultHealthCheck = func(ctx context.Context) func(c *Client) error {
+		return func(c *Client) error {
+			var pingErr error
+			for i := range 3 {
+				if _, pingErr = c.Ping(ctx); pingErr == nil {
+					return nil
+				}
+				select {
+				case <-ctx.Done():
+					return ctx.Err()
+				case <-time.After(time.Millisecond * time.Duration(i+1) * 100):
+				}
+			}
+			return fmt.Errorf("docker daemon not ready: %w", pingErr)
+		}
+	}
+)
+
 // New returns a new client for interacting with containers.
 // The client is configured using the provided options, that must be compatible with
 // docker's [client.Opt] type.
@@ -42,7 +67,9 @@ const (
 //
 // The client is safe for concurrent use by multiple goroutines.
 func New(ctx context.Context, options ...ClientOption) (*Client, error) {
-	client := &Client{}
+	client := &Client{
+		healthCheck: defaultHealthCheck,
+	}
 	for _, opt := range options {
 		if err := opt.Apply(client); err != nil {
 			return nil, fmt.Errorf("apply option: %w", err)
@@ -53,12 +80,7 @@ func New(ctx context.Context, options ...ClientOption) (*Client, error) {
 		return nil, fmt.Errorf("load config: %w", err)
 	}
 
-	healthCheck := client.healthCheck
-	if healthCheck == nil {
-		// use the default health check if not set
-		healthCheck = defaultHealthCheck
-	}
-	if err := healthCheck(ctx)(client); err != nil {
+	if err := client.healthCheck(ctx)(client); err != nil {
 		return nil, fmt.Errorf("health check: %w", err)
 	}
 
@@ -80,7 +102,7 @@ func (c *Client) initOnce(_ context.Context) error {
 	defer c.mtx.Unlock()
 
 	if c.log == nil {
-		c.log = slog.New(slog.NewTextHandler(io.Discard, nil))
+		c.log = defaultLogger
 	}
 
 	dockerHost, err := dockercontext.CurrentDockerHost()
@@ -92,7 +114,8 @@ func (c *Client) initOnce(_ context.Context) error {
 		return c.err
 	}
 
-	opts := []client.Opt{client.FromEnv, client.WithAPIVersionNegotiation()}
+	opts := make([]client.Opt, len(defaultOpts), len(defaultOpts)+len(c.dockerOpts))
+	copy(opts, defaultOpts)
 
 	// Add all collected Docker options
 	opts = append(opts, c.dockerOpts...)
@@ -117,7 +140,7 @@ func (c *Client) initOnce(_ context.Context) error {
 	}
 
 	// Append the SDK headers last.
-	httpHeaders[headerUserAgent] = "docker-go-sdk/" + Version()
+	httpHeaders[headerUserAgent] = defaultUserAgent
 
 	opts = append(opts, client.WithHTTPHeaders(httpHeaders))
 
@@ -155,29 +178,4 @@ func (c *Client) Logger() *slog.Logger {
 	c.mtx.RLock()
 	defer c.mtx.RUnlock()
 	return c.log
-}
-
-// defaultHealthCheck is the default health check for the client.
-// It retries the ping to the docker daemon until it is ready.
-func defaultHealthCheck(ctx context.Context) func(c *Client) error {
-	return func(c *Client) error {
-		// Add a retry mechanism to ensure Docker daemon is ready
-		var pingErr error
-		for i := range 3 { // Try up to 3 times
-			_, pingErr = c.Ping(ctx)
-			if pingErr == nil {
-				break
-			}
-			select {
-			case <-ctx.Done():
-				return ctx.Err()
-			case <-time.After(time.Millisecond * time.Duration(i+1) * 100): // Exponential backoff
-				continue
-			}
-		}
-		if pingErr != nil {
-			return fmt.Errorf("docker daemon not ready: %w", pingErr)
-		}
-		return nil
-	}
 }
