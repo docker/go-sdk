@@ -102,7 +102,7 @@ jobs:
         id: cache
         uses: actions/cache/restore@5a3ec84eff668545956fd18022155c47e93e2684 # v4
         with:
-          path: ./cache
+          path: ./${{ inputs.project-directory }}/cache
           key: ${{ steps.get-main-branch-sha.outputs.sha }}-${{ runner.os }}-${{ steps.system-info.outputs.cpu-model }}-${{ inputs.project-directory }}-benchmark
 
       # This will only run if we have Benchmark Results from main branch
