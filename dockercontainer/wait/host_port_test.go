@@ -50,9 +50,7 @@ func TestWaitForListeningPortSucceeds(t *testing.T) {
 			}
 			return 0, nil, nil
 		},
-		LoggerImpl: func() *slog.Logger {
-			return slog.Default()
-		},
+		LoggerImpl: slog.Default,
 	}
 
 	wg := ForListeningPort("80").
@@ -97,9 +95,7 @@ func TestWaitForListeningPortInternallySucceeds(t *testing.T) {
 			}
 			return 0, nil, nil
 		},
-		LoggerImpl: func() *slog.Logger {
-			return slog.Default()
-		},
+		LoggerImpl: slog.Default,
 	}
 
 	wg := ForListeningPort(localPort).
@@ -138,9 +134,7 @@ func TestWaitForMappedPortSucceeds(t *testing.T) {
 				Running: true,
 			}, nil
 		},
-		LoggerImpl: func() *slog.Logger {
-			return slog.Default()
-		},
+		LoggerImpl: slog.Default,
 	}
 
 	wg := ForMappedPort(localPort).
@@ -212,9 +206,7 @@ func TestWaitForExposedPortSkipChecksSucceeds(t *testing.T) {
 			}
 			return 0, nil, nil
 		},
-		LoggerImpl: func() *slog.Logger {
-			return slog.Default()
-		},
+		LoggerImpl: slog.Default,
 	}
 
 	wg := ForExposedPort().

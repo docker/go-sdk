@@ -450,7 +450,6 @@ func TestRunContainerWithWaitStrategy(t *testing.T) {
 	t.Run("for-file-does-not-exist", func(t *testing.T) {
 		testRun(t, wait.ForFile("/tmp/foo.txt").WithTimeout(1*time.Second), true)
 	})
-
 }
 
 // BenchmarkRunContainer measures container creation time

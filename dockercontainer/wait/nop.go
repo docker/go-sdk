@@ -12,8 +12,9 @@ import (
 )
 
 var (
-	_ Strategy        = (*NopStrategy)(nil)
-	_ StrategyTimeout = (*NopStrategy)(nil)
+	_          Strategy        = (*NopStrategy)(nil)
+	_          StrategyTimeout = (*NopStrategy)(nil)
+	noopLogger                 = slog.New(slog.NewTextHandler(io.Discard, nil))
 )
 
 type NopStrategy struct {
@@ -76,5 +77,5 @@ func (st *NopStrategyTarget) CopyFromContainer(_ context.Context, _ string) (io.
 }
 
 func (st *NopStrategyTarget) Logger() *slog.Logger {
-	return slog.Default()
+	return noopLogger
 }
