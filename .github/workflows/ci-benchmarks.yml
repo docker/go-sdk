@@ -47,43 +47,6 @@ jobs:
             echo "benchmarks_found=true" >> $GITHUB_OUTPUT
           fi
 
-      ### hack because of the problem with duplicated benchmark names - https://github.com/benchmark-action/github-action-benchmark/issues/264
-      - name: Extract Module Name
-        if: ${{ steps.check-benchmarks.outputs.benchmarks_found == 'true' }}
-        id: extract-module
-        working-directory: ${{ inputs.project-directory }}
-        run: |
-          MODULE_NAME=$(awk '/^module / {print $2}' go.mod)
-          echo "MODULE_NAME=$MODULE_NAME" >> $GITHUB_ENV
-
-      - name: Identify Duplicate Benchmark Names
-        if: ${{ steps.check-benchmarks.outputs.benchmarks_found == 'true' }}
-        working-directory: ${{ inputs.project-directory }}
-        run: |
-          awk '/^Benchmark/ {print $1}' output.txt | sort | uniq -d > duplicate_benchmarks.txt
-
-      - name: Add Normalized Package Prefix to Duplicate Benchmark Names
-        if: ${{ steps.check-benchmarks.outputs.benchmarks_found == 'true' }}
-        working-directory: ${{ inputs.project-directory }}
-        run: |
-          awk -v MODULE_NAME="$MODULE_NAME" '
-            FNR==NR {duplicates[$1]; next}
-            /^pkg: / { package=$2 }
-            /^Benchmark/ {
-              if ($1 in duplicates) {
-                sub("^" MODULE_NAME "/?", "", package)
-                gsub("/", "_", package)
-                print $1 "_" package substr($0, length($1) + 1)
-              } else {
-                print $0
-              }
-              next
-            }
-            { print }
-          ' duplicate_benchmarks.txt output.txt > output_prefixed.txt
-          mv output_prefixed.txt output.txt
-      ### end
-
       # NOTE: Benchmarks could change with different CPU types
       - name: Get GitHub Runner System Information
         if: ${{ steps.check-benchmarks.outputs.benchmarks_found == 'true' }}
