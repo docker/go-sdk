@@ -85,7 +85,7 @@ jobs:
         package: ${{ fromJSON(needs.detect-packages.outputs.packages || '[]') }}
     permissions:
       contents: read  # for actions/checkout to fetch code
-      pull-requests: read  # for sonarsource/sonarcloud-github-action to determine which PR to decorate
+      pull-requests: write  # for sonarsource/sonarcloud-github-action to determine which PR to decorate
     uses: ./.github/workflows/ci-benchmarks.yml
     with:
       project-directory: "${{ matrix.package }}"
