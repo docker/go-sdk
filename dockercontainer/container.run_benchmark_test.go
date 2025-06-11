@@ -5,8 +5,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/docker/go-sdk/dockercontainer"
 	"github.com/stretchr/testify/require"
+
+	"github.com/docker/go-sdk/dockercontainer"
 )
 
 // BenchmarkRunContainer measures container creation time
