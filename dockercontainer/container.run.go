@@ -181,7 +181,7 @@ func Run(ctx context.Context, opts ...ContainerCustomizer) (*Container, error) {
 
 	if def.Started {
 		if err := ctr.Start(ctx); err != nil {
-			return nil, fmt.Errorf("start container: %w", err)
+			return ctr, fmt.Errorf("start container: %w", err)
 		}
 	}
 

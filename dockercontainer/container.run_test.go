@@ -420,7 +420,6 @@ func TestRunContainerWithWaitStrategy(t *testing.T) {
 		dockercontainer.CleanupContainer(t, ctr)
 		if expectError {
 			require.Error(t, err)
-			require.Nil(t, ctr)
 		} else {
 			require.NoError(t, err)
 			require.NotNil(t, ctr)
