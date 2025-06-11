@@ -24,6 +24,7 @@ type ImagePullClient interface {
 
 // Pull pulls an image from a remote registry, retrying on non-permanent errors.
 // See [dockerclient.IsPermanentClientError] for the list of non-permanent errors.
+// It first extracts the registry credentials from the image name, and sets them in the pull options.
 func Pull(ctx context.Context, imagePullCli ImagePullClient, imageName string, pullOpt image.PullOptions) error {
 	user, pwd, err := dockerconfig.RegistryCredentials(imageName)
 	if err != nil {
