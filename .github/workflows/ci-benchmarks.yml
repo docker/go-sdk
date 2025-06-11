@@ -13,7 +13,7 @@ on:
 permissions:
   contents: read
   # we need write permission to be able to post comments to pull request
-  pull-requests: read
+  pull-requests: write
 
 jobs:
   Compare:
