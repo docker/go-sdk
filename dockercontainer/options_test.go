@@ -11,17 +11,19 @@ import (
 	"github.com/docker/go-sdk/dockercontainer/wait"
 )
 
-type msgsLogConsumer struct {
+// TestStringsLogConsumer is a log consumer that collects logs in a slice.
+// It can be used for simple tests where we want to assert the logs.
+type TestStringsLogConsumer struct {
 	msgs []string
 }
 
 // Accept prints the log to stdout
-func (lc *msgsLogConsumer) Accept(l Log) {
+func (lc *TestStringsLogConsumer) Accept(l Log) {
 	lc.msgs = append(lc.msgs, string(l.Content))
 }
 
 func TestWithLogConsumers(t *testing.T) {
-	lc := &msgsLogConsumer{}
+	lc := &TestStringsLogConsumer{}
 	def := Definition{
 		image:      "mysql:8.0.36",
 		WaitingFor: wait.ForLog("port: 3306  MySQL Community Server - GPL"),
@@ -33,7 +35,7 @@ func TestWithLogConsumers(t *testing.T) {
 }
 
 func TestWithLogConsumerConfig(t *testing.T) {
-	lc := &msgsLogConsumer{}
+	lc := &TestStringsLogConsumer{}
 
 	t.Run("add-to-nil", func(t *testing.T) {
 		def := Definition{
