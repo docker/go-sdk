@@ -27,14 +27,14 @@ type unwrapErrs interface {
 	Unwrap() []error
 }
 
-// CleanupContainer is a helper function that schedules the container
+// CleanupContainer is a helper function that schedules a [TerminableContainer]
 // to be terminated when the test ends.
 //
 // This should be called directly after (before any error check)
 // [Create](...) in a test to ensure the
 // container is pruned when the function ends.
 // If the container is nil, it's a no-op.
-func CleanupContainer(tb testing.TB, ctr *Container, options ...TerminateOption) {
+func CleanupContainer(tb testing.TB, ctr TerminableContainer, options ...TerminateOption) {
 	tb.Helper()
 
 	tb.Cleanup(func() {

@@ -11,6 +11,11 @@ import (
 	"github.com/docker/go-sdk/dockerclient"
 )
 
+// TerminableContainer is a container that can be terminated.
+type TerminableContainer interface {
+	Terminate(ctx context.Context, opts ...TerminateOption) error
+}
+
 // TerminateOptions is a type that holds the options for terminating a container.
 type TerminateOptions struct {
 	*StopOptions
@@ -66,11 +71,11 @@ func RemoveVolumes(volumes ...string) TerminateOption {
 	}
 }
 
-// TerminateContainer calls [Container.Terminate] on the container if it is not nil.
+// TerminateContainer calls [TerminableContainer.Terminate] on the container if it is not nil.
 //
 // This should be called as a defer directly after [Create](...)
 // to ensure the container is terminated when the function ends.
-func TerminateContainer(ctr *Container, options ...TerminateOption) error {
+func TerminateContainer(ctr TerminableContainer, options ...TerminateOption) error {
 	if isNil(ctr) {
 		return nil
 	}
