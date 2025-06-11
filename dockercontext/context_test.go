@@ -158,21 +158,21 @@ func setupDockerContexts(tb testing.TB, currentContextIndex int, contextsCount i
 }
 
 // createDockerContext creates a Docker context with the specified name and host
-func createDockerContext(t testing.TB, metaDir, baseContext string, index int, host string) {
-	t.Helper()
+func createDockerContext(tb testing.TB, metaDir, baseContext string, index int, host string) {
+	tb.Helper()
 
 	contextDir := filepath.Join(metaDir, fmt.Sprintf("context%d", index))
-	tempMkdirAll(t, contextDir)
+	tempMkdirAll(tb, contextDir)
 
 	context := fmt.Sprintf(`{"Name":"%s%d","Metadata":{"Description":"Testcontainers Go %d"},"Endpoints":{"docker":{"Host":"%s","SkipTLSVerify":false}}}`,
 		baseContext, index, index, host)
 	err := os.WriteFile(filepath.Join(contextDir, "meta.json"), []byte(context), 0o644)
-	require.NoError(t, err)
+	require.NoError(tb, err)
 }
 
-func tempMkdirAll(t testing.TB, dir string) {
-	t.Helper()
+func tempMkdirAll(tb testing.TB, dir string) {
+	tb.Helper()
 
 	err := os.MkdirAll(dir, 0o755)
-	require.NoError(t, err)
+	require.NoError(tb, err)
 }
