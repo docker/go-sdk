@@ -83,8 +83,17 @@ func (ws *HTTPStrategy) WithPort(port nat.Port) *HTTPStrategy {
 	return ws
 }
 
+// WithStatusCodeMatcher sets the status code matcher to the given function
 func (ws *HTTPStrategy) WithStatusCodeMatcher(statusCodeMatcher func(status int) bool) *HTTPStrategy {
 	ws.StatusCodeMatcher = statusCodeMatcher
+	return ws
+}
+
+// WithStatus uses [WithStatusCodeMatcher] with the given status code
+func (ws *HTTPStrategy) WithStatus(status int) *HTTPStrategy {
+	ws.StatusCodeMatcher = func(s int) bool {
+		return s == status
+	}
 	return ws
 }
 

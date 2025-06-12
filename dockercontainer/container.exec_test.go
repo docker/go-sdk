@@ -12,12 +12,15 @@ import (
 	"github.com/docker/go-sdk/dockercontainer/exec"
 )
 
-const nginxAlpineImage = "nginx:alpine"
+const (
+	alpineLatest     = "alpine:latest"
+	nginxAlpineImage = "nginx:alpine"
+)
 
 func TestContainer_Exec(t *testing.T) {
 	t.Run("stopped-container/error", func(t *testing.T) {
 		ctr, err := dockercontainer.Run(context.Background(),
-			dockercontainer.WithImage("alpine:latest"),
+			dockercontainer.WithImage(alpineLatest),
 			dockercontainer.WithNoStart(),
 		)
 		require.NoError(t, err)

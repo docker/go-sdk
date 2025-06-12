@@ -5,6 +5,7 @@ import (
 	"context"
 	"io"
 	"log/slog"
+	"net/http"
 	"strings"
 	"testing"
 	"time"
@@ -209,7 +210,7 @@ echo "done"
 		ctx := context.Background()
 
 		c, err := dockercontainer.Run(ctx,
-			dockercontainer.WithImage("alpine:latest"),
+			dockercontainer.WithImage(alpineLatest),
 			dockercontainer.WithEntrypoint("tail", "-f", "/dev/null"),
 			dockercontainer.WithStartupCommand(exec.NewRawCommand([]string{"touch", "/tmp/.dockercontainer-test"})),
 		)
@@ -229,7 +230,7 @@ echo "done"
 		ctx := context.Background()
 
 		c, err := dockercontainer.Run(ctx,
-			dockercontainer.WithImage("alpine:latest"),
+			dockercontainer.WithImage(alpineLatest),
 			dockercontainer.WithEntrypoint("tail", "-f", "/dev/null"),
 			dockercontainer.WithAfterReadyCommand(exec.NewRawCommand([]string{"touch", "/tmp/.dockercontainer-test"})),
 		)
@@ -452,7 +453,7 @@ func TestRunContainerWithLifecycleHooks(t *testing.T) {
 }
 
 func TestRunContainerWithWaitStrategy(t *testing.T) {
-	testRun := func(t *testing.T, strategy wait.Strategy, expectError bool) {
+	testRun := func(t *testing.T, img string, strategy wait.Strategy, expectError bool) {
 		t.Helper()
 
 		bufLogger := &bytes.Buffer{}
@@ -463,7 +464,7 @@ func TestRunContainerWithWaitStrategy(t *testing.T) {
 
 		opts := []dockercontainer.ContainerCustomizer{
 			dockercontainer.WithDockerClient(dockerClient),
-			dockercontainer.WithImage(nginxAlpineImage),
+			dockercontainer.WithImage(img),
 			dockercontainer.WithFiles(dockercontainer.File{
 				ContainerPath: "/tmp/hello.txt",
 				Reader:        strings.NewReader(`hello world`),
@@ -483,32 +484,67 @@ func TestRunContainerWithWaitStrategy(t *testing.T) {
 	}
 
 	t.Run("for-listening-port", func(t *testing.T) {
-		testRun(t, wait.ForListeningPort("80/tcp"), false)
+		testRun(t, nginxAlpineImage, wait.ForListeningPort("80/tcp"), false)
 	})
 
 	t.Run("for-mapped-port", func(t *testing.T) {
-		testRun(t, wait.ForMappedPort("80/tcp"), false)
+		testRun(t, nginxAlpineImage, wait.ForMappedPort("80/tcp"), false)
 	})
 
 	t.Run("for-exposed-port", func(t *testing.T) {
-		testRun(t, wait.ForExposedPort(), false)
+		testRun(t, nginxAlpineImage, wait.ForExposedPort(), false)
 	})
 
 	t.Run("for-exec", func(t *testing.T) {
-		testRun(t, wait.ForExec([]string{"ls", "-l"}), false)
+		testRun(t, nginxAlpineImage, wait.ForExec([]string{"ls", "-l"}), false)
 	})
 
 	t.Run("for-file-exists", func(t *testing.T) {
-		testRun(t, wait.ForFile("/tmp/hello.txt"), false)
+		testRun(t, nginxAlpineImage, wait.ForFile("/tmp/hello.txt"), false)
 	})
 
 	t.Run("for-file-does-not-exist", func(t *testing.T) {
-		testRun(t, wait.ForFile("/tmp/foo.txt").WithTimeout(1*time.Second), true)
+		testRun(t, nginxAlpineImage, wait.ForFile("/tmp/foo.txt").WithTimeout(1*time.Second), true)
 	})
 
 	t.Run("for-log", func(t *testing.T) {
 		// log entry that is present in the nginx:alpine image
-		testRun(t, wait.ForLog("start worker processes").WithTimeout(5*time.Second), false)
+		testRun(t, nginxAlpineImage, wait.ForLog("start worker processes").WithTimeout(5*time.Second), false)
+	})
+
+	t.Run("for-exit/success", func(t *testing.T) {
+		testRun(t, alpineLatest, wait.ForExit().WithExitTimeout(3*time.Second), false)
+	})
+
+	t.Run("for-exit/error", func(t *testing.T) {
+		testRun(t, nginxAlpineImage, wait.ForExit().WithExitTimeout(3*time.Second), true)
+	})
+
+	t.Run("for-http", func(t *testing.T) {
+		testRun(t, nginxAlpineImage, wait.ForHTTP("/"), false)
+	})
+
+	t.Run("for-http/error", func(t *testing.T) {
+		testRun(t, nginxAlpineImage, wait.ForHTTP("/not-found").WithTimeout(3*time.Second), true)
+	})
+
+	t.Run("for-http/with-status", func(t *testing.T) {
+		testRun(t, nginxAlpineImage, wait.ForHTTP("/not-found").WithStatus(http.StatusNotFound), false)
+	})
+
+	t.Run("for-http/with-status-code-matcher", func(t *testing.T) {
+		testRun(t, nginxAlpineImage, wait.ForHTTP("/").WithStatusCodeMatcher(func(status int) bool {
+			return status == http.StatusOK
+		}), false)
+	})
+
+	t.Run("for-http/with-response-matcher", func(t *testing.T) {
+		testRun(t, nginxAlpineImage, wait.ForHTTP("/not-found").WithResponseMatcher(func(body io.Reader) bool {
+			content, err := io.ReadAll(body)
+			require.NoError(t, err)
+
+			return strings.Contains(string(content), `"GET /not-found HTTP/1.1" 404`)
+		}), false)
 	})
 }
 
