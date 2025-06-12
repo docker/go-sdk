@@ -3,8 +3,9 @@ package dockerclient_test
 import (
 	"testing"
 
-	"github.com/docker/go-sdk/dockerclient"
 	"github.com/stretchr/testify/require"
+
+	"github.com/docker/go-sdk/dockerclient"
 )
 
 func TestAddSDKLabels(t *testing.T) {
