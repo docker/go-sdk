@@ -1,6 +1,9 @@
 package dockercontainer
 
-import "time"
+import (
+	"sync"
+	"time"
+)
 
 const (
 	// StdoutLog is the log type for STDOUT
@@ -45,6 +48,7 @@ type LogConsumerConfig struct {
 type logConsumerWriter struct {
 	log       Log
 	consumers []LogConsumer
+	mu        sync.RWMutex // Protects the consumers slice
 }
 
 // newLogConsumerWriter creates a new logConsumerWriter for logType that sends messages to all consumers.
@@ -56,9 +60,13 @@ func newLogConsumerWriter(logType string, consumers []LogConsumer) *logConsumerW
 }
 
 // Write writes the p content to all consumers.
-func (lw logConsumerWriter) Write(p []byte) (int, error) {
+func (lw *logConsumerWriter) Write(p []byte) (int, error) {
 	lw.log.Content = p
-	for _, consumer := range lw.consumers {
+	lw.mu.RLock()
+	consumers := lw.consumers
+	lw.mu.RUnlock()
+
+	for _, consumer := range consumers {
 		consumer.Accept(lw.log)
 	}
 	return len(p), nil
