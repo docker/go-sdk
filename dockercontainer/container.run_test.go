@@ -334,9 +334,9 @@ func TestRunContainer_addSDKLabels(t *testing.T) {
 	inspect, err := ctr.Inspect(context.Background())
 	require.NoError(t, err)
 
-	require.Contains(t, inspect.Config.Labels, dockercontainer.LabelBase)
-	require.Contains(t, inspect.Config.Labels, dockercontainer.LabelLang)
-	require.Contains(t, inspect.Config.Labels, dockercontainer.LabelVersion)
+	require.Contains(t, inspect.Config.Labels, dockerclient.LabelBase)
+	require.Contains(t, inspect.Config.Labels, dockerclient.LabelLang)
+	require.Contains(t, inspect.Config.Labels, dockerclient.LabelVersion)
 }
 
 func TestRunContainerWithLifecycleHooks(t *testing.T) {

@@ -1,4 +1,4 @@
-package dockercontainer
+package dockerclient
 
 const (
 	// LabelBase is the base label for all Docker labels.
