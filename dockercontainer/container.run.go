@@ -104,7 +104,7 @@ func Run(ctx context.Context, opts ...ContainerCustomizer) (*Container, error) {
 	}
 
 	// Add the labels that identify this as a container created by the SDK.
-	AddSDKLabels(def.Labels)
+	dockerclient.AddSDKLabels(def.Labels)
 
 	dockerInput := &container.Config{
 		Entrypoint: def.Entrypoint,
