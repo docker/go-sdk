@@ -84,6 +84,23 @@ func (c *Container) Logs(ctx context.Context) (io.ReadCloser, error) {
 	return pr, nil
 }
 
+// GetLogProductionErrorChannel exposes the only way for the consumer
+// to be able to listen to errors and react to them.
+func (c *Container) GetLogProductionErrorChannel() <-chan error {
+	if c.logProductionCtx == nil {
+		return nil
+	}
+
+	errCh := make(chan error, 1)
+	go func(ctx context.Context) {
+		<-ctx.Done()
+		errCh <- context.Cause(ctx)
+		close(errCh)
+	}(c.logProductionCtx)
+
+	return errCh
+}
+
 // copyLogs copies logs from the container to stdout and stderr.
 func (c *Container) copyLogs(ctx context.Context, stdout, stderr io.Writer, options container.LogsOptions) error {
 	rc, err := c.dockerClient.ContainerLogs(ctx, c.ID, options)
@@ -162,7 +179,11 @@ func (c *Container) printLogs(ctx context.Context, cause error) {
 
 	b, err := io.ReadAll(reader)
 	if err != nil {
-		c.logger.Error("failed reading container logs", "error", err)
+		if len(b) > 0 {
+			c.logger.Error("failed reading container logs", "error", err, "cause", cause, "logs", b)
+		} else {
+			c.logger.Error("failed reading container logs", "error", err, "cause", cause)
+		}
 		return
 	}
 

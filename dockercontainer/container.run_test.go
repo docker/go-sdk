@@ -189,6 +189,62 @@ echo "done"
 		require.Contains(t, inspect.NetworkSettings.Networks[name].Aliases, "alias2")
 	})
 
+	t.Run("with-log-consumer", func(t *testing.T) {
+		lc := &dockercontainer.TestStringsLogConsumer{}
+		ctx := context.Background()
+
+		c, err := dockercontainer.Run(ctx,
+			dockercontainer.WithImage("mysql:8.0.36"),
+			dockercontainer.WithWaitStrategy(wait.ForLog("port: 3306  MySQL Community Server - GPL").WithTimeout(10*time.Second)),
+			dockercontainer.WithLogConsumers(lc),
+		)
+		dockercontainer.CleanupContainer(t, c)
+		// we expect an error because the MySQL environment variables are not set
+		// but this is expected because we just want to test the log consumer
+		require.Error(t, err)
+		require.NotEmpty(t, lc.Messages())
+	})
+
+	t.Run("with-startup-command", func(t *testing.T) {
+		ctx := context.Background()
+
+		c, err := dockercontainer.Run(ctx,
+			dockercontainer.WithImage("alpine:latest"),
+			dockercontainer.WithEntrypoint("tail", "-f", "/dev/null"),
+			dockercontainer.WithStartupCommand(exec.NewRawCommand([]string{"touch", "/tmp/.dockercontainer-test"})),
+		)
+		dockercontainer.CleanupContainer(t, c)
+		require.NoError(t, err)
+		require.NotNil(t, c)
+
+		_, reader, err := c.Exec(context.Background(), []string{"ls", "/tmp/.dockercontainer-test"}, exec.Multiplexed())
+		require.NoError(t, err)
+
+		content, err := io.ReadAll(reader)
+		require.NoError(t, err)
+		require.Equal(t, "/tmp/.dockercontainer-test\n", string(content))
+	})
+
+	t.Run("with-after-ready-command", func(t *testing.T) {
+		ctx := context.Background()
+
+		c, err := dockercontainer.Run(ctx,
+			dockercontainer.WithImage("alpine:latest"),
+			dockercontainer.WithEntrypoint("tail", "-f", "/dev/null"),
+			dockercontainer.WithAfterReadyCommand(exec.NewRawCommand([]string{"touch", "/tmp/.dockercontainer-test"})),
+		)
+		dockercontainer.CleanupContainer(t, c)
+		require.NoError(t, err)
+		require.NotNil(t, c)
+
+		_, reader, err := c.Exec(context.Background(), []string{"ls", "/tmp/.dockercontainer-test"}, exec.Multiplexed())
+		require.NoError(t, err)
+
+		content, err := io.ReadAll(reader)
+		require.NoError(t, err)
+		require.Equal(t, "/tmp/.dockercontainer-test\n", string(content))
+	})
+
 	t.Run("no-dockerclient-uses-default", func(t *testing.T) {
 		ctr, err := dockercontainer.Run(context.Background(),
 			dockercontainer.WithImage(nginxAlpineImage),

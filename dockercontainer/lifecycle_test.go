@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 )
@@ -141,4 +142,159 @@ func TestCombineLifecycleHooks(t *testing.T) {
 		require.Equal(t, fmt.Sprintf("[default] post-%s hook 2.1", hookType), prints[initialIndex+18])
 		require.Equal(t, fmt.Sprintf("[default] post-%s hook 2.2", hookType), prints[initialIndex+19])
 	}
+}
+
+func TestLifecycleHooks(t *testing.T) {
+	prints := []string{}
+	ctx := context.Background()
+
+	opts := []ContainerCustomizer{
+		WithImage(nginxAlpineImage),
+		WithLifecycleHooks(LifecycleHooks{
+			PreCreates: []DefinitionHook{
+				func(_ context.Context, _ *Definition) error {
+					prints = append(prints, "pre-create hook 1")
+					return nil
+				},
+				func(_ context.Context, _ *Definition) error {
+					prints = append(prints, "pre-create hook 2")
+					return nil
+				},
+			},
+			PostCreates: []ContainerHook{
+				func(_ context.Context, _ *Container) error {
+					prints = append(prints, "post-create hook 1")
+					return nil
+				},
+				func(_ context.Context, _ *Container) error {
+					prints = append(prints, "post-create hook 2")
+					return nil
+				},
+			},
+			PreStarts: []ContainerHook{
+				func(_ context.Context, _ *Container) error {
+					prints = append(prints, "pre-start hook 1")
+					return nil
+				},
+				func(_ context.Context, _ *Container) error {
+					prints = append(prints, "pre-start hook 2")
+					return nil
+				},
+			},
+			PostStarts: []ContainerHook{
+				func(_ context.Context, _ *Container) error {
+					prints = append(prints, "post-start hook 1")
+					return nil
+				},
+				func(_ context.Context, _ *Container) error {
+					prints = append(prints, "post-start hook 2")
+					return nil
+				},
+			},
+			PostReadies: []ContainerHook{
+				func(_ context.Context, _ *Container) error {
+					prints = append(prints, "post-ready hook 1")
+					return nil
+				},
+				func(_ context.Context, _ *Container) error {
+					prints = append(prints, "post-ready hook 2")
+					return nil
+				},
+			},
+			PreStops: []ContainerHook{
+				func(_ context.Context, _ *Container) error {
+					prints = append(prints, "pre-stop hook 1")
+					return nil
+				},
+				func(_ context.Context, _ *Container) error {
+					prints = append(prints, "pre-stop hook 2")
+					return nil
+				},
+			},
+			PostStops: []ContainerHook{
+				func(_ context.Context, _ *Container) error {
+					prints = append(prints, "post-stop hook 1")
+					return nil
+				},
+				func(_ context.Context, _ *Container) error {
+					prints = append(prints, "post-stop hook 2")
+					return nil
+				},
+			},
+			PreTerminates: []ContainerHook{
+				func(_ context.Context, _ *Container) error {
+					prints = append(prints, "pre-terminate hook 1")
+					return nil
+				},
+				func(_ context.Context, _ *Container) error {
+					prints = append(prints, "pre-terminate hook 2")
+					return nil
+				},
+			},
+			PostTerminates: []ContainerHook{
+				func(_ context.Context, _ *Container) error {
+					prints = append(prints, "post-terminate hook 1")
+					return nil
+				},
+				func(_ context.Context, _ *Container) error {
+					prints = append(prints, "post-terminate hook 2")
+					return nil
+				},
+			},
+		}),
+	}
+
+	c, err := Run(ctx, opts...)
+	CleanupContainer(t, c)
+	require.NoError(t, err)
+	require.NotNil(t, c)
+
+	err = c.Stop(ctx, StopTimeout(1*time.Second))
+	require.NoError(t, err)
+
+	err = c.Start(ctx)
+	require.NoError(t, err)
+
+	err = c.Terminate(ctx)
+	require.NoError(t, err)
+
+	lifecycleHooksIsHonouredFn(t, prints)
+}
+
+func lifecycleHooksIsHonouredFn(t *testing.T, prints []string) {
+	t.Helper()
+
+	expects := []string{
+		"pre-create hook 1",
+		"pre-create hook 2",
+		"post-create hook 1",
+		"post-create hook 2",
+		"pre-start hook 1",
+		"pre-start hook 2",
+		"post-start hook 1",
+		"post-start hook 2",
+		"post-ready hook 1",
+		"post-ready hook 2",
+		"pre-stop hook 1",
+		"pre-stop hook 2",
+		"post-stop hook 1",
+		"post-stop hook 2",
+		"pre-start hook 1",
+		"pre-start hook 2",
+		"post-start hook 1",
+		"post-start hook 2",
+		"post-ready hook 1",
+		"post-ready hook 2",
+		// Terminate currently calls stop to ensure that child containers are stopped.
+		"pre-stop hook 1",
+		"pre-stop hook 2",
+		"post-stop hook 1",
+		"post-stop hook 2",
+		"pre-terminate hook 1",
+		"pre-terminate hook 2",
+		"post-terminate hook 1",
+		"post-terminate hook 2",
+	}
+
+	require.Equal(t, expects, prints)
 }

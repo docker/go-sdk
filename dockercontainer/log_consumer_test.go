@@ -1,9 +1,12 @@
 package dockercontainer
 
 import (
+	"context"
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/require"
 )
 
 // FooLogConsumer is a test log consumer that accepts logs from the
@@ -50,4 +53,41 @@ func NewFooLogConsumer(t *testing.T) *FooLogConsumer {
 		t:          t,
 		LogChannel: make(chan string, 2),
 	}
+}
+
+func TestRestartContainerWithLogConsumer(t *testing.T) {
+	logConsumer := NewFooLogConsumer(t)
+
+	ctx := context.Background()
+
+	ctr, err := Run(ctx,
+		WithImage("hello-world"),
+		WithAlwaysPull(),
+		WithLogConsumerConfig(&LogConsumerConfig{
+			Consumers: []LogConsumer{logConsumer},
+		}),
+		WithNoStart(),
+	)
+	CleanupContainer(t, ctr)
+	require.NoError(t, err)
+
+	// Start and confirm that the log consumer receives the log message.
+	err = ctr.Start(ctx)
+	require.NoError(t, err)
+
+	logConsumer.AssertRead()
+
+	// Stop the container and clear any pending message.
+	err = ctr.Stop(ctx, StopTimeout(5*time.Second))
+	require.NoError(t, err)
+
+	logConsumer.SlurpOne()
+
+	// Restart the container and confirm that the log consumer receives new log messages.
+	err = ctr.Start(ctx)
+	require.NoError(t, err)
+
+	// First message is from the first start.
+	logConsumer.AssertRead()
+	logConsumer.AssertRead()
 }

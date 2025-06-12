@@ -4,14 +4,14 @@ import "context"
 
 // startingHook is a hook that will be called before a container is started.
 func (c *Container) startingHook(ctx context.Context) error {
-	return c.applyLifecycleHooks(ctx, false, func(lifecycleHooks LifecycleHooks) error {
+	return c.applyLifecycleHooks(ctx, true, func(lifecycleHooks LifecycleHooks) error {
 		return applyContainerHooks(ctx, lifecycleHooks.PreStarts, c)
 	})
 }
 
 // startedHook is a hook that will be called after a container is started.
 func (c *Container) startedHook(ctx context.Context) error {
-	return c.applyLifecycleHooks(ctx, false, func(lifecycleHooks LifecycleHooks) error {
+	return c.applyLifecycleHooks(ctx, true, func(lifecycleHooks LifecycleHooks) error {
 		return applyContainerHooks(ctx, lifecycleHooks.PostStarts, c)
 	})
 }

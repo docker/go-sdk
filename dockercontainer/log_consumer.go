@@ -1,5 +1,7 @@
 package dockercontainer
 
+import "time"
+
 const (
 	// StdoutLog is the log type for STDOUT
 	StdoutLog = "STDOUT"
@@ -10,6 +12,14 @@ const (
 
 // LogProductionOption is a function that modifies a [Container].
 type LogProductionOption func(*Container)
+
+// WithLogProductionTimeout is a functional option that sets the timeout for the log production.
+// If the timeout is lower than 5s or greater than 60s it will be set to 5s or 60s respectively.
+func WithLogProductionTimeout(timeout time.Duration) LogProductionOption {
+	return func(c *Container) {
+		c.logProductionTimeout = &timeout
+	}
+}
 
 // Log represents a message that was created by a process,
 // LogType is either "STDOUT" or "STDERR",

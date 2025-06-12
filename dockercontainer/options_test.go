@@ -17,6 +17,11 @@ type TestStringsLogConsumer struct {
 	msgs []string
 }
 
+// Messages returns the collected logs.
+func (lc *TestStringsLogConsumer) Messages() []string {
+	return lc.msgs
+}
+
 // Accept prints the log to stdout
 func (lc *TestStringsLogConsumer) Accept(l Log) {
 	lc.msgs = append(lc.msgs, string(l.Content))

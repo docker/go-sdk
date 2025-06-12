@@ -1,8 +1,12 @@
 package dockercontainer
 
 import (
+	"bytes"
 	"context"
+	"log/slog"
+	"regexp"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 
@@ -341,6 +345,65 @@ func TestPreCreateModifierHook(t *testing.T) {
 		require.Equal(t, "localhost", inputHostConfig.PortBindings["80/tcp"][0].HostIP)
 		require.Equal(t, "8080", inputHostConfig.PortBindings["80/tcp"][0].HostPort)
 	})
+}
+
+func TestLifecycleHooks_withDefaultLogger(t *testing.T) {
+	ctx := context.Background()
+
+	buff := bytes.NewBuffer(nil)
+	logger := slog.New(slog.NewTextHandler(buff, nil))
+
+	c, err := Run(ctx,
+		WithImage(nginxAlpineImage),
+		WithLifecycleHooks(DefaultLoggingHook(logger)),
+	)
+
+	CleanupContainer(t, c)
+	require.NoError(t, err)
+	require.NotNil(t, c)
+
+	err = c.Stop(ctx, StopTimeout(1*time.Second))
+	require.NoError(t, err)
+
+	err = c.Start(ctx)
+	require.NoError(t, err)
+
+	err = c.Terminate(ctx)
+	require.NoError(t, err)
+
+	// Includes four additional entries for stop (twice) when terminate is called.
+	log := buff.String()
+	require.Len(t, regexp.MustCompile("Starting container").FindAllString(log, -1), 2)
+	require.Len(t, regexp.MustCompile("Stopping container").FindAllString(log, -1), 2)
+}
+
+func TestLifecycleHooks_WithMultipleHooks(t *testing.T) {
+	ctx := context.Background()
+
+	buff := bytes.NewBuffer(nil)
+	logger := slog.New(slog.NewTextHandler(buff, nil))
+
+	c, err := Run(ctx,
+		WithImage(nginxAlpineImage),
+		WithLifecycleHooks(DefaultLoggingHook(logger), DefaultLoggingHook(logger)),
+	)
+	CleanupContainer(t, c)
+	require.NoError(t, err)
+	require.NotNil(t, c)
+
+	err = c.Stop(ctx, StopTimeout(1*time.Second))
+	require.NoError(t, err)
+
+	err = c.Start(ctx)
+	require.NoError(t, err)
+
+	err = c.Terminate(ctx)
+	require.NoError(t, err)
+
+	// Includes four additional entries for stop (twice) when terminate is called.
+	log := buff.String()
+	require.Len(t, regexp.MustCompile("Starting container").FindAllString(log, -1), 4)
+	require.Len(t, regexp.MustCompile("Stopping container").FindAllString(log, -1), 4)
 }
 
 func testCreateNetwork(t *testing.T, networkName string) network.CreateResponse {
