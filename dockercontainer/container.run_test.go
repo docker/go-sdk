@@ -505,6 +505,11 @@ func TestRunContainerWithWaitStrategy(t *testing.T) {
 	t.Run("for-file-does-not-exist", func(t *testing.T) {
 		testRun(t, wait.ForFile("/tmp/foo.txt").WithTimeout(1*time.Second), true)
 	})
+
+	t.Run("for-log", func(t *testing.T) {
+		// log entry that is present in the nginx:alpine image
+		testRun(t, wait.ForLog("start worker processes").WithTimeout(5*time.Second), false)
+	})
 }
 
 func testCreateNetwork(t *testing.T, networkName string) network.CreateResponse {
