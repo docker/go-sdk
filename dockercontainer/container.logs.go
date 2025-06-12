@@ -44,7 +44,6 @@ func (c *Container) Logs(ctx context.Context) (io.ReadCloser, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer rc.Close()
 
 	pr, pw := io.Pipe()
 	r := bufio.NewReader(rc)
