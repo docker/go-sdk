@@ -147,6 +147,8 @@ func (c *Container) copyLogsTimeout(stdout, stderr io.Writer, options *container
 // followOutput adds a LogConsumer to be sent logs from the container's
 // STDOUT and STDERR
 func (c *Container) followOutput(consumer LogConsumer) {
+	c.consumersMutex.Lock()
+	defer c.consumersMutex.Unlock()
 	c.consumers = append(c.consumers, consumer)
 }
 
@@ -213,9 +215,15 @@ func (c *Container) startLogProduction(ctx context.Context, opts ...LogProductio
 		c.logProductionTimeout = &maxLogProductionTimeout
 	}
 
+	// Get a snapshot of current consumers
+	c.consumersMutex.RLock()
+	consumers := make([]LogConsumer, len(c.consumers))
+	copy(consumers, c.consumers)
+	c.consumersMutex.RUnlock()
+
 	// Setup the log writers.
-	stdout := newLogConsumerWriter(StdoutLog, c.consumers)
-	stderr := newLogConsumerWriter(StderrLog, c.consumers)
+	stdout := newLogConsumerWriter(StdoutLog, consumers)
+	stderr := newLogConsumerWriter(StderrLog, consumers)
 
 	// Setup the log production context which will be used to stop the log production.
 	c.logProductionCtx, c.logProductionCancel = context.WithCancelCause(ctx)
