@@ -3,7 +3,6 @@ package dockercontainer
 import (
 	"context"
 	"log/slog"
-	"sync"
 	"time"
 
 	"github.com/docker/go-sdk/dockerclient"
@@ -44,8 +43,6 @@ type Container struct {
 
 	// lifecycleHooks the lifecycle hooks to use for the container.
 	lifecycleHooks []LifecycleHooks
-
-	consumersMutex sync.RWMutex // Use RWMutex for better read performance
 
 	// consumers the log consumers to use for the container.
 	consumers []LogConsumer

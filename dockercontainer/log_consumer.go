@@ -46,7 +46,7 @@ type LogConsumerConfig struct {
 
 // logConsumerWriter is a writer that writes to a LogConsumer.
 type logConsumerWriter struct {
-	log       Log
+	logType   string
 	consumers []LogConsumer
 	mu        sync.RWMutex // Protects the consumers slice
 }
@@ -54,20 +54,25 @@ type logConsumerWriter struct {
 // newLogConsumerWriter creates a new logConsumerWriter for logType that sends messages to all consumers.
 func newLogConsumerWriter(logType string, consumers []LogConsumer) *logConsumerWriter {
 	return &logConsumerWriter{
-		log:       Log{LogType: logType},
+		logType:   logType,
 		consumers: consumers,
 	}
 }
 
 // Write writes the p content to all consumers.
 func (lw *logConsumerWriter) Write(p []byte) (int, error) {
-	lw.log.Content = p
+	// Create a new Log for each write
+	log := Log{
+		LogType: lw.logType,
+		Content: append([]byte(nil), p...), // Make a copy of the content
+	}
+
 	lw.mu.RLock()
 	consumers := lw.consumers
 	lw.mu.RUnlock()
 
 	for _, consumer := range consumers {
-		consumer.Accept(lw.log)
+		consumer.Accept(log)
 	}
 	return len(p), nil
 }
