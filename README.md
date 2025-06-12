@@ -92,6 +92,26 @@ if err != nil {
 
 ```
 
+### dockernetwork
+
+```go
+nw, err := dockernetwork.New(ctx)
+if err != nil {
+    log.Fatalf("failed to create network: %v", err)
+}
+
+resp, err := nw.Inspect(ctx)
+if err != nil {
+    log.Fatalf("failed to inspect network: %v", err)
+}
+
+fmt.Printf("network: %+v", resp)
+
+err = nw.Terminate(ctx)
+if err != nil {
+    log.Fatalf("failed to terminate network: %v", err)
+}
+```
 
 More usage examples are coming soon!
 
