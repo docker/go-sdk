@@ -539,11 +539,12 @@ func TestRunContainerWithWaitStrategy(t *testing.T) {
 	})
 
 	t.Run("for-http/with-response-matcher", func(t *testing.T) {
-		testRun(t, nginxAlpineImage, wait.ForHTTP("/not-found").WithResponseMatcher(func(body io.Reader) bool {
+		testRun(t, nginxAlpineImage, wait.ForHTTP("/not-found").WithStatus(http.StatusNotFound).WithResponseMatcher(func(body io.Reader) bool {
 			content, err := io.ReadAll(body)
 			require.NoError(t, err)
 
-			return strings.Contains(string(content), `"GET /not-found HTTP/1.1" 404`)
+			// 404 response by the nginx:alpine image
+			return strings.Contains(string(content), "<title>404 Not Found</title>")
 		}), false)
 	})
 }
