@@ -3,10 +3,13 @@ package dockercontainer
 import (
 	"context"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/require"
+
+	"github.com/docker/go-sdk/dockercontainer/wait"
 )
 
 // FooLogConsumer is a test log consumer that accepts logs from the
@@ -55,6 +58,23 @@ func NewFooLogConsumer(t *testing.T) *FooLogConsumer {
 	}
 }
 
+type testLogConsumer struct {
+	logs []string
+	mx   sync.Mutex
+}
+
+func (l *testLogConsumer) Accept(log Log) {
+	l.mx.Lock()
+	defer l.mx.Unlock()
+	l.logs = append(l.logs, string(log.Content))
+}
+
+func (l *testLogConsumer) Logs() []string {
+	l.mx.Lock()
+	defer l.mx.Unlock()
+	return l.logs
+}
+
 func TestRestartContainerWithLogConsumer(t *testing.T) {
 	logConsumer := NewFooLogConsumer(t)
 
@@ -90,4 +110,30 @@ func TestRestartContainerWithLogConsumer(t *testing.T) {
 	// First message is from the first start.
 	logConsumer.AssertRead()
 	logConsumer.AssertRead()
+}
+
+func TestLogConsumers_multiple(t *testing.T) {
+	ctx := context.Background()
+	consumer1 := &testLogConsumer{}
+	consumer2 := &testLogConsumer{}
+
+	ctr, err := Run(ctx,
+		WithImage("alpine:latest"),
+		WithCmd("sh", "-c", `for i in $(seq 1 50); do echo "test log $i"; done`),
+		WithLogConsumerConfig(&LogConsumerConfig{
+			Consumers: []LogConsumer{consumer1, consumer2},
+		}),
+		WithWaitStrategy(wait.ForLog("test log 50")), // Wait for the last log message
+	)
+	CleanupContainer(t, ctr)
+	require.NoError(t, err)
+
+	// Verify logs for both consumers
+	logs1 := consumer1.Logs()
+	logs2 := consumer2.Logs()
+	require.Len(t, logs1, 50)
+	require.Len(t, logs2, 50)
+	for i := range 50 {
+		require.Equal(t, logs1[i], logs2[i])
+	}
 }
