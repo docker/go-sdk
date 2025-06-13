@@ -3,7 +3,6 @@ package dockercontainer
 import (
 	"context"
 	"strings"
-	"sync"
 	"testing"
 	"time"
 
@@ -60,18 +59,13 @@ func NewFooLogConsumer(t *testing.T) *FooLogConsumer {
 
 type testLogConsumer struct {
 	logs []string
-	mx   sync.Mutex
 }
 
 func (l *testLogConsumer) Accept(log Log) {
-	l.mx.Lock()
-	defer l.mx.Unlock()
 	l.logs = append(l.logs, string(log.Content))
 }
 
 func (l *testLogConsumer) Logs() []string {
-	l.mx.Lock()
-	defer l.mx.Unlock()
 	return l.logs
 }
 
@@ -125,10 +119,12 @@ func TestLogConsumers_multiple(t *testing.T) {
 		}),
 		WithWaitStrategy(wait.ForLog("test log 50")), // Wait for the last log message
 	)
-	CleanupContainer(t, ctr)
 	require.NoError(t, err)
+	require.NoError(t, ctr.Terminate(ctx))
 
-	// Verify logs for both consumers
+	// Verify logs for both consumers, but right after the container is terminated
+	// else we might get a race condition because the log consumer could still be
+	// writing to the log consumer.
 	logs1 := consumer1.Logs()
 	logs2 := consumer2.Logs()
 	require.Len(t, logs1, 50)
