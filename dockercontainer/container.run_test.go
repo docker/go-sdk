@@ -453,6 +453,8 @@ func TestRunContainerWithLifecycleHooks(t *testing.T) {
 		}
 
 		ctr, err := dockercontainer.Run(context.Background(), opts...)
+		// cleanup the container: even if it's nil, it is handled by the CleanupContainer function
+		dockercontainer.CleanupContainer(t, ctr)
 		require.NoError(t, err)
 		require.NotNil(t, ctr)
 
