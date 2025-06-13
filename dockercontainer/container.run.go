@@ -19,8 +19,8 @@ import (
 // using the [WithNoStart] option.
 func Run(ctx context.Context, opts ...ContainerCustomizer) (*Container, error) {
 	def := Definition{
-		Env:     make(map[string]string),
-		Started: true,
+		env:     make(map[string]string),
+		started: true,
 	}
 
 	for _, opt := range opts {
@@ -33,56 +33,56 @@ func Run(ctx context.Context, opts ...ContainerCustomizer) (*Container, error) {
 		return nil, fmt.Errorf("validate: %w", err)
 	}
 
-	if def.DockerClient == nil {
+	if def.dockerClient == nil {
 		// use the default docker client
 		cli, err := dockerclient.New(ctx)
 		if err != nil {
 			return nil, fmt.Errorf("new docker client: %w", err)
 		}
-		def.DockerClient = cli
+		def.dockerClient = cli
 	}
 
 	env := []string{}
-	for envKey, envVar := range def.Env {
+	for envKey, envVar := range def.env {
 		env = append(env, envKey+"="+envVar)
 	}
 
-	if def.Labels == nil {
-		def.Labels = make(map[string]string)
+	if def.labels == nil {
+		def.labels = make(map[string]string)
 	}
 
 	defaultHooks := []LifecycleHooks{
-		DefaultLoggingHook(def.DockerClient.Logger()),
+		DefaultLoggingHook(def.dockerClient.Logger()),
 	}
 
-	for _, is := range def.ImageSubstitutors {
+	for _, is := range def.imageSubstitutors {
 		modifiedTag, err := is.Substitute(def.image)
 		if err != nil {
 			return nil, fmt.Errorf("failed to substitute image %s with %s: %w", def.image, is.Description(), err)
 		}
 
 		if modifiedTag != def.image {
-			def.DockerClient.Logger().Info("Replacing image", "description", is.Description(), "from", def.image, "to", modifiedTag)
+			def.dockerClient.Logger().Info("Replacing image", "description", is.Description(), "from", def.image, "to", modifiedTag)
 			def.image = modifiedTag
 		}
 	}
 
 	var platform *platforms.Platform
 
-	if def.ImagePlatform != "" {
-		p, err := platforms.Parse(def.ImagePlatform)
+	if def.imagePlatform != "" {
+		p, err := platforms.Parse(def.imagePlatform)
 		if err != nil {
-			return nil, fmt.Errorf("invalid platform %s: %w", def.ImagePlatform, err)
+			return nil, fmt.Errorf("invalid platform %s: %w", def.imagePlatform, err)
 		}
 		platform = &p
 	}
 
 	var shouldPullImage bool
 
-	if def.AlwaysPullImage {
+	if def.alwaysPullImage {
 		shouldPullImage = true // If requested always attempt to pull image
 	} else {
-		img, err := def.DockerClient.ImageInspect(ctx, def.image)
+		img, err := def.dockerClient.ImageInspect(ctx, def.image)
 		if err != nil {
 			if !errdefs.IsNotFound(err) {
 				return nil, err
@@ -96,22 +96,22 @@ func Run(ctx context.Context, opts ...ContainerCustomizer) (*Container, error) {
 
 	if shouldPullImage {
 		pullOpt := image.PullOptions{
-			Platform: def.ImagePlatform, // may be empty
+			Platform: def.imagePlatform, // may be empty
 		}
-		if err := dockerimage.Pull(ctx, def.DockerClient, def.image, pullOpt); err != nil {
+		if err := dockerimage.Pull(ctx, def.dockerClient, def.image, pullOpt); err != nil {
 			return nil, err
 		}
 	}
 
 	// Add the labels that identify this as a container created by the SDK.
-	dockerclient.AddSDKLabels(def.Labels)
+	dockerclient.AddSDKLabels(def.labels)
 
 	dockerInput := &container.Config{
-		Entrypoint: def.Entrypoint,
+		Entrypoint: def.entrypoint,
 		Image:      def.image,
 		Env:        env,
-		Labels:     def.Labels,
-		Cmd:        def.Cmd,
+		Labels:     def.labels,
+		Cmd:        def.cmd,
 	}
 
 	hostConfig := &container.HostConfig{}
@@ -120,15 +120,15 @@ func Run(ctx context.Context, opts ...ContainerCustomizer) (*Container, error) {
 
 	// default hooks include logger hook and pre-create hook
 	defaultHooks = append(defaultHooks,
-		defaultPreCreateHook(def.DockerClient, dockerInput, hostConfig, networkingConfig),
-		defaultCopyFileToContainerHook(def.Files),
-		defaultLogConsumersHook(def.LogConsumerCfg),
+		defaultPreCreateHook(def.dockerClient, dockerInput, hostConfig, networkingConfig),
+		defaultCopyFileToContainerHook(def.files),
+		defaultLogConsumersHook(def.logConsumerCfg),
 		defaultReadinessHook(),
 	)
 
 	// Combine with the original LifecycleHooks to avoid duplicate logging hooks.
-	origLifecycleHooks := def.LifecycleHooks
-	def.LifecycleHooks = []LifecycleHooks{
+	origLifecycleHooks := def.lifecycleHooks
+	def.lifecycleHooks = []LifecycleHooks{
 		combineContainerHooks(defaultHooks, origLifecycleHooks),
 	}
 
@@ -137,15 +137,15 @@ func Run(ctx context.Context, opts ...ContainerCustomizer) (*Container, error) {
 		return nil, err
 	}
 
-	resp, err := def.DockerClient.ContainerCreate(ctx, dockerInput, hostConfig, networkingConfig, platform, def.Name)
+	resp, err := def.dockerClient.ContainerCreate(ctx, dockerInput, hostConfig, networkingConfig, platform, def.name)
 	if err != nil {
 		return nil, fmt.Errorf("container create: %w", err)
 	}
 
 	// If there is more than one network specified in the request attach newly created container to them one by one
-	if len(def.Networks) > 1 {
-		for _, n := range def.Networks[1:] {
-			nwInspect, err := def.DockerClient.NetworkInspect(ctx, n, network.InspectOptions{
+	if len(def.networks) > 1 {
+		for _, n := range def.networks[1:] {
+			nwInspect, err := def.dockerClient.NetworkInspect(ctx, n, network.InspectOptions{
 				Verbose: true,
 			})
 			if err != nil {
@@ -153,9 +153,9 @@ func Run(ctx context.Context, opts ...ContainerCustomizer) (*Container, error) {
 			}
 
 			endpointSetting := network.EndpointSettings{
-				Aliases: def.NetworkAliases[n],
+				Aliases: def.networkAliases[n],
 			}
-			err = def.DockerClient.NetworkConnect(ctx, nwInspect.ID, resp.ID, &endpointSetting)
+			err = def.dockerClient.NetworkConnect(ctx, nwInspect.ID, resp.ID, &endpointSetting)
 			if err != nil {
 				return nil, fmt.Errorf("network connect: %w", err)
 			}
@@ -164,14 +164,14 @@ func Run(ctx context.Context, opts ...ContainerCustomizer) (*Container, error) {
 
 	// This should match the fields set in ContainerFromDockerResponse.
 	ctr := &Container{
-		dockerClient:   def.DockerClient,
+		dockerClient:   def.dockerClient,
 		containerID:    resp.ID,
 		shortID:        resp.ID[:12],
-		waitingFor:     def.WaitingFor,
+		waitingFor:     def.waitingFor,
 		image:          def.image,
-		exposedPorts:   def.ExposedPorts,
-		logger:         def.DockerClient.Logger(),
-		lifecycleHooks: def.LifecycleHooks,
+		exposedPorts:   def.exposedPorts,
+		logger:         def.dockerClient.Logger(),
+		lifecycleHooks: def.lifecycleHooks,
 	}
 
 	if err = ctr.createdHook(ctx); err != nil {
@@ -179,7 +179,7 @@ func Run(ctx context.Context, opts ...ContainerCustomizer) (*Container, error) {
 		return ctr, fmt.Errorf("created hook: %w", err)
 	}
 
-	if def.Started {
+	if def.started {
 		if err := ctr.Start(ctx); err != nil {
 			return ctr, fmt.Errorf("start container: %w", err)
 		}

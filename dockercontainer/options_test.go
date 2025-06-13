@@ -31,8 +31,8 @@ func TestWithLogConsumers(t *testing.T) {
 	lc := &TestStringsLogConsumer{}
 	def := Definition{
 		image:      "mysql:8.0.36",
-		WaitingFor: wait.ForLog("port: 3306  MySQL Community Server - GPL"),
-		Started:    true,
+		waitingFor: wait.ForLog("port: 3306  MySQL Community Server - GPL"),
+		started:    true,
 	}
 
 	err := WithLogConsumers(lc)(&def)
@@ -52,13 +52,13 @@ func TestWithLogConsumerConfig(t *testing.T) {
 		})(&def)
 		require.NoError(t, err)
 
-		require.Equal(t, []LogConsumer{lc}, def.LogConsumerCfg.Consumers)
+		require.Equal(t, []LogConsumer{lc}, def.logConsumerCfg.Consumers)
 	})
 
 	t.Run("replace-existing", func(t *testing.T) {
 		def := Definition{
 			image: "alpine",
-			LogConsumerCfg: &LogConsumerConfig{
+			logConsumerCfg: &LogConsumerConfig{
 				Consumers: []LogConsumer{NewFooLogConsumer(t)},
 			},
 		}
@@ -68,15 +68,15 @@ func TestWithLogConsumerConfig(t *testing.T) {
 		})(&def)
 		require.NoError(t, err)
 
-		require.Equal(t, []LogConsumer{lc}, def.LogConsumerCfg.Consumers)
+		require.Equal(t, []LogConsumer{lc}, def.logConsumerCfg.Consumers)
 	})
 }
 
 func TestWithStartupCommand(t *testing.T) {
 	def := Definition{
 		image:      "alpine",
-		Entrypoint: []string{"tail", "-f", "/dev/null"},
-		Started:    true,
+		entrypoint: []string{"tail", "-f", "/dev/null"},
+		started:    true,
 	}
 
 	testExec := exec.NewRawCommand([]string{"touch", ".testcontainers"}, exec.WithWorkingDir("/tmp"))
@@ -84,15 +84,15 @@ func TestWithStartupCommand(t *testing.T) {
 	err := WithStartupCommand(testExec)(&def)
 	require.NoError(t, err)
 
-	require.Len(t, def.LifecycleHooks, 1)
-	require.Len(t, def.LifecycleHooks[0].PostStarts, 1)
+	require.Len(t, def.lifecycleHooks, 1)
+	require.Len(t, def.lifecycleHooks[0].PostStarts, 1)
 }
 
 func TestWithAfterReadyCommand(t *testing.T) {
 	def := Definition{
 		image:      "alpine",
-		Entrypoint: []string{"tail", "-f", "/dev/null"},
-		Started:    true,
+		entrypoint: []string{"tail", "-f", "/dev/null"},
+		started:    true,
 	}
 
 	testExec := exec.NewRawCommand([]string{"touch", "/tmp/.testcontainers"})
@@ -100,8 +100,8 @@ func TestWithAfterReadyCommand(t *testing.T) {
 	err := WithAfterReadyCommand(testExec)(&def)
 	require.NoError(t, err)
 
-	require.Len(t, def.LifecycleHooks, 1)
-	require.Len(t, def.LifecycleHooks[0].PostReadies, 1)
+	require.Len(t, def.lifecycleHooks, 1)
+	require.Len(t, def.lifecycleHooks[0].PostReadies, 1)
 }
 
 func TestWithEnv(t *testing.T) {
@@ -109,11 +109,11 @@ func TestWithEnv(t *testing.T) {
 		t.Helper()
 
 		def := Definition{
-			Env: initial,
+			env: initial,
 		}
 		opt := WithEnv(add)
 		require.NoError(t, opt.Customize(&def))
-		require.Equal(t, expected, def.Env)
+		require.Equal(t, expected, def.env)
 	}
 
 	t.Run("add-to-existing", func(t *testing.T) {
@@ -155,11 +155,11 @@ func TestWithEntrypoint(t *testing.T) {
 		t.Helper()
 
 		def := Definition{
-			Entrypoint: initial,
+			entrypoint: initial,
 		}
 		opt := WithEntrypoint(add...)
 		require.NoError(t, opt.Customize(&def))
-		require.Equal(t, expected, def.Entrypoint)
+		require.Equal(t, expected, def.entrypoint)
 	}
 
 	t.Run("replace-existing", func(t *testing.T) {
@@ -184,11 +184,11 @@ func TestWithEntrypointArgs(t *testing.T) {
 		t.Helper()
 
 		def := Definition{
-			Entrypoint: initial,
+			entrypoint: initial,
 		}
 		opt := WithEntrypointArgs(add...)
 		require.NoError(t, opt.Customize(&def))
-		require.Equal(t, expected, def.Entrypoint)
+		require.Equal(t, expected, def.entrypoint)
 	}
 
 	t.Run("add-to-existing", func(t *testing.T) {
@@ -213,11 +213,11 @@ func TestWithExposedPorts(t *testing.T) {
 		t.Helper()
 
 		def := Definition{
-			ExposedPorts: initial,
+			exposedPorts: initial,
 		}
 		opt := WithExposedPorts(add...)
 		require.NoError(t, opt.Customize(&def))
-		require.Equal(t, expected, def.ExposedPorts)
+		require.Equal(t, expected, def.exposedPorts)
 	}
 
 	t.Run("add-to-existing", func(t *testing.T) {
@@ -242,11 +242,11 @@ func TestWithCmd(t *testing.T) {
 		t.Helper()
 
 		def := Definition{
-			Cmd: initial,
+			cmd: initial,
 		}
 		opt := WithCmd(add...)
 		require.NoError(t, opt.Customize(&def))
-		require.Equal(t, expected, def.Cmd)
+		require.Equal(t, expected, def.cmd)
 	}
 
 	t.Run("replace-existing", func(t *testing.T) {
@@ -273,7 +273,7 @@ func TestWithAlwaysPull(t *testing.T) {
 
 	opt := WithAlwaysPull()
 	require.NoError(t, opt.Customize(&def))
-	require.True(t, def.AlwaysPullImage)
+	require.True(t, def.alwaysPullImage)
 }
 
 func TestWithImagePlatform(t *testing.T) {
@@ -283,7 +283,7 @@ func TestWithImagePlatform(t *testing.T) {
 
 	opt := WithImagePlatform("linux/amd64")
 	require.NoError(t, opt.Customize(&def))
-	require.Equal(t, "linux/amd64", def.ImagePlatform)
+	require.Equal(t, "linux/amd64", def.imagePlatform)
 }
 
 func TestWithCmdArgs(t *testing.T) {
@@ -291,11 +291,11 @@ func TestWithCmdArgs(t *testing.T) {
 		t.Helper()
 
 		def := Definition{
-			Cmd: initial,
+			cmd: initial,
 		}
 		opt := WithCmdArgs(add...)
 		require.NoError(t, opt.Customize(&def))
-		require.Equal(t, expected, def.Cmd)
+		require.Equal(t, expected, def.cmd)
 	}
 
 	t.Run("add-to-existing", func(t *testing.T) {
@@ -320,11 +320,11 @@ func TestWithLabels(t *testing.T) {
 		t.Helper()
 
 		def := Definition{
-			Labels: initial,
+			labels: initial,
 		}
 		opt := WithLabels(add)
 		require.NoError(t, opt.Customize(&def))
-		require.Equal(t, expected, def.Labels)
+		require.Equal(t, expected, def.labels)
 	}
 
 	t.Run("add-to-existing", func(t *testing.T) {
@@ -351,7 +351,7 @@ func TestWithLifecycleHooks(t *testing.T) {
 		t.Helper()
 
 		def := Definition{
-			LifecycleHooks: initial,
+			lifecycleHooks: initial,
 		}
 
 		var opt CustomizeDefinitionOption
@@ -361,9 +361,9 @@ func TestWithLifecycleHooks(t *testing.T) {
 			opt = WithAdditionalLifecycleHooks(add...)
 		}
 		require.NoError(t, opt.Customize(&def))
-		require.Len(t, def.LifecycleHooks, len(expected))
+		require.Len(t, def.lifecycleHooks, len(expected))
 		for i, hook := range expected {
-			require.Equal(t, hook, def.LifecycleHooks[i])
+			require.Equal(t, hook, def.lifecycleHooks[i])
 		}
 	}
 
@@ -409,11 +409,11 @@ func TestWithFiles(t *testing.T) {
 		t.Helper()
 
 		def := Definition{
-			Files: initial,
+			files: initial,
 		}
 		opt := WithFiles(add...)
 		require.NoError(t, opt.Customize(&def))
-		require.Equal(t, expected, def.Files)
+		require.Equal(t, expected, def.files)
 	}
 
 	reader1 := bytes.NewReader([]byte("hello"))
@@ -444,7 +444,7 @@ func TestWithName(t *testing.T) {
 
 	opt := WithName("pg-test")
 	require.NoError(t, opt.Customize(&def))
-	require.Equal(t, "pg-test", def.Name)
+	require.Equal(t, "pg-test", def.name)
 
 	t.Run("empty", func(t *testing.T) {
 		def := Definition{}
@@ -459,7 +459,7 @@ func TestWithNoStart(t *testing.T) {
 
 	opt := WithNoStart()
 	require.NoError(t, opt.Customize(&def))
-	require.False(t, def.Started)
+	require.False(t, def.started)
 }
 
 func TestWithWaitStrategy(t *testing.T) {
@@ -473,7 +473,7 @@ func TestWithWaitStrategy(t *testing.T) {
 		t.Helper()
 
 		def := Definition{
-			WaitingFor: initial,
+			waitingFor: initial,
 		}
 
 		var opt CustomizeDefinitionOption
@@ -489,7 +489,7 @@ func TestWithWaitStrategy(t *testing.T) {
 			}
 		}
 		require.NoError(t, opt.Customize(&def))
-		require.Equal(t, expected, def.WaitingFor)
+		require.Equal(t, expected, def.waitingFor)
 	}
 
 	t.Run("replace-nil", func(t *testing.T) {

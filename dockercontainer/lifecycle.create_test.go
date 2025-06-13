@@ -117,10 +117,10 @@ func TestPreCreateModifierHook(t *testing.T) {
 	t.Run("no-exposed-ports", func(t *testing.T) {
 		def := &Definition{
 			image: nginxAlpineImage, // alpine image does expose port 80
-			ConfigModifier: func(config *container.Config) {
+			configModifier: func(config *container.Config) {
 				config.Env = []string{"a=b"}
 			},
-			HostConfigModifier: func(hostConfig *container.HostConfig) {
+			hostConfigModifier: func(hostConfig *container.HostConfig) {
 				hostConfig.PortBindings = nat.PortMap{
 					"80/tcp": []nat.PortBinding{
 						{
@@ -130,7 +130,7 @@ func TestPreCreateModifierHook(t *testing.T) {
 					},
 				}
 			},
-			EndpointSettingsModifier: func(endpointSettings map[string]*network.EndpointSettings) {
+			endpointSettingsModifier: func(endpointSettings map[string]*network.EndpointSettings) {
 				endpointSettings["a"] = &network.EndpointSettings{
 					Aliases: []string{"b"},
 					Links:   []string{"link1", "link2"},
@@ -174,7 +174,7 @@ func TestPreCreateModifierHook(t *testing.T) {
 	t.Run("no-exposed-ports-and-network-mode-is-container", func(t *testing.T) {
 		def := &Definition{
 			image: nginxAlpineImage, // alpine image does expose port 80
-			HostConfigModifier: func(hostConfig *container.HostConfig) {
+			hostConfigModifier: func(hostConfig *container.HostConfig) {
 				hostConfig.PortBindings = nat.PortMap{
 					"80/tcp": []nat.PortBinding{
 						{
@@ -218,8 +218,8 @@ func TestPreCreateModifierHook(t *testing.T) {
 
 		def := &Definition{
 			image:    nginxAlpineImage, // alpine image does expose port 80
-			Networks: []string{networkName, "bar"},
-			NetworkAliases: map[string][]string{
+			networks: []string{networkName, "bar"},
+			networkAliases: map[string][]string{
 				networkName: {"foo1"}, // network aliases are needed at the moment there is a network
 			},
 		}
@@ -238,7 +238,7 @@ func TestPreCreateModifierHook(t *testing.T) {
 
 		require.Equal(
 			t,
-			def.NetworkAliases[networkName],
+			def.networkAliases[networkName],
 			inputNetworkingConfig.EndpointsConfig[networkName].Aliases,
 			"Networking config's aliases should come from the container request",
 		)
@@ -256,7 +256,7 @@ func TestPreCreateModifierHook(t *testing.T) {
 
 		def := &Definition{
 			image:    nginxAlpineImage, // alpine image does expose port 80
-			Networks: []string{networkName, "bar"},
+			networks: []string{networkName, "bar"},
 		}
 
 		// define empty inputs to be overwritten by the pre create hook
@@ -287,7 +287,7 @@ func TestPreCreateModifierHook(t *testing.T) {
 	t.Run("definition-contains-exposed-port-modifiers-without-protocol", func(t *testing.T) {
 		def := &Definition{
 			image: nginxAlpineImage, // alpine image does expose port 80
-			HostConfigModifier: func(hostConfig *container.HostConfig) {
+			hostConfigModifier: func(hostConfig *container.HostConfig) {
 				hostConfig.PortBindings = nat.PortMap{
 					"80/tcp": []nat.PortBinding{
 						{
@@ -318,7 +318,7 @@ func TestPreCreateModifierHook(t *testing.T) {
 	t.Run("definition-contains-exposed-port-modifiers-with-protocol", func(t *testing.T) {
 		def := &Definition{
 			image: nginxAlpineImage, // alpine image does expose port 80
-			HostConfigModifier: func(hostConfig *container.HostConfig) {
+			hostConfigModifier: func(hostConfig *container.HostConfig) {
 				hostConfig.PortBindings = nat.PortMap{
 					"80/tcp": []nat.PortBinding{
 						{

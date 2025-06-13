@@ -32,7 +32,7 @@ func (opt CustomizeDefinitionOption) Customize(def *Definition) error {
 // WithDockerClient sets the docker client for a container
 func WithDockerClient(dockerClient *dockerclient.Client) CustomizeDefinitionOption {
 	return func(def *Definition) error {
-		def.DockerClient = dockerClient
+		def.dockerClient = dockerClient
 
 		return nil
 	}
@@ -41,7 +41,7 @@ func WithDockerClient(dockerClient *dockerclient.Client) CustomizeDefinitionOpti
 // WithConfigModifier allows to override the default container config
 func WithConfigModifier(modifier func(config *container.Config)) CustomizeDefinitionOption {
 	return func(def *Definition) error {
-		def.ConfigModifier = modifier
+		def.configModifier = modifier
 
 		return nil
 	}
@@ -50,7 +50,7 @@ func WithConfigModifier(modifier func(config *container.Config)) CustomizeDefini
 // WithEndpointSettingsModifier allows to override the default endpoint settings
 func WithEndpointSettingsModifier(modifier func(settings map[string]*network.EndpointSettings)) CustomizeDefinitionOption {
 	return func(def *Definition) error {
-		def.EndpointSettingsModifier = modifier
+		def.endpointSettingsModifier = modifier
 
 		return nil
 	}
@@ -60,12 +60,12 @@ func WithEndpointSettingsModifier(modifier func(settings map[string]*network.End
 // If the environment variable already exists, it will be overridden.
 func WithEnv(envs map[string]string) CustomizeDefinitionOption {
 	return func(def *Definition) error {
-		if def.Env == nil {
-			def.Env = map[string]string{}
+		if def.env == nil {
+			def.env = map[string]string{}
 		}
 
 		for key, val := range envs {
-			def.Env[key] = val
+			def.env[key] = val
 		}
 
 		return nil
@@ -75,7 +75,7 @@ func WithEnv(envs map[string]string) CustomizeDefinitionOption {
 // WithHostConfigModifier allows to override the default host config
 func WithHostConfigModifier(modifier func(hostConfig *container.HostConfig)) CustomizeDefinitionOption {
 	return func(def *Definition) error {
-		def.HostConfigModifier = modifier
+		def.hostConfigModifier = modifier
 
 		return nil
 	}
@@ -87,7 +87,7 @@ func WithName(containerName string) CustomizeDefinitionOption {
 		if containerName == "" {
 			return ErrReuseEmptyName
 		}
-		def.Name = containerName
+		def.name = containerName
 		return nil
 	}
 }
@@ -95,7 +95,7 @@ func WithName(containerName string) CustomizeDefinitionOption {
 // WithNoStart will prevent the container from being started after creation.
 func WithNoStart() CustomizeDefinitionOption {
 	return func(def *Definition) error {
-		def.Started = false
+		def.started = false
 		return nil
 	}
 }
@@ -112,7 +112,7 @@ func WithImage(image string) CustomizeDefinitionOption {
 // WithImageSubstitutors sets the image substitutors for a container
 func WithImageSubstitutors(fn ...ImageSubstitutor) CustomizeDefinitionOption {
 	return func(def *Definition) error {
-		def.ImageSubstitutors = fn
+		def.imageSubstitutors = fn
 
 		return nil
 	}
@@ -121,11 +121,11 @@ func WithImageSubstitutors(fn ...ImageSubstitutor) CustomizeDefinitionOption {
 // WithLogConsumers sets the log consumers for a container
 func WithLogConsumers(consumer ...LogConsumer) CustomizeDefinitionOption {
 	return func(def *Definition) error {
-		if def.LogConsumerCfg == nil {
-			def.LogConsumerCfg = &LogConsumerConfig{}
+		if def.logConsumerCfg == nil {
+			def.logConsumerCfg = &LogConsumerConfig{}
 		}
 
-		def.LogConsumerCfg.Consumers = consumer
+		def.logConsumerCfg.Consumers = consumer
 		return nil
 	}
 }
@@ -136,7 +136,7 @@ func WithLogConsumers(consumer ...LogConsumer) CustomizeDefinitionOption {
 // so it should be used with care.
 func WithLogConsumerConfig(config *LogConsumerConfig) CustomizeDefinitionOption {
 	return func(def *Definition) error {
-		def.LogConsumerCfg = config
+		def.logConsumerCfg = config
 		return nil
 	}
 }
@@ -169,7 +169,7 @@ func WithStartupCommand(execs ...Executable) CustomizeDefinitionOption {
 			startupCommandsHook.PostStarts = append(startupCommandsHook.PostStarts, execFn)
 		}
 
-		def.LifecycleHooks = append(def.LifecycleHooks, startupCommandsHook)
+		def.lifecycleHooks = append(def.lifecycleHooks, startupCommandsHook)
 
 		return nil
 	}
@@ -191,7 +191,7 @@ func WithAfterReadyCommand(execs ...Executable) CustomizeDefinitionOption {
 			postReadiesHook = append(postReadiesHook, execFn)
 		}
 
-		def.LifecycleHooks = append(def.LifecycleHooks, LifecycleHooks{
+		def.lifecycleHooks = append(def.lifecycleHooks, LifecycleHooks{
 			PostReadies: postReadiesHook,
 		})
 
@@ -212,7 +212,7 @@ func WithAdditionalWaitStrategy(strategies ...wait.Strategy) CustomizeDefinition
 // WithWaitStrategyAndDeadline replaces the wait strategy for a container, including deadline
 func WithWaitStrategyAndDeadline(deadline time.Duration, strategies ...wait.Strategy) CustomizeDefinitionOption {
 	return func(def *Definition) error {
-		def.WaitingFor = wait.ForAll(strategies...).WithDeadline(deadline)
+		def.waitingFor = wait.ForAll(strategies...).WithDeadline(deadline)
 
 		return nil
 	}
@@ -221,16 +221,16 @@ func WithWaitStrategyAndDeadline(deadline time.Duration, strategies ...wait.Stra
 // WithAdditionalWaitStrategyAndDeadline appends the wait strategy for a container, including deadline
 func WithAdditionalWaitStrategyAndDeadline(deadline time.Duration, strategies ...wait.Strategy) CustomizeDefinitionOption {
 	return func(def *Definition) error {
-		if def.WaitingFor == nil {
-			def.WaitingFor = wait.ForAll(strategies...).WithDeadline(deadline)
+		if def.waitingFor == nil {
+			def.waitingFor = wait.ForAll(strategies...).WithDeadline(deadline)
 			return nil
 		}
 
 		wss := make([]wait.Strategy, 0, len(strategies)+1)
-		wss = append(wss, def.WaitingFor)
+		wss = append(wss, def.waitingFor)
 		wss = append(wss, strategies...)
 
-		def.WaitingFor = wait.ForAll(wss...).WithDeadline(deadline)
+		def.waitingFor = wait.ForAll(wss...).WithDeadline(deadline)
 
 		return nil
 	}
@@ -239,7 +239,7 @@ func WithAdditionalWaitStrategyAndDeadline(deadline time.Duration, strategies ..
 // WithAlwaysPull will pull the image before starting the container
 func WithAlwaysPull() CustomizeDefinitionOption {
 	return func(def *Definition) error {
-		def.AlwaysPullImage = true
+		def.alwaysPullImage = true
 		return nil
 	}
 }
@@ -247,7 +247,7 @@ func WithAlwaysPull() CustomizeDefinitionOption {
 // WithImagePlatform sets the platform for a container
 func WithImagePlatform(platform string) CustomizeDefinitionOption {
 	return func(def *Definition) error {
-		def.ImagePlatform = platform
+		def.imagePlatform = platform
 		return nil
 	}
 }
@@ -255,7 +255,7 @@ func WithImagePlatform(platform string) CustomizeDefinitionOption {
 // WithEntrypoint completely replaces the entrypoint of a container
 func WithEntrypoint(entrypoint ...string) CustomizeDefinitionOption {
 	return func(def *Definition) error {
-		def.Entrypoint = entrypoint
+		def.entrypoint = entrypoint
 		return nil
 	}
 }
@@ -263,7 +263,7 @@ func WithEntrypoint(entrypoint ...string) CustomizeDefinitionOption {
 // WithEntrypointArgs appends the entrypoint arguments to the entrypoint of a container
 func WithEntrypointArgs(entrypointArgs ...string) CustomizeDefinitionOption {
 	return func(def *Definition) error {
-		def.Entrypoint = append(def.Entrypoint, entrypointArgs...)
+		def.entrypoint = append(def.entrypoint, entrypointArgs...)
 		return nil
 	}
 }
@@ -271,7 +271,7 @@ func WithEntrypointArgs(entrypointArgs ...string) CustomizeDefinitionOption {
 // WithExposedPorts appends the ports to the exposed ports for a container
 func WithExposedPorts(ports ...string) CustomizeDefinitionOption {
 	return func(def *Definition) error {
-		def.ExposedPorts = append(def.ExposedPorts, ports...)
+		def.exposedPorts = append(def.exposedPorts, ports...)
 		return nil
 	}
 }
@@ -279,7 +279,7 @@ func WithExposedPorts(ports ...string) CustomizeDefinitionOption {
 // WithCmd completely replaces the command for a container
 func WithCmd(cmd ...string) CustomizeDefinitionOption {
 	return func(def *Definition) error {
-		def.Cmd = cmd
+		def.cmd = cmd
 		return nil
 	}
 }
@@ -287,7 +287,7 @@ func WithCmd(cmd ...string) CustomizeDefinitionOption {
 // WithCmdArgs appends the command arguments to the command for a container
 func WithCmdArgs(cmdArgs ...string) CustomizeDefinitionOption {
 	return func(def *Definition) error {
-		def.Cmd = append(def.Cmd, cmdArgs...)
+		def.cmd = append(def.cmd, cmdArgs...)
 		return nil
 	}
 }
@@ -295,11 +295,11 @@ func WithCmdArgs(cmdArgs ...string) CustomizeDefinitionOption {
 // WithLabels appends the labels to the labels for a container
 func WithLabels(labels map[string]string) CustomizeDefinitionOption {
 	return func(def *Definition) error {
-		if def.Labels == nil {
-			def.Labels = make(map[string]string)
+		if def.labels == nil {
+			def.labels = make(map[string]string)
 		}
 		for k, v := range labels {
-			def.Labels[k] = v
+			def.labels[k] = v
 		}
 		return nil
 	}
@@ -308,7 +308,7 @@ func WithLabels(labels map[string]string) CustomizeDefinitionOption {
 // WithLifecycleHooks completely replaces the lifecycle hooks for a container
 func WithLifecycleHooks(hooks ...LifecycleHooks) CustomizeDefinitionOption {
 	return func(def *Definition) error {
-		def.LifecycleHooks = hooks
+		def.lifecycleHooks = hooks
 		return nil
 	}
 }
@@ -316,7 +316,7 @@ func WithLifecycleHooks(hooks ...LifecycleHooks) CustomizeDefinitionOption {
 // WithAdditionalLifecycleHooks appends lifecycle hooks to the existing ones for a container
 func WithAdditionalLifecycleHooks(hooks ...LifecycleHooks) CustomizeDefinitionOption {
 	return func(def *Definition) error {
-		def.LifecycleHooks = append(def.LifecycleHooks, hooks...)
+		def.lifecycleHooks = append(def.lifecycleHooks, hooks...)
 		return nil
 	}
 }
@@ -324,7 +324,7 @@ func WithAdditionalLifecycleHooks(hooks ...LifecycleHooks) CustomizeDefinitionOp
 // WithFiles appends the files to the files for a container
 func WithFiles(files ...File) CustomizeDefinitionOption {
 	return func(def *Definition) error {
-		def.Files = append(def.Files, files...)
+		def.files = append(def.files, files...)
 		return nil
 	}
 }

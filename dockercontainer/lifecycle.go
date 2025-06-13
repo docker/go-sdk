@@ -176,12 +176,12 @@ func applyDefinitionHooks(ctx context.Context, hooks []DefinitionHook, def *Defi
 
 // applyLifecycleHooks calls hook on all LifecycleHooks.
 func (def *Definition) applyLifecycleHooks(hook func(lifecycleHooks LifecycleHooks) error) error {
-	if def.LifecycleHooks == nil {
+	if def.lifecycleHooks == nil {
 		return nil
 	}
 
 	var errs []error
-	for _, lifecycleHooks := range def.LifecycleHooks {
+	for _, lifecycleHooks := range def.lifecycleHooks {
 		if err := hook(lifecycleHooks); err != nil {
 			errs = append(errs, err)
 		}

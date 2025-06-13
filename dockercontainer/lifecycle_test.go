@@ -51,13 +51,13 @@ func TestCombineLifecycleHooks(t *testing.T) {
 	// call all the hooks in the right order, honouring the lifecycle
 
 	def := Definition{
-		LifecycleHooks: []LifecycleHooks{combineContainerHooks(defaultHooks, userDefinedHooks)},
+		lifecycleHooks: []LifecycleHooks{combineContainerHooks(defaultHooks, userDefinedHooks)},
 	}
 	err := def.creatingHook(context.Background())
 	require.NoError(t, err)
 
 	c := &Container{
-		lifecycleHooks: def.LifecycleHooks,
+		lifecycleHooks: def.lifecycleHooks,
 	}
 
 	err = c.createdHook(context.Background())

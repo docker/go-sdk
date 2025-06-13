@@ -357,7 +357,7 @@ func TestRunContainerWithLifecycleHooks(t *testing.T) {
 				dockercontainer.LifecycleHooks{
 					PreCreates: []dockercontainer.DefinitionHook{
 						func(_ context.Context, def *dockercontainer.Definition) error {
-							def.DockerClient.Logger().Info("pre-create hook")
+							def.DockerClient().Logger().Info("pre-create hook")
 							return nil
 						},
 					},

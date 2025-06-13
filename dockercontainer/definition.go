@@ -11,69 +11,68 @@ import (
 
 // Definition is the Definition of a container.
 type Definition struct {
-	// DockerClient the docker client to use for the container.
-	DockerClient *dockerclient.Client
+	// dockerClient the docker client to use for the container.
+	dockerClient *dockerclient.Client
 
-	// ConfigModifier the modifier for the config before container creation
-	ConfigModifier func(*container.Config)
+	// configModifier the modifier for the config before container creation
+	configModifier func(*container.Config)
 
-	// Cmd the command to use for the container.
-	Cmd []string
+	// cmd the command to use for the container.
+	cmd []string
 
-	// EndpointSettingsModifier the modifier for the network settings before container creation
-	EndpointSettingsModifier func(map[string]*network.EndpointSettings)
+	// endpointSettingsModifier the modifier for the network settings before container creation
+	endpointSettingsModifier func(map[string]*network.EndpointSettings)
 
-	// Entrypoint the entrypoint to use for the container.
-	Entrypoint []string
+	// entrypoint the entrypoint to use for the container.
+	entrypoint []string
 
-	// Env the environment variables to use for the container.
-	Env map[string]string
+	// env the environment variables to use for the container.
+	env map[string]string
 
-	// Files the files to be copied when container starts
-	Files []File
+	// files the files to be copied when container starts
+	files []File
 
-	// HostConfigModifier the modifier for the host config before container creation
-	HostConfigModifier func(*container.HostConfig)
+	// hostConfigModifier the modifier for the host config before container creation
+	hostConfigModifier func(*container.HostConfig)
 
-	// ImageSubstitutors the image substitutors to use for the container.
-	ImageSubstitutors []ImageSubstitutor
+	// imageSubstitutors the image substitutors to use for the container.
+	imageSubstitutors []ImageSubstitutor
 
-	// Labels the labels to use for the container.
-	Labels map[string]string
+	// labels the labels to use for the container.
+	labels map[string]string
 
-	// LifecycleHooks the hooks to be executed during container lifecycle
-	LifecycleHooks []LifecycleHooks
+	// lifecycleHooks the hooks to be executed during container lifecycle
+	lifecycleHooks []LifecycleHooks
 
-	// LogConsumerCfg the configuration for the log producer and its log consumers to follow the logs
-	LogConsumerCfg *LogConsumerConfig
+	// logConsumerCfg the configuration for the log producer and its log consumers to follow the logs
+	logConsumerCfg *LogConsumerConfig
 
-	// NetworkAliases the network aliases to use for the container.
-	NetworkAliases map[string][]string
+	// networkAliases the network aliases to use for the container.
+	networkAliases map[string][]string
 
-	// Networks the networks to use for the container.
-	Networks []string
+	// networks the networks to use for the container.
+	networks []string
 
-	// WaitingFor the waiting strategy to use for the container.
-	WaitingFor wait.Strategy
+	// waitingFor the waiting strategy to use for the container.
+	waitingFor wait.Strategy
 
-	// 16-byte aligned fields (strings)
-	// ExposedPorts the ports exposed by the container.
-	ExposedPorts []string
+	// exposedPorts the ports exposed by the container.
+	exposedPorts []string
 
 	// image the image to use for the container.
 	image string
 
-	// ImagePlatform the platform of the image
-	ImagePlatform string
+	// imagePlatform the platform of the image
+	imagePlatform string
 
-	// Name the name of the container.
-	Name string
+	// name the name of the container.
+	name string
 
-	// AlwaysPullImage whether to always pull the image
-	AlwaysPullImage bool
+	// alwaysPullImage whether to always pull the image
+	alwaysPullImage bool
 
-	// Started whether to auto-start the container.
-	Started bool
+	// started whether to auto-start the container.
+	started bool
 }
 
 // validate validates the definition.
@@ -83,4 +82,14 @@ func (d *Definition) validate() error {
 	}
 
 	return nil
+}
+
+// DockerClient returns the docker client used by the definition.
+func (d *Definition) DockerClient() *dockerclient.Client {
+	return d.dockerClient
+}
+
+// Image returns the image used by the definition.
+func (d *Definition) Image() string {
+	return d.image
 }

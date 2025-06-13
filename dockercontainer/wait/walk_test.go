@@ -6,12 +6,15 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/docker/go-sdk/dockercontainer"
 	"github.com/docker/go-sdk/dockercontainer/wait"
 )
 
+type testDefinition struct {
+	WaitingFor wait.Strategy
+}
+
 func TestWalk(t *testing.T) {
-	def := dockercontainer.Definition{
+	def := testDefinition{
 		WaitingFor: wait.ForAll(
 			wait.ForFile("/tmp/file"),
 			wait.ForHTTP("/health"),
@@ -73,7 +76,7 @@ func TestWalk(t *testing.T) {
 	})
 
 	t.Run("remove-stop", func(t *testing.T) {
-		def := dockercontainer.Definition{
+		def := testDefinition{
 			WaitingFor: wait.ForAll(
 				wait.ForFile("/tmp/file"),
 				wait.ForHTTP("/health"),
@@ -97,24 +100,24 @@ func TestWalk(t *testing.T) {
 	})
 
 	t.Run("direct-single", func(t *testing.T) {
-		def := dockercontainer.Definition{
+		def := testDefinition{
 			WaitingFor: wait.ForFile("/tmp/file"),
 		}
-		requireVisits(t, &def, 1)
+		requireVisits(t, def, 1)
 	})
 
 	t.Run("for-all-single", func(t *testing.T) {
-		def := dockercontainer.Definition{
+		def := testDefinition{
 			WaitingFor: wait.ForAll(
 				wait.ForFile("/tmp/file"),
 			),
 		}
-		requireVisits(t, &def, 2)
+		requireVisits(t, def, 2)
 	})
 }
 
 // requireVisits validates the number of visits for a given request.
-func requireVisits(t *testing.T, def *dockercontainer.Definition, expected int) {
+func requireVisits(t *testing.T, def testDefinition, expected int) {
 	t.Helper()
 
 	var count int

@@ -147,10 +147,10 @@ func preCreateContainerHook(ctx context.Context, dockerClient *dockerclient.Clie
 	// Docker allows only one network to be specified during container creation
 	// If there is more than one network specified in the request container should be attached to them
 	// once it is created. We will take a first network if any specified in the request and use it to create container
-	if len(def.Networks) > 0 {
-		attachContainerTo := def.Networks[0]
+	if len(def.networks) > 0 {
+		attachContainerTo := def.networks[0]
 
-		nwInspect, err := dockerClient.NetworkInspect(ctx, def.Networks[0], network.InspectOptions{
+		nwInspect, err := dockerClient.NetworkInspect(ctx, def.networks[0], network.InspectOptions{
 			Verbose: true,
 		})
 		if err != nil {
@@ -158,8 +158,8 @@ func preCreateContainerHook(ctx context.Context, dockerClient *dockerclient.Clie
 		}
 
 		aliases := []string{}
-		if _, ok := def.NetworkAliases[attachContainerTo]; ok {
-			aliases = def.NetworkAliases[attachContainerTo]
+		if _, ok := def.networkAliases[attachContainerTo]; ok {
+			aliases = def.networkAliases[attachContainerTo]
 		}
 		endpointSetting := network.EndpointSettings{
 			Aliases:   aliases,
@@ -169,16 +169,16 @@ func preCreateContainerHook(ctx context.Context, dockerClient *dockerclient.Clie
 
 	}
 
-	if def.ConfigModifier != nil {
-		def.ConfigModifier(dockerInput)
+	if def.configModifier != nil {
+		def.configModifier(dockerInput)
 	}
 
-	if def.HostConfigModifier != nil {
-		def.HostConfigModifier(hostConfig)
+	if def.hostConfigModifier != nil {
+		def.hostConfigModifier(hostConfig)
 	}
 
-	if def.EndpointSettingsModifier != nil {
-		def.EndpointSettingsModifier(endpointSettings)
+	if def.endpointSettingsModifier != nil {
+		def.endpointSettingsModifier(endpointSettings)
 	}
 
 	networkingConfig.EndpointsConfig = endpointSettings
