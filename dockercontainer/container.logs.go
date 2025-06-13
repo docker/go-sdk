@@ -225,11 +225,11 @@ func (c *Container) startLogProduction(ctx context.Context, opts ...LogProductio
 
 	// We capture context cancel function to avoid data race with multiple
 	// calls to startLogProduction.
-	go func(cancel context.CancelCauseFunc) {
+	go func() {
 		defer c.logProductionCancel(nil)
 
 		c.logProducer(stdout, stderr)
-	}(c.logProductionCancel)
+	}()
 
 	return nil
 }
