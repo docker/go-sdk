@@ -6,6 +6,7 @@ import (
 	"io"
 	"log/slog"
 	"net/http"
+	"path"
 	"strings"
 	"testing"
 	"time"
@@ -84,6 +85,40 @@ echo "done"
 				dockercontainer.WithFiles(dockercontainer.File{
 					ContainerPath: "/tmp/hello.sh",
 					Reader:        bytes.NewReader(helloSh),
+					Mode:          0o755,
+				}),
+			)
+			dockercontainer.CleanupContainer(t, ctr)
+			require.NoError(t, err)
+			require.NotNil(t, ctr)
+
+			code, r, err := ctr.Exec(context.Background(), []string{"/tmp/hello.sh"}, exec.Multiplexed())
+			require.NoError(t, err)
+			require.Equal(t, 0, code)
+
+			buf := &bytes.Buffer{}
+			_, err = io.Copy(buf, r)
+			require.NoError(t, err)
+
+			require.Equal(t, "done\n", buf.String())
+
+			// Verify that the file can be copied out of the container.
+			rc, err := ctr.CopyFromContainer(context.Background(), "/tmp/hello.txt")
+			require.NoError(t, err)
+
+			buf = &bytes.Buffer{}
+			_, err = io.Copy(buf, rc)
+			require.NoError(t, err)
+
+			require.Equal(t, "hello world\n", buf.String())
+		})
+
+		t.Run("success/using-host-path", func(t *testing.T) {
+			ctr, err := dockercontainer.Run(context.Background(),
+				dockercontainer.WithImage(nginxAlpineImage),
+				dockercontainer.WithFiles(dockercontainer.File{
+					ContainerPath: "/tmp/hello.sh",
+					HostPath:      path.Join("testdata", "hello.sh"),
 					Mode:          0o755,
 				}),
 			)

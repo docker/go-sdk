@@ -19,8 +19,13 @@ import (
 
 // File represents a file that will be copied when container starts
 type File struct {
-	// Reader the reader to read the file from
+	// Reader the reader to read the file from.
+	// It takes precedence over [HostPath].
 	Reader io.Reader
+
+	// HostPath the path to the file on the host.
+	// If [Reader] is not specified, the file will be read from the host path.
+	HostPath string
 
 	// ContainerPath the path to the file in the container.
 	// Use the slash character that matches the path separator of the operating system
@@ -33,8 +38,8 @@ type File struct {
 
 // validate validates the [File]
 func (f *File) validate() error {
-	if f.Reader == nil {
-		return errors.New("reader must be specified")
+	if f.Reader == nil && f.HostPath == "" {
+		return errors.New("reader or host path must be specified")
 	}
 
 	if f.ContainerPath == "" {

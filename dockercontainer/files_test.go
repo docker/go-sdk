@@ -16,10 +16,19 @@ import (
 )
 
 func TestFile_validate(t *testing.T) {
-	t.Run("empty-reader", func(t *testing.T) {
+	t.Run("empty-reader-and-host-path", func(t *testing.T) {
 		file := File{}
 		err := file.validate()
 		require.Error(t, err)
+	})
+
+	t.Run("empty-reader", func(t *testing.T) {
+		file := File{
+			HostPath:      "test",
+			ContainerPath: "/test",
+		}
+		err := file.validate()
+		require.NoError(t, err)
 	})
 
 	t.Run("empty-container-path", func(t *testing.T) {

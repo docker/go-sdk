@@ -1,3 +1,3 @@
-#!/usr/bin/env bash
-echo "hello world" > /data/hello.txt
+#!/bin/sh
+echo "hello world" > /tmp/hello.txt
 echo "done"

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"os"
 	"strings"
 
 	"github.com/docker/docker/api/types/container"
@@ -35,10 +36,20 @@ var defaultCopyFileToContainerHook = func(files []File) LifecycleHooks {
 						return fmt.Errorf("invalid file: %w", err)
 					}
 
-					// Bytes takes precedence over HostFilePath
-					bs, err := io.ReadAll(f.Reader)
-					if err != nil {
-						return fmt.Errorf("read all: %w", err)
+					var bs []byte
+					var err error
+					if f.Reader != nil {
+						// Bytes takes precedence over HostFilePath
+						bs, err = io.ReadAll(f.Reader)
+						if err != nil {
+							return fmt.Errorf("read all: %w", err)
+						}
+					} else {
+						// no reader, read from host path
+						bs, err = os.ReadFile(f.HostPath)
+						if err != nil {
+							return fmt.Errorf("read file: %w", err)
+						}
 					}
 
 					err = c.CopyToContainer(ctx, bs, f.ContainerPath, f.Mode)
