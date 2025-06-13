@@ -183,7 +183,7 @@ func preCreateContainerHook(ctx context.Context, dockerClient *dockerclient.Clie
 
 	networkingConfig.EndpointsConfig = endpointSettings
 
-	exposedPorts := def.ExposedPorts
+	exposedPorts := def.exposedPorts
 	// this check must be done after the pre-creation Modifiers are called, so the network mode is already set
 	if len(exposedPorts) == 0 && !hostConfig.NetworkMode.IsContainer() {
 		hostConfig.PublishAllPorts = true
@@ -200,7 +200,7 @@ func preCreateContainerHook(ctx context.Context, dockerClient *dockerclient.Clie
 	if len(exposedPorts) == 0 && !hostConfig.NetworkMode.IsContainer() {
 		hostConfig.PortBindings = exposedPortMap
 	} else {
-		hostConfig.PortBindings = mergePortBindings(hostConfig.PortBindings, exposedPortMap, def.ExposedPorts)
+		hostConfig.PortBindings = mergePortBindings(hostConfig.PortBindings, exposedPortMap, def.exposedPorts)
 	}
 
 	return nil
