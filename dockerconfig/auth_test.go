@@ -14,8 +14,12 @@ import (
 
 func TestDecodeBase64Auth(t *testing.T) {
 	for _, tc := range base64TestCases() {
-		t.Run(tc.name, testBase64Case(tc, func() (string, string, error) {
-			return decodeBase64Auth(tc.config)
+		t.Run(tc.name, testBase64Case(tc, func() (AuthConfig, error) {
+			user, pass, err := decodeBase64Auth(tc.config)
+			return AuthConfig{
+				Username: user,
+				Password: pass,
+			}, err
 		}))
 	}
 }
@@ -29,7 +33,7 @@ func TestConfig_RegistryCredentialsForHostname(t *testing.T) {
 						"some.domain": tc.config,
 					},
 				}
-				testBase64Case(tc, func() (string, string, error) {
+				testBase64Case(tc, func() (AuthConfig, error) {
 					return config.RegistryCredentialsForHostname("some.domain")
 				})(t)
 			})
@@ -60,21 +64,21 @@ func base64TestCases() []base64TestCase {
 	return cases
 }
 
-type testAuthFn func() (string, string, error)
+type testAuthFn func() (AuthConfig, error)
 
 func testBase64Case(tc base64TestCase, authFn testAuthFn) func(t *testing.T) {
 	return func(t *testing.T) {
 		t.Helper()
 
-		u, p, err := authFn()
+		creds, err := authFn()
 		if tc.expErr {
 			require.Error(t, err)
 		} else {
 			require.NoError(t, err)
 		}
 
-		require.Equal(t, tc.expUser, u)
-		require.Equal(t, tc.expPass, p)
+		require.Equal(t, tc.expUser, creds.Username)
+		require.Equal(t, tc.expPass, creds.Password)
 	}
 }
 
@@ -82,42 +86,48 @@ func testBase64Case(tc base64TestCase, authFn testAuthFn) func(t *testing.T) {
 func validateAuthForHostname(t *testing.T, hostname, expectedUser, expectedPass string) {
 	t.Helper()
 
-	username, password, err := RegistryCredentialsForHostname(hostname)
+	creds, err := RegistryCredentialsForHostname(hostname)
 	require.NoError(t, err)
-	require.Equal(t, expectedUser, username)
-	require.Equal(t, expectedPass, password)
+	require.Equal(t, expectedUser, creds.Username)
+	require.Equal(t, expectedPass, creds.Password)
+	if creds.ServerAddress != "" {
+		require.Equal(t, hostname, creds.ServerAddress)
+	}
 }
 
 // validateAuthForImage is a helper function to validate the username and password for a given image reference.
 func validateAuthForImage(t *testing.T, imageRef, expectedUser, expectedPass string) {
 	t.Helper()
 
-	username, password, err := RegistryCredentials(imageRef)
+	creds, err := RegistryCredentials(imageRef)
 	require.NoError(t, err)
-	require.Equal(t, expectedUser, username)
-	require.Equal(t, expectedPass, password)
+	require.Equal(t, expectedUser, creds.Username)
+	require.Equal(t, expectedPass, creds.Password)
 }
 
 // validateAuthErrorForHostname is a helper function to validate we get an error for the given hostname.
 func validateAuthErrorForHostname(t *testing.T, hostname string, expectedErr error) {
 	t.Helper()
 
-	username, password, err := RegistryCredentialsForHostname(hostname)
+	creds, err := RegistryCredentialsForHostname(hostname)
 	require.Error(t, err)
 	require.Equal(t, expectedErr.Error(), err.Error())
-	require.Empty(t, username)
-	require.Empty(t, password)
+	require.Empty(t, creds.Username)
+	require.Empty(t, creds.Password)
+	if creds.ServerAddress != "" {
+		require.Equal(t, hostname, creds.ServerAddress)
+	}
 }
 
 // validateAuthErrorForImage is a helper function to validate we get an error for the given image reference.
 func validateAuthErrorForImage(t *testing.T, imageRef string, expectedErr error) {
 	t.Helper()
 
-	username, password, err := RegistryCredentials(imageRef)
+	creds, err := RegistryCredentials(imageRef)
 	require.Error(t, err)
-	require.Equal(t, expectedErr.Error(), err.Error())
-	require.Empty(t, username)
-	require.Empty(t, password)
+	require.ErrorContains(t, err, expectedErr.Error())
+	require.Empty(t, creds.Username)
+	require.Empty(t, creds.Password)
 }
 
 func TestRegistryCredentialsForImage(t *testing.T) {

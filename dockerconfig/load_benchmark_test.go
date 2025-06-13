@@ -89,10 +89,10 @@ func BenchmarkGetCredentials(b *testing.B) {
 		b.ResetTimer()
 		b.ReportAllocs()
 		for i := 0; i < b.N; i++ {
-			username, password, err := cfg.RegistryCredentialsForHostname("https://index.docker.io/v1/")
+			creds, err := cfg.RegistryCredentialsForHostname("https://index.docker.io/v1/")
 			require.NoError(b, err)
-			require.Equal(b, "testuser", username)
-			require.Equal(b, "testpassword", password)
+			require.Equal(b, "testuser", creds.Username)
+			require.Equal(b, "testpassword", creds.Password)
 		}
 	})
 
@@ -100,10 +100,10 @@ func BenchmarkGetCredentials(b *testing.B) {
 		b.ResetTimer()
 		b.ReportAllocs()
 		for i := 0; i < b.N; i++ {
-			username, password, err := cfg.RegistryCredentialsForHostname("https://registry.example.com")
+			creds, err := cfg.RegistryCredentialsForHostname("https://registry.example.com")
 			require.NoError(b, err)
-			require.Equal(b, "anotheruser", username)
-			require.Equal(b, "anotherpassword", password)
+			require.Equal(b, "anotheruser", creds.Username)
+			require.Equal(b, "anotherpassword", creds.Password)
 		}
 	})
 
@@ -111,10 +111,10 @@ func BenchmarkGetCredentials(b *testing.B) {
 		b.ResetTimer()
 		b.ReportAllocs()
 		for i := 0; i < b.N; i++ {
-			username, password, err := cfg.RegistryCredentialsForHostname("https://nonexistent.registry.com")
+			creds, err := cfg.RegistryCredentialsForHostname("https://nonexistent.registry.com")
 			require.NoError(b, err)
-			require.Empty(b, username)
-			require.Empty(b, password)
+			require.Empty(b, creds.Username)
+			require.Empty(b, creds.Password)
 		}
 	})
 
@@ -122,10 +122,10 @@ func BenchmarkGetCredentials(b *testing.B) {
 		b.ResetTimer()
 		b.ReportAllocs()
 		for i := 0; i < b.N; i++ {
-			username, password, err := RegistryCredentials("docker.io/library/nginx:latest")
+			creds, err := RegistryCredentials("docker.io/library/nginx:latest")
 			require.NoError(b, err)
-			require.Equal(b, "testuser", username)
-			require.Equal(b, "testpassword", password)
+			require.Equal(b, "testuser", creds.Username)
+			require.Equal(b, "testpassword", creds.Password)
 		}
 	})
 }

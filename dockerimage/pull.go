@@ -26,13 +26,13 @@ type ImagePullClient interface {
 // See [dockerclient.IsPermanentClientError] for the list of non-permanent errors.
 // It first extracts the registry credentials from the image name, and sets them in the pull options.
 func Pull(ctx context.Context, imagePullCli ImagePullClient, imageName string, pullOpt image.PullOptions) error {
-	user, pwd, err := dockerconfig.RegistryCredentials(imageName)
+	creds, err := dockerconfig.RegistryCredentials(imageName)
 	if err != nil {
 		imagePullCli.Logger().Warn("failed to get image auth, setting empty credentials for the image", "image", imageName, "error", err)
 	} else {
 		authConfig := dockerconfig.AuthConfig{
-			Username: user,
-			Password: pwd,
+			Username: creds.Username,
+			Password: creds.Password,
 		}
 		encodedJSON, err := json.Marshal(authConfig)
 		if err != nil {

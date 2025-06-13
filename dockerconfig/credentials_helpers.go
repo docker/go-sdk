@@ -34,16 +34,17 @@ var (
 // Hostnames should already be resolved using [ResolveRegistryHost]
 //
 // If the username string is empty, the password string is an identity token.
-func credentialsFromHelper(helper, hostname string) (string, string, error) {
+func credentialsFromHelper(helper, hostname string) (AuthConfig, error) {
+	var creds AuthConfig
 	credHelperName := helper
 	if helper == "" {
 		helper, helperErr := getCredentialHelper()
 		if helperErr != nil {
-			return "", "", fmt.Errorf("get credential helper: %w", helperErr)
+			return creds, fmt.Errorf("get credential helper: %w", helperErr)
 		}
 
 		if helper == "" {
-			return "", "", nil
+			return creds, nil
 		}
 
 		credHelperName = helper
@@ -53,10 +54,10 @@ func credentialsFromHelper(helper, hostname string) (string, string, error) {
 	p, err := execLookPath(helper)
 	if err != nil {
 		if !errors.Is(err, exec.ErrNotFound) {
-			return "", "", fmt.Errorf("look up %q: %w", helper, err)
+			return creds, fmt.Errorf("look up %q: %w", helper, err)
 		}
 
-		return "", "", nil
+		return creds, nil
 	}
 
 	var outBuf, errBuf bytes.Buffer
@@ -69,31 +70,38 @@ func credentialsFromHelper(helper, hostname string) (string, string, error) {
 		out := strings.TrimSpace(outBuf.String())
 		switch out {
 		case ErrCredentialsNotFound.Error():
-			return "", "", nil
+			return creds, nil
 		case ErrCredentialsMissingServerURL.Error():
-			return "", "", ErrCredentialsMissingServerURL
+			return creds, ErrCredentialsMissingServerURL
 		default:
-			return "", "", fmt.Errorf("execute %q stdout: %q stderr: %q: %w",
+			return creds, fmt.Errorf("execute %q stdout: %q stderr: %q: %w",
 				helper, out, strings.TrimSpace(errBuf.String()), err,
 			)
 		}
 	}
 
-	var creds struct {
-		Username string `json:"Username"`
-		Secret   string `json:"Secret"`
+	// ServerURL is not always present in the output,
+	// only some credential helpers include it (e.g. Google Cloud).
+	var bytesCreds struct {
+		Username  string `json:"Username"`
+		Secret    string `json:"Secret"`
+		ServerURL string `json:"ServerURL,omitempty"`
 	}
 
-	if err = json.Unmarshal(outBuf.Bytes(), &creds); err != nil {
-		return "", "", fmt.Errorf("unmarshal credentials from: %q: %w", helper, err)
+	if err = json.Unmarshal(outBuf.Bytes(), &bytesCreds); err != nil {
+		return creds, fmt.Errorf("unmarshal credentials from: %q: %w", helper, err)
 	}
 
 	// When tokenUsername is used, the output is an identity token and the username is garbage.
-	if creds.Username == tokenUsername {
-		creds.Username = ""
+	if bytesCreds.Username == tokenUsername {
+		bytesCreds.Username = ""
 	}
 
-	return creds.Username, creds.Secret, nil
+	creds.Username = bytesCreds.Username
+	creds.Password = bytesCreds.Secret
+	creds.ServerAddress = bytesCreds.ServerURL
+
+	return creds, nil
 }
 
 // getCredentialHelper gets the default credential helper name for the current platform.

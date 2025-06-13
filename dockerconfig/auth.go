@@ -19,26 +19,33 @@ const tokenUsername = "<token>"
 //
 // This will use [Load] to read registry auth details from the config.
 // If the config doesn't exist, it will attempt to load registry credentials using the default credential helper for the platform.
-func RegistryCredentials(imageRef string) (string, string, error) {
+func RegistryCredentials(imageRef string) (AuthConfig, error) {
 	var ref auth.ImageReference
+	var creds AuthConfig
 
 	ref, err := auth.ParseImageRef(imageRef)
 	if err != nil {
-		return "", "", fmt.Errorf("parse image ref: %w", err)
+		return creds, fmt.Errorf("parse image ref: %w", err)
 	}
 
-	return RegistryCredentialsForHostname(ref.Registry)
+	creds, err = RegistryCredentialsForHostname(ref.Registry)
+	if err != nil {
+		return creds, fmt.Errorf("get credentials for hostname: %w", err)
+	}
+
+	return creds, nil
 }
 
 // RegistryCredentialsForHostname gets registry credentials for the passed in registry host.
 //
 // This will use [Load] to read registry auth details from the config.
 // If the config doesn't exist, it will attempt to load registry credentials using the default credential helper for the platform.
-func RegistryCredentialsForHostname(hostname string) (string, string, error) {
+func RegistryCredentialsForHostname(hostname string) (AuthConfig, error) {
+	var creds AuthConfig
 	cfg, err := Load()
 	if err != nil {
 		if !errors.Is(err, fs.ErrNotExist) {
-			return "", "", fmt.Errorf("load default config: %w", err)
+			return creds, fmt.Errorf("load default config: %w", err)
 		}
 
 		return credentialsFromHelper("", hostname)
@@ -52,37 +59,52 @@ func RegistryCredentialsForHostname(hostname string) (string, string, error) {
 // Hostnames should already be resolved using [ResolveRegistryHost].
 //
 // If the returned username string is empty, the password is an identity token.
-func (c *Config) RegistryCredentialsForHostname(hostname string) (string, string, error) {
+func (c *Config) RegistryCredentialsForHostname(hostname string) (AuthConfig, error) {
+	var zero AuthConfig
 	h, ok := c.CredentialHelpers[hostname]
 	if ok {
 		return credentialsFromHelper(h, hostname)
 	}
 
 	if c.CredentialsStore != "" {
-		username, password, err := credentialsFromHelper(c.CredentialsStore, hostname)
+		creds, err := credentialsFromHelper(c.CredentialsStore, hostname)
 		if err != nil {
-			return "", "", fmt.Errorf("get credentials from store: %w", err)
+			return zero, fmt.Errorf("get credentials from store: %w", err)
 		}
 
-		if username != "" || password != "" {
-			return username, password, nil
+		if creds.Username != "" || creds.Password != "" {
+			return creds, nil
 		}
 	}
 
-	auth, ok := c.AuthConfigs[hostname]
+	authConfig, ok := c.AuthConfigs[hostname]
 	if !ok {
 		return credentialsFromHelper("", hostname)
 	}
 
-	if auth.IdentityToken != "" {
-		return "", auth.IdentityToken, nil
+	creds := AuthConfig{}
+
+	if authConfig.IdentityToken != "" {
+		creds.Username = ""
+		creds.Password = authConfig.IdentityToken
+		return creds, nil
 	}
 
-	if auth.Username != "" && auth.Password != "" {
-		return auth.Username, auth.Password, nil
+	if authConfig.Username != "" && authConfig.Password != "" {
+		creds.Username = authConfig.Username
+		creds.Password = authConfig.Password
+		return creds, nil
 	}
 
-	return decodeBase64Auth(auth)
+	user, pass, err := decodeBase64Auth(authConfig)
+	if err != nil {
+		return zero, fmt.Errorf("decode base64 auth: %w", err)
+	}
+
+	creds.Username = user
+	creds.Password = pass
+
+	return creds, nil
 }
 
 // decodeBase64Auth decodes the legacy file-based auth storage from the docker CLI.
