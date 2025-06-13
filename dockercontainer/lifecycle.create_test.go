@@ -297,7 +297,7 @@ func TestPreCreateModifierHook(t *testing.T) {
 					},
 				}
 			},
-			ExposedPorts: []string{"80"},
+			exposedPorts: []string{"80"},
 		}
 
 		// define empty inputs to be overwritten by the pre create hook
@@ -328,7 +328,7 @@ func TestPreCreateModifierHook(t *testing.T) {
 					},
 				}
 			},
-			ExposedPorts: []string{"80/tcp"},
+			exposedPorts: []string{"80/tcp"},
 		}
 
 		// define empty inputs to be overwritten by the pre create hook
