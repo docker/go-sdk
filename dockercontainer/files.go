@@ -62,7 +62,7 @@ func (fc *FileFromContainer) Close() error {
 
 // CopyFromContainer copies a file from the container to the local filesystem.
 func (c *Container) CopyFromContainer(ctx context.Context, containerFilePath string) (io.ReadCloser, error) {
-	r, _, err := c.dockerClient.CopyFromContainer(ctx, c.ID, containerFilePath)
+	r, _, err := c.dockerClient.CopyFromContainer(ctx, c.ID(), containerFilePath)
 	if err != nil {
 		return nil, err
 	}
@@ -101,7 +101,7 @@ func (c *Container) CopyToContainer(ctx context.Context, fileContent []byte, con
 		return fmt.Errorf("new docker client: %w", err)
 	}
 
-	err = dockerClient.CopyToContainer(ctx, c.ID, "/", buffer, container.CopyToContainerOptions{})
+	err = dockerClient.CopyToContainer(ctx, c.ID(), "/", buffer, container.CopyToContainerOptions{})
 	if err != nil {
 		return fmt.Errorf("copy to container: %w", err)
 	}

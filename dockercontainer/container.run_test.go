@@ -276,8 +276,8 @@ echo "done"
 			require.NoError(t, err)
 			require.NotNil(t, inspect)
 
-			require.Equal(t, ctr.ID, inspect.ID)
-			require.Equal(t, ctr.Image, inspect.Config.Image)
+			require.Equal(t, ctr.ID(), inspect.ID)
+			require.Equal(t, ctr.Image(), inspect.Config.Image)
 		})
 
 		t.Run("mapped-ports", func(t *testing.T) {

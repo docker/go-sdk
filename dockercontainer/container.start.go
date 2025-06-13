@@ -14,7 +14,7 @@ func (c *Container) Start(ctx context.Context) error {
 		return fmt.Errorf("starting hook: %w", err)
 	}
 
-	if err := c.dockerClient.ContainerStart(ctx, c.ID, container.StartOptions{}); err != nil {
+	if err := c.dockerClient.ContainerStart(ctx, c.ID(), container.StartOptions{}); err != nil {
 		return fmt.Errorf("container start: %w", err)
 	}
 	defer c.dockerClient.Close()

@@ -123,7 +123,7 @@ func (c *Container) Terminate(ctx context.Context, opts ...TerminateOption) erro
 	// run the terminated hook?
 	errs := []error{
 		c.terminatingHook(ctx),
-		c.dockerClient.ContainerRemove(ctx, c.ID, container.RemoveOptions{
+		c.dockerClient.ContainerRemove(ctx, c.ID(), container.RemoveOptions{
 			RemoveVolumes: true,
 			Force:         true,
 		}),

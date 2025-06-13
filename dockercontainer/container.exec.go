@@ -26,7 +26,7 @@ func (c *Container) Exec(ctx context.Context, cmd []string, options ...exec.Proc
 		o.Apply(processOptions)
 	}
 
-	response, err := c.dockerClient.ContainerExecCreate(ctx, c.ID, processOptions.ExecConfig)
+	response, err := c.dockerClient.ContainerExecCreate(ctx, c.ID(), processOptions.ExecConfig)
 	if err != nil {
 		return 0, nil, fmt.Errorf("container exec create: %w", err)
 	}

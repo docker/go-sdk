@@ -75,7 +75,7 @@ func (c *Container) Stop(ctx context.Context, opts ...StopOption) error {
 	timeoutSeconds := int(stopOptions.StopTimeout().Seconds())
 	options.Timeout = &timeoutSeconds
 
-	if err := c.dockerClient.ContainerStop(stopOptions.Context(), c.ID, options); err != nil {
+	if err := c.dockerClient.ContainerStop(stopOptions.Context(), c.ID(), options); err != nil {
 		return fmt.Errorf("container stop: %w", err)
 	}
 

@@ -165,10 +165,10 @@ func Run(ctx context.Context, opts ...ContainerCustomizer) (*Container, error) {
 	// This should match the fields set in ContainerFromDockerResponse.
 	ctr := &Container{
 		dockerClient:   def.DockerClient,
-		ID:             resp.ID,
+		containerID:    resp.ID,
 		shortID:        resp.ID[:12],
-		WaitingFor:     def.WaitingFor,
-		Image:          def.image,
+		waitingFor:     def.WaitingFor,
+		image:          def.image,
 		exposedPorts:   def.ExposedPorts,
 		logger:         def.DockerClient.Logger(),
 		lifecycleHooks: def.LifecycleHooks,

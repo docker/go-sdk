@@ -13,14 +13,14 @@ import (
 type Container struct {
 	dockerClient *dockerclient.Client
 
-	// ID the Container ID
-	ID string
+	// containerID the Container ID
+	containerID string
 
 	// shortID the short Container ID, using the first 12 characters of the ID
 	shortID string
 
 	// WaitingFor the waiting strategy to use for the container.
-	WaitingFor wait.Strategy
+	waitingFor wait.Strategy
 
 	// TODO: Remove locking and wait group once the deprecated StartLogProducer and
 	// StopLogProducer have been removed and hence logging can only be started and
@@ -32,8 +32,8 @@ type Container struct {
 
 	logProductionTimeout *time.Duration
 
-	// Image the image to use for the container.
-	Image string
+	// image the image to use for the container.
+	image string
 
 	// exposedPorts the ports exposed by the container.
 	exposedPorts []string
@@ -49,6 +49,21 @@ type Container struct {
 
 	// isRunning the flag to check if the container is running.
 	isRunning bool
+}
+
+// ID returns the container ID
+func (c *Container) ID() string {
+	return c.containerID
+}
+
+// Image returns the image used by the container.
+func (c *Container) Image() string {
+	return c.image
+}
+
+// ShortID returns the short container ID, using the first 12 characters of the ID
+func (c *Container) ShortID() string {
+	return c.shortID
 }
 
 // Host gets host (ip or name) of the docker daemon where the container port is exposed
