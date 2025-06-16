@@ -1,4 +1,4 @@
-module github.com/docker/go-sdk/dockerimage
+module github.com/docker/go-sdk/image
 
 go 1.23.6
 

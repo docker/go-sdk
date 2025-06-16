@@ -8,10 +8,10 @@ import (
 	"github.com/containerd/platforms"
 
 	"github.com/docker/docker/api/types/container"
-	"github.com/docker/docker/api/types/image"
+	apiimage "github.com/docker/docker/api/types/image"
 	apinetwork "github.com/docker/docker/api/types/network"
 	"github.com/docker/go-sdk/dockerclient"
-	"github.com/docker/go-sdk/dockerimage"
+	"github.com/docker/go-sdk/image"
 )
 
 // Run is a convenience function that creates a new container and starts it.
@@ -95,10 +95,10 @@ func Run(ctx context.Context, opts ...ContainerCustomizer) (*Container, error) {
 	}
 
 	if shouldPullImage {
-		pullOpt := image.PullOptions{
+		pullOpt := apiimage.PullOptions{
 			Platform: def.imagePlatform, // may be empty
 		}
-		if err := dockerimage.Pull(ctx, def.image, dockerimage.WithPullClient(def.dockerClient), dockerimage.WithPullOptions(pullOpt)); err != nil {
+		if err := image.Pull(ctx, def.image, image.WithPullClient(def.dockerClient), image.WithPullOptions(pullOpt)); err != nil {
 			return nil, err
 		}
 	}

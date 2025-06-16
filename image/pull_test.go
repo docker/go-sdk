@@ -1,4 +1,4 @@
-package dockerimage_test
+package image_test
 
 import (
 	"context"
@@ -6,9 +6,9 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/docker/docker/api/types/image"
+	apiimage "github.com/docker/docker/api/types/image"
 	"github.com/docker/go-sdk/dockerclient"
-	"github.com/docker/go-sdk/dockerimage"
+	"github.com/docker/go-sdk/image"
 )
 
 func TestPull(t *testing.T) {
@@ -17,10 +17,10 @@ func TestPull(t *testing.T) {
 	require.NoError(t, err)
 	defer dockerClient.Close()
 
-	err = dockerimage.Pull(ctx,
+	err = image.Pull(ctx,
 		"nginx:alpine",
-		dockerimage.WithPullClient(dockerClient),
-		dockerimage.WithPullOptions(image.PullOptions{}),
+		image.WithPullClient(dockerClient),
+		image.WithPullOptions(apiimage.PullOptions{}),
 	)
 	require.NoError(t, err)
 }

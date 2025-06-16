@@ -1,4 +1,4 @@
-package dockerimage
+package image
 
 import (
 	"github.com/docker/docker/api/types/image"

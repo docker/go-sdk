@@ -5,6 +5,6 @@ use (
 	./dockerconfig
 	./dockercontainer
 	./dockercontext
-	./dockerimage
+	./image
 	./network
 )

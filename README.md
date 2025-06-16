@@ -84,10 +84,10 @@ if err != nil {
 }
 ```
 
-### dockerimage
+### image
 
 ```go
-err := dockerimage.Pull(ctx, mockImageClient, "someTag", image.PullOptions{})
+err := image.Pull(ctx, mockImageClient, "someTag", image.PullOptions{})
 if err != nil {
     log.Fatalf("failed to pull image: %v", err)
 }
