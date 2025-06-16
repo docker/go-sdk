@@ -7,6 +7,7 @@ replace (
 	github.com/docker/go-sdk/dockerconfig => ../dockerconfig
 	github.com/docker/go-sdk/dockercontext => ../dockercontext
 	github.com/docker/go-sdk/dockerimage => ../dockerimage
+	github.com/docker/go-sdk/dockernetwork => ../dockernetwork
 )
 
 require (
@@ -17,11 +18,13 @@ require (
 	github.com/docker/go-sdk/dockerclient v0.1.0
 	github.com/docker/go-sdk/dockerconfig v0.1.0
 	github.com/docker/go-sdk/dockerimage v0.1.0
+	github.com/docker/go-sdk/dockernetwork v0.1.0
 	github.com/stretchr/testify v1.10.0
 	golang.org/x/sys v0.33.0
 )
 
 require (
+	github.com/Azure/go-ansiterm v0.0.0-20250102033503-faa5f7b0171c // indirect
 	github.com/Microsoft/go-winio v0.6.2 // indirect
 	github.com/caarlos0/env/v11 v11.3.1 // indirect
 	github.com/cenkalti/backoff/v4 v4.2.1 // indirect
@@ -35,7 +38,10 @@ require (
 	github.com/go-logr/logr v1.4.2 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
+	github.com/google/uuid v1.6.0 // indirect
 	github.com/moby/docker-image-spec v1.3.1 // indirect
+	github.com/moby/term v0.5.2 // indirect
+	github.com/morikuni/aec v1.0.0 // indirect
 	github.com/opencontainers/go-digest v1.0.0 // indirect
 	github.com/opencontainers/image-spec v1.1.1 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
