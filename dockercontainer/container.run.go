@@ -142,26 +142,6 @@ func Run(ctx context.Context, opts ...ContainerCustomizer) (*Container, error) {
 		return nil, fmt.Errorf("container create: %w", err)
 	}
 
-	// If there is more than one network specified in the request attach newly created container to them one by one
-	if len(def.networks) > 1 {
-		for _, n := range def.networks[1:] {
-			nwInspect, err := def.dockerClient.NetworkInspect(ctx, n, network.InspectOptions{
-				Verbose: true,
-			})
-			if err != nil {
-				return nil, fmt.Errorf("network inspect: %w", err)
-			}
-
-			endpointSetting := network.EndpointSettings{
-				Aliases: def.networkAliases[n],
-			}
-			err = def.dockerClient.NetworkConnect(ctx, nwInspect.ID, resp.ID, &endpointSetting)
-			if err != nil {
-				return nil, fmt.Errorf("network connect: %w", err)
-			}
-		}
-	}
-
 	// This should match the fields set in ContainerFromDockerResponse.
 	ctr := &Container{
 		dockerClient:   def.dockerClient,
@@ -172,6 +152,26 @@ func Run(ctx context.Context, opts ...ContainerCustomizer) (*Container, error) {
 		exposedPorts:   def.exposedPorts,
 		logger:         def.dockerClient.Logger(),
 		lifecycleHooks: def.lifecycleHooks,
+	}
+
+	// If there is more than one network specified in the request attach newly created container to them one by one
+	if len(def.networks) > 1 {
+		for _, n := range def.networks[1:] {
+			nwInspect, err := def.dockerClient.NetworkInspect(ctx, n, network.InspectOptions{
+				Verbose: true,
+			})
+			if err != nil {
+				return ctr, fmt.Errorf("network inspect: %w", err)
+			}
+
+			endpointSetting := network.EndpointSettings{
+				Aliases: def.networkAliases[n],
+			}
+			err = def.dockerClient.NetworkConnect(ctx, nwInspect.ID, resp.ID, &endpointSetting)
+			if err != nil {
+				return ctr, fmt.Errorf("network connect: %w", err)
+			}
+		}
 	}
 
 	if err = ctr.createdHook(ctx); err != nil {
