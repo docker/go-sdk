@@ -58,21 +58,21 @@ if ok {
 }
 ```
 
-### dockercontainer
+### container
 
 ```go
-ctr, err := dockercontainer.Run(context.Background(),
-    dockercontainer.WithImage("nginx:alpine"),
-    dockercontainer.WithImagePlatform("linux/amd64"),
-    dockercontainer.WithAlwaysPull(),
-    dockercontainer.WithExposedPorts("80/tcp"),
-    dockercontainer.WithWaitStrategy(wait.ForListeningPort("80/tcp")),
+ctr, err := container.Run(context.Background(),
+    container.WithImage("nginx:alpine"),
+    container.WithImagePlatform("linux/amd64"),
+    container.WithAlwaysPull(),
+    container.WithExposedPorts("80/tcp"),
+    container.WithWaitStrategy(wait.ForListeningPort("80/tcp")),
 )
 if err != nil {
     log.Fatalf("failed to run container: %v", err)
 }
 
-dockercontainer.TerminateContainer(ctr)
+container.TerminateContainer(ctr)
 ```
 
 ### context

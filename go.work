@@ -3,7 +3,7 @@ go 1.23.6
 use (
 	./dockerclient
 	./config
-	./dockercontainer
+	./container
 	./context
 	./image
 	./network
