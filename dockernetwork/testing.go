@@ -7,6 +7,9 @@ import (
 
 	"github.com/containerd/errdefs"
 	"github.com/stretchr/testify/require"
+
+	"github.com/docker/docker/api/types/network"
+	"github.com/docker/go-sdk/dockerclient"
 )
 
 // errAlreadyInProgress is a regular expression that matches the error for a network
@@ -40,6 +43,34 @@ func CleanupNetwork(tb testing.TB, nw TerminableNetwork) {
 			noErrorOrIgnored(tb, nw.Terminate(context.Background()))
 		}
 	})
+}
+
+// CleanupNetworkByID is a helper function that schedules the network to be
+// removed, identified by its ID, when the test ends.
+// This should be the first call after NewNetwork(...) in a test before
+// any error check. If network is nil, it's a no-op.
+// It uses a new docker client to terminate the network, which is automatically
+// closed when the test ends.
+func CleanupNetworkByID(tb testing.TB, id string) {
+	tb.Helper()
+
+	dockerClient, err := dockerclient.New(context.Background())
+	if err != nil {
+		noErrorOrIgnored(tb, err)
+	}
+
+	// synthetic network using a new docker client.
+	nw := &Network{
+		response: network.CreateResponse{
+			ID: id,
+		},
+		dockerClient: dockerClient,
+	}
+	tb.Cleanup(func() {
+		noErrorOrIgnored(tb, dockerClient.Close())
+	})
+
+	CleanupNetwork(tb, nw)
 }
 
 // isCleanupSafe checks if an error is cleanup safe.
