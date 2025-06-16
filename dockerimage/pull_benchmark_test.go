@@ -43,7 +43,7 @@ func BenchmarkPull(b *testing.B) {
 		b.ResetTimer()
 		b.ReportAllocs()
 
-		for i := 0; i < b.N; i++ {
+		for range b.N {
 			err := Pull(ctx, client, imageName, pullOpt)
 			require.NoError(b, err)
 		}
@@ -59,7 +59,7 @@ func BenchmarkPull(b *testing.B) {
 		b.ResetTimer()
 		b.ReportAllocs()
 
-		for i := 0; i < b.N; i++ {
+		for range b.N {
 			err := Pull(ctx, client, imageName, pullOpt)
 			require.NoError(b, err)
 		}
@@ -78,7 +78,7 @@ func BenchmarkPull(b *testing.B) {
 		b.ResetTimer()
 		b.ReportAllocs()
 
-		for i := 0; i < b.N; i++ {
+		for range b.N {
 			attempts = 0
 			err := Pull(ctx, client, imageName, pullOpt)
 			require.NoError(b, err)

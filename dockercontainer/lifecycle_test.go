@@ -91,7 +91,7 @@ func TestCombineLifecycleHooks(t *testing.T) {
 	// - pre-X hooks: first default (2*2), then user-defined (3*2)
 	// - post-X hooks: first user-defined (3*2), then default (2*2)
 
-	for i := 0; i < 5; i++ {
+	for i := range 5 {
 		var hookType string
 		// this is the particular order of execution for the hooks
 		switch i {

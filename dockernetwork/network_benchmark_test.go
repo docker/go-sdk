@@ -15,7 +15,7 @@ func BenchmarkNetworkOperations(b *testing.B) {
 	b.Run("create-network", func(b *testing.B) {
 		b.ReportAllocs()
 		b.ResetTimer()
-		for i := 0; i < b.N; i++ {
+		for range b.N {
 			nw, err := dockernetwork.New(ctx)
 			dockernetwork.CleanupNetwork(b, nw)
 			require.NoError(b, err)
@@ -35,7 +35,7 @@ func BenchmarkNetworkOperations(b *testing.B) {
 
 		b.ReportAllocs()
 		b.ResetTimer()
-		for i := 0; i < b.N; i++ {
+		for range b.N {
 			nw, err := dockernetwork.New(ctx, opts...)
 			dockernetwork.CleanupNetwork(b, nw)
 			require.NoError(b, err)
@@ -49,11 +49,9 @@ func BenchmarkNetworkOperations(b *testing.B) {
 
 		b.ReportAllocs()
 		b.ResetTimer()
-		for i := 0; i < b.N; i++ {
+		for range b.N {
 			_, err := nw.Inspect(ctx)
-			if err != nil {
-				b.Fatal(err)
-			}
+			require.NoError(b, err)
 		}
 	})
 
@@ -68,7 +66,7 @@ func BenchmarkNetworkOperations(b *testing.B) {
 
 		b.ReportAllocs()
 		b.ResetTimer()
-		for i := 0; i < b.N; i++ {
+		for range b.N {
 			_, err := nw.Inspect(ctx)
 			require.NoError(b, err)
 		}
@@ -81,7 +79,7 @@ func BenchmarkNetworkOperations(b *testing.B) {
 
 		b.ReportAllocs()
 		b.ResetTimer()
-		for i := 0; i < b.N; i++ {
+		for range b.N {
 			_, err := nw.Inspect(ctx, dockernetwork.WithNoCache())
 			require.NoError(b, err)
 		}
@@ -90,7 +88,7 @@ func BenchmarkNetworkOperations(b *testing.B) {
 	b.Run("terminate-network", func(b *testing.B) {
 		b.ReportAllocs()
 		b.ResetTimer()
-		for i := 0; i < b.N; i++ {
+		for range b.N {
 			nw, err := dockernetwork.New(ctx)
 			dockernetwork.CleanupNetwork(b, nw)
 			require.NoError(b, err)
@@ -101,7 +99,7 @@ func BenchmarkNetworkOperations(b *testing.B) {
 	b.Run("create-and-terminate-network", func(b *testing.B) {
 		b.ReportAllocs()
 		b.ResetTimer()
-		for i := 0; i < b.N; i++ {
+		for range b.N {
 			nw, err := dockernetwork.New(ctx)
 			dockernetwork.CleanupNetwork(b, nw)
 			require.NoError(b, err)

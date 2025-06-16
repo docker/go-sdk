@@ -12,7 +12,7 @@ func BenchmarkContextOperations(b *testing.B) {
 	b.Run("current-context", func(b *testing.B) {
 		b.ResetTimer()
 		b.ReportAllocs()
-		for i := 0; i < b.N; i++ {
+		for range b.N {
 			current, err := Current()
 			require.NoError(b, err)
 			require.Equal(b, "context1", current)
@@ -23,7 +23,7 @@ func BenchmarkContextOperations(b *testing.B) {
 		b.Setenv(EnvOverrideContext, "context2")
 		b.ResetTimer()
 		b.ReportAllocs()
-		for i := 0; i < b.N; i++ {
+		for range b.N {
 			current, err := Current()
 			require.NoError(b, err)
 			require.Equal(b, "context2", current)
@@ -34,7 +34,7 @@ func BenchmarkContextOperations(b *testing.B) {
 		b.Setenv(EnvOverrideHost, "tcp://127.0.0.1:123")
 		b.ResetTimer()
 		b.ReportAllocs()
-		for i := 0; i < b.N; i++ {
+		for range b.N {
 			current, err := Current()
 			require.NoError(b, err)
 			require.Equal(b, DefaultContextName, current)
@@ -44,7 +44,7 @@ func BenchmarkContextOperations(b *testing.B) {
 	b.Run("current-docker-host", func(b *testing.B) {
 		b.ResetTimer()
 		b.ReportAllocs()
-		for i := 0; i < b.N; i++ {
+		for range b.N {
 			host, err := CurrentDockerHost()
 			require.NoError(b, err)
 			require.Equal(b, "tcp://127.0.0.1:1", host)
@@ -55,7 +55,7 @@ func BenchmarkContextOperations(b *testing.B) {
 		b.Setenv(EnvOverrideContext, "context2")
 		b.ResetTimer()
 		b.ReportAllocs()
-		for i := 0; i < b.N; i++ {
+		for range b.N {
 			host, err := CurrentDockerHost()
 			require.NoError(b, err)
 			require.Equal(b, "tcp://127.0.0.1:2", host)
@@ -66,7 +66,7 @@ func BenchmarkContextOperations(b *testing.B) {
 		b.Setenv(EnvOverrideHost, "tcp://127.0.0.1:123")
 		b.ResetTimer()
 		b.ReportAllocs()
-		for i := 0; i < b.N; i++ {
+		for range b.N {
 			host, err := CurrentDockerHost()
 			require.NoError(b, err)
 			require.Equal(b, "tcp://127.0.0.1:123", host)
@@ -77,7 +77,7 @@ func BenchmarkContextOperations(b *testing.B) {
 		b.Setenv(EnvOverrideContext, DefaultContextName)
 		b.ResetTimer()
 		b.ReportAllocs()
-		for i := 0; i < b.N; i++ {
+		for range b.N {
 			host, err := CurrentDockerHost()
 			require.NoError(b, err)
 			require.Equal(b, DefaultDockerHost, host)
@@ -98,7 +98,7 @@ func BenchmarkContextList(b *testing.B) {
 		b.Setenv(EnvOverrideContext, "nested/context1")
 		b.ResetTimer()
 		b.ReportAllocs()
-		for i := 0; i < b.N; i++ {
+		for range b.N {
 			host, err := CurrentDockerHost()
 			require.NoError(b, err)
 			require.Equal(b, "tcp://127.0.0.1:4", host)
@@ -109,7 +109,7 @@ func BenchmarkContextList(b *testing.B) {
 		b.Setenv(EnvOverrideContext, "nested/deep/context2")
 		b.ResetTimer()
 		b.ReportAllocs()
-		for i := 0; i < b.N; i++ {
+		for range b.N {
 			host, err := CurrentDockerHost()
 			require.NoError(b, err)
 			require.Equal(b, "tcp://127.0.0.1:5", host)
@@ -120,7 +120,7 @@ func BenchmarkContextList(b *testing.B) {
 		b.Setenv(EnvOverrideContext, "non-existent")
 		b.ResetTimer()
 		b.ReportAllocs()
-		for i := 0; i < b.N; i++ {
+		for range b.N {
 			host, err := CurrentDockerHost()
 			require.Error(b, err)
 			require.Empty(b, host)

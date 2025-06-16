@@ -13,7 +13,7 @@ import (
 func BenchmarkNew(b *testing.B) {
 	b.Run("default", func(b *testing.B) {
 		b.ResetTimer()
-		for i := 0; i < b.N; i++ {
+		for range b.N {
 			cli, err := dockerclient.New(context.Background())
 			require.NoError(b, err)
 			require.NoError(b, cli.Close())
@@ -23,7 +23,7 @@ func BenchmarkNew(b *testing.B) {
 	b.Run("with-host", func(b *testing.B) {
 		opt := dockerclient.FromDockerOpt(client.WithHost("tcp://localhost:2375"))
 		b.ResetTimer()
-		for i := 0; i < b.N; i++ {
+		for range b.N {
 			cli, err := dockerclient.New(context.Background(), opt)
 			require.NoError(b, err)
 			require.NoError(b, cli.Close())
@@ -33,7 +33,7 @@ func BenchmarkNew(b *testing.B) {
 	b.Run("with-logger", func(b *testing.B) {
 		opt := dockerclient.WithLogger(nil) // Using nil logger for benchmark
 		b.ResetTimer()
-		for i := 0; i < b.N; i++ {
+		for range b.N {
 			cli, err := dockerclient.New(context.Background(), opt)
 			require.NoError(b, err)
 			require.NoError(b, cli.Close())
@@ -48,7 +48,7 @@ func BenchmarkNew(b *testing.B) {
 		}
 		opt := dockerclient.WithHealthCheck(noopHealthCheck)
 		b.ResetTimer()
-		for i := 0; i < b.N; i++ {
+		for range b.N {
 			cli, err := dockerclient.New(context.Background(), opt)
 			require.NoError(b, err)
 			require.NoError(b, cli.Close())
@@ -88,7 +88,7 @@ func BenchmarkClientClose(b *testing.B) {
 		cli, err := dockerclient.New(context.Background())
 		require.NoError(b, err)
 		b.ResetTimer()
-		for i := 0; i < b.N; i++ {
+		for range b.N {
 			require.NoError(b, cli.Close())
 		}
 	})

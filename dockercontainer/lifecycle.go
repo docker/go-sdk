@@ -121,7 +121,7 @@ func combineContainerHooks(defaultHooks, userDefinedHooks []LifecycleHooks) Life
 	hooksType := reflect.TypeOf(hooks)
 	for _, defaultHook := range defaultHooks {
 		defaultVal := reflect.ValueOf(defaultHook)
-		for i := 0; i < hooksType.NumField(); i++ {
+		for i := range hooksType.NumField() {
 			if strings.HasPrefix(hooksType.Field(i).Name, "Pre") {
 				field := hooksVal.Field(i)
 				field.Set(reflect.AppendSlice(field, defaultVal.Field(i)))
@@ -134,7 +134,7 @@ func combineContainerHooks(defaultHooks, userDefinedHooks []LifecycleHooks) Life
 	// post-hooks will be the first ones to be executed.
 	for _, userDefinedHook := range userDefinedHooks {
 		userVal := reflect.ValueOf(userDefinedHook)
-		for i := 0; i < hooksType.NumField(); i++ {
+		for i := range hooksType.NumField() {
 			field := hooksVal.Field(i)
 			field.Set(reflect.AppendSlice(field, userVal.Field(i)))
 		}
@@ -143,7 +143,7 @@ func combineContainerHooks(defaultHooks, userDefinedHooks []LifecycleHooks) Life
 	// Finally, append the default post-hooks.
 	for _, defaultHook := range defaultHooks {
 		defaultVal := reflect.ValueOf(defaultHook)
-		for i := 0; i < hooksType.NumField(); i++ {
+		for i := range hooksType.NumField() {
 			if strings.HasPrefix(hooksType.Field(i).Name, "Post") {
 				field := hooksVal.Field(i)
 				field.Set(reflect.AppendSlice(field, defaultVal.Field(i)))

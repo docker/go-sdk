@@ -126,7 +126,7 @@ func benchmarkContainerRun(b *testing.B, ctx context.Context, opts []dockerconta
 	b.Helper()
 	b.ReportAllocs()
 
-	for i := 0; i < b.N; i++ {
+	for range b.N {
 		ctr, err := dockercontainer.Run(ctx, opts...)
 		dockercontainer.CleanupContainer(b, ctr)
 		require.NoError(b, err)
@@ -139,7 +139,7 @@ func benchmarkRunContainerCleanup(b *testing.B, ctx context.Context, opts []dock
 	b.ReportAllocs()
 
 	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
+	for range b.N {
 		// Create and immediately terminate one container at a time
 		ctr, err := dockercontainer.Run(ctx, opts...)
 		require.NoError(b, err)
