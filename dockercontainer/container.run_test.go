@@ -62,6 +62,9 @@ func TestRunContainer(t *testing.T) {
 		// so no need to close it during the entire container lifecycle.
 		dockerClient, err := dockerclient.New(context.Background())
 		require.NoError(t, err)
+		t.Cleanup(func() {
+			require.NoError(t, dockerClient.Close())
+		})
 
 		ctr, err := dockercontainer.Run(context.Background(),
 			dockercontainer.WithDockerClient(dockerClient),
@@ -358,6 +361,9 @@ echo "done"
 func TestRunContainer_addSDKLabels(t *testing.T) {
 	dockerClient, err := dockerclient.New(context.Background())
 	require.NoError(t, err)
+	t.Cleanup(func() {
+		require.NoError(t, dockerClient.Close())
+	})
 
 	ctr, err := dockercontainer.Run(context.Background(),
 		dockercontainer.WithDockerClient(dockerClient),
@@ -384,6 +390,9 @@ func TestRunContainerWithLifecycleHooks(t *testing.T) {
 
 		dockerClient, err := dockerclient.New(context.Background(), dockerclient.WithLogger(logger))
 		require.NoError(t, err)
+		t.Cleanup(func() {
+			require.NoError(t, dockerClient.Close())
+		})
 
 		opts := []dockercontainer.ContainerCustomizer{
 			dockercontainer.WithDockerClient(dockerClient),
@@ -498,6 +507,9 @@ func TestRunContainerWithWaitStrategy(t *testing.T) {
 
 		dockerClient, err := dockerclient.New(context.Background(), dockerclient.WithLogger(logger))
 		require.NoError(t, err)
+		t.Cleanup(func() {
+			require.NoError(t, dockerClient.Close())
+		})
 
 		opts := []dockercontainer.ContainerCustomizer{
 			dockercontainer.WithDockerClient(dockerClient),
@@ -591,6 +603,9 @@ func testCreateNetwork(t *testing.T, networkName string) network.CreateResponse 
 
 	dockerClient, err := dockerclient.New(context.Background())
 	require.NoError(t, err)
+	t.Cleanup(func() {
+		require.NoError(t, dockerClient.Close())
+	})
 
 	nw, err := dockerClient.NetworkCreate(context.Background(), networkName, network.CreateOptions{})
 	require.NoError(t, err)

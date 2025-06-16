@@ -112,7 +112,9 @@ func TestPreCreateModifierHook(t *testing.T) {
 
 	dockerClient, err := dockerclient.New(context.Background())
 	require.NoError(t, err)
-	defer dockerClient.Close()
+	t.Cleanup(func() {
+		require.NoError(t, dockerClient.Close())
+	})
 
 	t.Run("no-exposed-ports", func(t *testing.T) {
 		def := &Definition{
@@ -411,6 +413,9 @@ func testCreateNetwork(t *testing.T, networkName string) network.CreateResponse 
 
 	dockerClient, err := dockerclient.New(context.Background())
 	require.NoError(t, err)
+	t.Cleanup(func() {
+		require.NoError(t, dockerClient.Close())
+	})
 
 	nw, err := dockerClient.NetworkCreate(context.Background(), networkName, network.CreateOptions{})
 	require.NoError(t, err)

@@ -136,8 +136,5 @@ func (c *Container) Terminate(ctx context.Context, opts ...TerminateOption) erro
 		errs = append(errs, err)
 	}
 
-	// Close the docker client once the container is terminated.
-	errs = append(errs, c.dockerClient.Close())
-
 	return errors.Join(errs...)
 }

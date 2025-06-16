@@ -40,6 +40,8 @@ if err != nil {
     log.Fatalf("failed to create docker client: %v", err)
 }
 
+// Close the docker client when done
+defer cli.Close()
 ```
 
 ### dockerconfig
