@@ -44,7 +44,7 @@ func BenchmarkPull(b *testing.B) {
 		b.ReportAllocs()
 
 		for range b.N {
-			err := Pull(ctx, client, imageName, pullOpt)
+			err := Pull(ctx, imageName, WithPullClient(client), WithPullOptions(pullOpt))
 			require.NoError(b, err)
 		}
 	})
@@ -60,7 +60,7 @@ func BenchmarkPull(b *testing.B) {
 		b.ReportAllocs()
 
 		for range b.N {
-			err := Pull(ctx, client, imageName, pullOpt)
+			err := Pull(ctx, imageName, WithPullClient(client), WithPullOptions(pullOpt))
 			require.NoError(b, err)
 		}
 	})
@@ -80,7 +80,7 @@ func BenchmarkPull(b *testing.B) {
 
 		for range b.N {
 			attempts = 0
-			err := Pull(ctx, client, imageName, pullOpt)
+			err := Pull(ctx, imageName, WithPullClient(client), WithPullOptions(pullOpt))
 			require.NoError(b, err)
 		}
 	})

@@ -4,6 +4,8 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
+	"fmt"
 	"io"
 	"time"
 
@@ -25,10 +27,34 @@ type ImagePullClient interface {
 // Pull pulls an image from a remote registry, retrying on non-permanent errors.
 // See [dockerclient.IsPermanentClientError] for the list of non-permanent errors.
 // It first extracts the registry credentials from the image name, and sets them in the pull options.
-func Pull(ctx context.Context, imagePullCli ImagePullClient, imageName string, pullOpt image.PullOptions) error {
+// It needs to be called with a valid image name, and optional pull  options, see [PullOption].
+func Pull(ctx context.Context, imageName string, opts ...PullOption) error {
+	pullOpts := &pullOptions{}
+	for _, opt := range opts {
+		if err := opt(pullOpts); err != nil {
+			return fmt.Errorf("apply pull option: %w", err)
+		}
+	}
+
+	if pullOpts.pullClient == nil {
+		// create a new docker client if not set
+		cli, err := dockerclient.New(ctx)
+		if err != nil {
+			return fmt.Errorf("create docker client: %w", err)
+		}
+		pullOpts.pullClient = cli
+		// In case there is no pull client set, we use the default docker client
+		// to pull the image. We need to close it when done.
+		defer cli.Close()
+	}
+
+	if imageName == "" {
+		return errors.New("image name is not set")
+	}
+
 	creds, err := dockerconfig.RegistryCredentials(imageName)
 	if err != nil {
-		imagePullCli.Logger().Warn("failed to get image auth, setting empty credentials for the image", "image", imageName, "error", err)
+		pullOpts.pullClient.Logger().Warn("failed to get image auth, setting empty credentials for the image", "image", imageName, "error", err)
 	} else {
 		authConfig := dockerconfig.AuthConfig{
 			Username: creds.Username,
@@ -36,16 +62,16 @@ func Pull(ctx context.Context, imagePullCli ImagePullClient, imageName string, p
 		}
 		encodedJSON, err := json.Marshal(authConfig)
 		if err != nil {
-			imagePullCli.Logger().Warn("failed to marshal image auth, setting empty credentials for the image", "image", imageName, "error", err)
+			pullOpts.pullClient.Logger().Warn("failed to marshal image auth, setting empty credentials for the image", "image", imageName, "error", err)
 		} else {
-			pullOpt.RegistryAuth = base64.URLEncoding.EncodeToString(encodedJSON)
+			pullOpts.pullOptions.RegistryAuth = base64.URLEncoding.EncodeToString(encodedJSON)
 		}
 	}
 
 	var pull io.ReadCloser
 	err = backoff.RetryNotify(
 		func() error {
-			pull, err = imagePullCli.ImagePull(ctx, imageName, pullOpt)
+			pull, err = pullOpts.pullClient.ImagePull(ctx, imageName, pullOpts.pullOptions)
 			if err != nil {
 				if dockerclient.IsPermanentClientError(err) {
 					return backoff.Permanent(err)
@@ -57,7 +83,7 @@ func Pull(ctx context.Context, imagePullCli ImagePullClient, imageName string, p
 		},
 		backoff.WithContext(backoff.NewExponentialBackOff(), ctx),
 		func(err error, _ time.Duration) {
-			imagePullCli.Logger().Warn("failed to pull image, will retry", "error", err)
+			pullOpts.pullClient.Logger().Warn("failed to pull image, will retry", "error", err)
 		},
 	)
 	if err != nil {

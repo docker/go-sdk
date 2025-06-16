@@ -98,7 +98,7 @@ func Run(ctx context.Context, opts ...ContainerCustomizer) (*Container, error) {
 		pullOpt := image.PullOptions{
 			Platform: def.imagePlatform, // may be empty
 		}
-		if err := dockerimage.Pull(ctx, def.dockerClient, def.image, pullOpt); err != nil {
+		if err := dockerimage.Pull(ctx, def.image, dockerimage.WithPullClient(def.dockerClient), dockerimage.WithPullOptions(pullOpt)); err != nil {
 			return nil, err
 		}
 	}
