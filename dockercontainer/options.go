@@ -3,6 +3,7 @@ package dockercontainer
 import (
 	"context"
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/docker/docker/api/types/container"
@@ -10,6 +11,7 @@ import (
 	"github.com/docker/go-sdk/dockerclient"
 	"github.com/docker/go-sdk/dockercontainer/exec"
 	"github.com/docker/go-sdk/dockercontainer/wait"
+	"github.com/docker/go-sdk/dockernetwork"
 )
 
 var ErrReuseEmptyName = errors.New("with reuse option a container name mustn't be empty")
@@ -137,6 +139,66 @@ func WithLogConsumers(consumer ...LogConsumer) CustomizeDefinitionOption {
 func WithLogConsumerConfig(config *LogConsumerConfig) CustomizeDefinitionOption {
 	return func(def *Definition) error {
 		def.logConsumerCfg = config
+		return nil
+	}
+}
+
+// WithNetwork reuses an already existing network, attaching the container to it.
+// Finally it sets the network alias on that network to the given alias.
+func WithNetwork(aliases []string, nw *dockernetwork.Network) CustomizeDefinitionOption {
+	return WithNetworkName(aliases, nw.Name())
+}
+
+// WithNetworkName attachs a container to an already existing network, by its name.
+// If the network is not "bridge", it sets the network alias on that network
+// to the given alias, else, it returns an error. This is because network-scoped alias
+// is supported only for containers in user defined networks.
+func WithNetworkName(aliases []string, networkName string) CustomizeDefinitionOption {
+	return func(def *Definition) error {
+		if networkName == "bridge" {
+			return errors.New("network-scoped aliases are supported only for containers in user defined networks")
+		}
+
+		// attaching to the network because it was created with success or it already existed.
+		def.networks = append(def.networks, networkName)
+
+		if def.networkAliases == nil {
+			def.networkAliases = make(map[string][]string)
+		}
+		def.networkAliases[networkName] = aliases
+
+		return nil
+	}
+}
+
+// WithBridgeNetwork attachs a container to the "bridge" network.
+// There is no need to set the network alias, as it is not supported for the "bridge" network.
+func WithBridgeNetwork() CustomizeDefinitionOption {
+	return func(def *Definition) error {
+		def.networks = append(def.networks, "bridge")
+		return nil
+	}
+}
+
+// WithNewNetwork creates a new network with random name and customizers, and attaches the container to it.
+// Finally it sets the network alias on that network to the given alias.
+func WithNewNetwork(ctx context.Context, aliases []string, opts ...dockernetwork.Option) CustomizeDefinitionOption {
+	return func(def *Definition) error {
+		newNetwork, err := dockernetwork.New(ctx, opts...)
+		if err != nil {
+			return fmt.Errorf("new network: %w", err)
+		}
+
+		networkName := newNetwork.Name()
+
+		// attaching to the network because it was created with success or it already existed.
+		def.networks = append(def.networks, networkName)
+
+		if def.networkAliases == nil {
+			def.networkAliases = make(map[string][]string)
+		}
+		def.networkAliases[networkName] = aliases
+
 		return nil
 	}
 }

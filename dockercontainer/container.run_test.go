@@ -19,6 +19,7 @@ import (
 	"github.com/docker/go-sdk/dockercontainer"
 	"github.com/docker/go-sdk/dockercontainer/exec"
 	"github.com/docker/go-sdk/dockercontainer/wait"
+	"github.com/docker/go-sdk/dockernetwork"
 )
 
 func TestRunContainer(t *testing.T) {
@@ -495,6 +496,170 @@ func TestRunContainerWithLifecycleHooks(t *testing.T) {
 
 	t.Run("run-container", func(t *testing.T) {
 		testRun(t, true)
+	})
+}
+
+func TestRunContainerWithNetworks(t *testing.T) {
+	testRun := func(t *testing.T, dockerClient *dockerclient.Client, networkOptions []dockercontainer.ContainerCustomizer) (*dockercontainer.Container, error) {
+		t.Helper()
+
+		opts := []dockercontainer.ContainerCustomizer{
+			dockercontainer.WithDockerClient(dockerClient),
+			dockercontainer.WithImage(nginxAlpineImage),
+		}
+
+		opts = append(opts, networkOptions...)
+
+		return dockercontainer.Run(context.Background(), opts...)
+	}
+
+	testInspect := func(t *testing.T, ctr *dockercontainer.Container) *container.InspectResponse {
+		t.Helper()
+
+		inspect, err := ctr.Inspect(context.Background())
+		require.NoError(t, err)
+		require.NotNil(t, inspect)
+
+		return inspect
+	}
+
+	t.Run("with-network", func(t *testing.T) {
+		bufLogger := &bytes.Buffer{}
+		logger := slog.New(slog.NewTextHandler(bufLogger, nil))
+
+		dockerClient, err := dockerclient.New(context.Background(), dockerclient.WithLogger(logger))
+		require.NoError(t, err)
+		t.Cleanup(func() {
+			require.NoError(t, dockerClient.Close())
+		})
+
+		nw, err := dockernetwork.New(context.Background(), dockernetwork.WithClient(dockerClient))
+		require.NoError(t, err)
+		dockernetwork.CleanupNetwork(t, nw)
+
+		ctr, runErr := testRun(t, dockerClient, []dockercontainer.ContainerCustomizer{
+			dockercontainer.WithNetwork([]string{"ctr1"}, nw),
+		})
+		dockercontainer.CleanupContainer(t, ctr)
+		require.NoError(t, runErr)
+
+		inspect := testInspect(t, ctr)
+		require.Len(t, inspect.NetworkSettings.Networks, 1)
+		require.Equal(t, []string{"ctr1"}, inspect.NetworkSettings.Networks[nw.Name()].Aliases)
+	})
+
+	t.Run("with-bridge-network", func(t *testing.T) {
+		bufLogger := &bytes.Buffer{}
+		logger := slog.New(slog.NewTextHandler(bufLogger, nil))
+
+		dockerClient, err := dockerclient.New(context.Background(), dockerclient.WithLogger(logger))
+		require.NoError(t, err)
+		t.Cleanup(func() {
+			require.NoError(t, dockerClient.Close())
+		})
+
+		nw, err := dockernetwork.New(context.Background(), dockernetwork.WithClient(dockerClient))
+		require.NoError(t, err)
+		dockernetwork.CleanupNetwork(t, nw)
+
+		ctr, runErr := testRun(t, dockerClient, []dockercontainer.ContainerCustomizer{
+			dockercontainer.WithBridgeNetwork(),
+		})
+		dockercontainer.CleanupContainer(t, ctr)
+		require.NoError(t, runErr)
+
+		inspect := testInspect(t, ctr)
+		require.Len(t, inspect.NetworkSettings.Networks, 1)
+		require.Empty(t, inspect.NetworkSettings.Networks["bridge"].Aliases) // Bridge network does not support aliases
+	})
+
+	t.Run("with-new-network", func(t *testing.T) {
+		bufLogger := &bytes.Buffer{}
+		logger := slog.New(slog.NewTextHandler(bufLogger, nil))
+
+		dockerClient, err := dockerclient.New(context.Background(), dockerclient.WithLogger(logger))
+		require.NoError(t, err)
+		t.Cleanup(func() {
+			require.NoError(t, dockerClient.Close())
+		})
+
+		ctr, runErr := testRun(t, dockerClient, []dockercontainer.ContainerCustomizer{
+			// the network is going to be created using the same docker client
+			dockercontainer.WithNewNetwork(context.Background(), []string{"ctr1"}, dockernetwork.WithClient(dockerClient)),
+		})
+
+		// We need to clean up the network first, else it fails
+		// because the network would have active endpoints (containers)
+		inspect := testInspect(t, ctr)
+		for k := range inspect.NetworkSettings.Networks {
+			dockernetwork.CleanupNetworkByID(t, k)
+		}
+
+		// Evaluate the run error last, as we need to clean up the network
+		// before cleaning up the container
+		dockercontainer.CleanupContainer(t, ctr)
+		require.NoError(t, runErr)
+
+		require.NotNil(t, inspect)
+		require.Len(t, inspect.NetworkSettings.Networks, 1)
+	})
+
+	t.Run("with-network-name", func(t *testing.T) {
+		bufLogger := &bytes.Buffer{}
+		logger := slog.New(slog.NewTextHandler(bufLogger, nil))
+
+		dockerClient, err := dockerclient.New(context.Background(), dockerclient.WithLogger(logger))
+		require.NoError(t, err)
+		t.Cleanup(func() {
+			require.NoError(t, dockerClient.Close())
+		})
+
+		newNetwork, err := dockernetwork.New(context.Background(), dockernetwork.WithClient(dockerClient))
+		dockernetwork.CleanupNetwork(t, newNetwork)
+		require.NoError(t, err)
+		require.NotNil(t, newNetwork)
+
+		ctr, err := testRun(t, dockerClient, []dockercontainer.ContainerCustomizer{
+			dockercontainer.WithNetworkName([]string{"ctr1"}, newNetwork.Name()),
+		})
+		dockercontainer.CleanupContainer(t, ctr)
+		require.NoError(t, err)
+		require.NotNil(t, ctr)
+
+		inspect := testInspect(t, ctr)
+		require.Len(t, inspect.NetworkSettings.Networks, 1)
+		require.Equal(t, []string{"ctr1"}, inspect.NetworkSettings.Networks[newNetwork.Name()].Aliases)
+	})
+
+	t.Run("with-multiple-networks", func(t *testing.T) {
+		bufLogger := &bytes.Buffer{}
+		logger := slog.New(slog.NewTextHandler(bufLogger, nil))
+
+		dockerClient, err := dockerclient.New(context.Background(), dockerclient.WithLogger(logger))
+		require.NoError(t, err)
+		t.Cleanup(func() {
+			require.NoError(t, dockerClient.Close())
+		})
+
+		nw1, err := dockernetwork.New(context.Background(), dockernetwork.WithClient(dockerClient))
+		require.NoError(t, err)
+		dockernetwork.CleanupNetwork(t, nw1)
+
+		nw2, err := dockernetwork.New(context.Background(), dockernetwork.WithClient(dockerClient))
+		require.NoError(t, err)
+		dockernetwork.CleanupNetwork(t, nw2)
+
+		ctr, runErr := testRun(t, dockerClient, []dockercontainer.ContainerCustomizer{
+			dockercontainer.WithNetwork([]string{"ctr1"}, nw1),
+			dockercontainer.WithNetwork([]string{"ctr2"}, nw2),
+		})
+		dockercontainer.CleanupContainer(t, ctr)
+		require.NoError(t, runErr)
+
+		inspect := testInspect(t, ctr)
+		require.Len(t, inspect.NetworkSettings.Networks, 2)
+		require.Equal(t, []string{"ctr1"}, inspect.NetworkSettings.Networks[nw1.Name()].Aliases)
+		require.Equal(t, []string{"ctr2"}, inspect.NetworkSettings.Networks[nw2.Name()].Aliases)
 	})
 }
 
