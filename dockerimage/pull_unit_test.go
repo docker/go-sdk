@@ -9,8 +9,9 @@ import (
 	"time"
 
 	"github.com/containerd/errdefs"
-	"github.com/docker/docker/api/types/image"
 	"github.com/stretchr/testify/require"
+
+	"github.com/docker/docker/api/types/image"
 )
 
 func TestPull(t *testing.T) {
