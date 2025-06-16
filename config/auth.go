@@ -1,4 +1,4 @@
-package dockerconfig
+package config
 
 import (
 	"encoding/base64"
@@ -7,7 +7,7 @@ import (
 	"io/fs"
 	"strings"
 
-	"github.com/docker/go-sdk/dockerconfig/auth"
+	"github.com/docker/go-sdk/config/auth"
 )
 
 // This is used by the docker CLI in cases where an oauth identity token is used.

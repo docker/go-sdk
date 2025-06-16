@@ -1,4 +1,4 @@
-package dockerconfig
+package config
 
 import (
 	_ "embed"
@@ -141,7 +141,7 @@ func setupHome(t *testing.T, dirs ...string) {
 }
 
 // setupDockerConfigs sets the DOCKER_CONFIG environment variable to the given path,
-// and the DOCKER_AUTH_CONFIG environment variable to the testdata/dockerconfig/config.json file.
+// and the DOCKER_AUTH_CONFIG environment variable to the testdata/config/config.json file.
 func setupDockerConfigs(t *testing.T, dirs ...string) {
 	t.Helper()
 

@@ -44,10 +44,10 @@ if err != nil {
 defer cli.Close()
 ```
 
-### dockerconfig
+### config
 
 ```go
-cfg, err := dockerconfig.Load()
+cfg, err := config.Load()
 if err != nil {
     log.Fatalf("failed to load config: %v", err)
 }

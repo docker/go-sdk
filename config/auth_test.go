@@ -1,4 +1,4 @@
-package dockerconfig
+package config
 
 import (
 	"encoding/base64"

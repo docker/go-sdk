@@ -9,7 +9,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/docker/go-sdk/dockerconfig"
+	"github.com/docker/go-sdk/config"
 	"github.com/docker/go-sdk/dockercontext/internal"
 )
 
@@ -75,7 +75,7 @@ func Current() (string, error) {
 	}
 
 	// Then check config
-	cfg, err := dockerconfig.Load()
+	cfg, err := config.Load()
 	if err != nil {
 		if os.IsNotExist(err) {
 			return DefaultContextName, nil
@@ -121,7 +121,7 @@ func CurrentDockerHost() (string, error) {
 
 // metaRoot returns the root directory of the Docker context metadata.
 func metaRoot() (string, error) {
-	dir, err := dockerconfig.Dir()
+	dir, err := config.Dir()
 	if err != nil {
 		return "", fmt.Errorf("docker config dir: %w", err)
 	}

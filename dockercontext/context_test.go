@@ -8,7 +8,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/docker/go-sdk/dockerconfig"
+	"github.com/docker/go-sdk/config"
 	"github.com/docker/go-sdk/dockercontext/internal"
 )
 
@@ -124,10 +124,10 @@ func setupDockerContexts(tb testing.TB, currentContextIndex int, contextsCount i
 
 	tempMkdirAll(tb, filepath.Join(tmpDir, ".docker"))
 
-	configDir, err := dockerconfig.Dir()
+	configDir, err := config.Dir()
 	require.NoError(tb, err)
 
-	configJSON := filepath.Join(configDir, dockerconfig.FileName)
+	configJSON := filepath.Join(configDir, config.FileName)
 
 	const baseContext = "context"
 

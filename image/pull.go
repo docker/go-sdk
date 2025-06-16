@@ -12,8 +12,8 @@ import (
 	"github.com/cenkalti/backoff/v4"
 
 	"github.com/docker/docker/api/types/image"
+	"github.com/docker/go-sdk/config"
 	"github.com/docker/go-sdk/dockerclient"
-	"github.com/docker/go-sdk/dockerconfig"
 )
 
 // ImagePullClient is a client that can pull images.
@@ -52,11 +52,11 @@ func Pull(ctx context.Context, imageName string, opts ...PullOption) error {
 		return errors.New("image name is not set")
 	}
 
-	creds, err := dockerconfig.RegistryCredentials(imageName)
+	creds, err := config.RegistryCredentials(imageName)
 	if err != nil {
 		pullOpts.pullClient.Logger().Warn("failed to get image auth, setting empty credentials for the image", "image", imageName, "error", err)
 	} else {
-		authConfig := dockerconfig.AuthConfig{
+		authConfig := config.AuthConfig{
 			Username: creds.Username,
 			Password: creds.Password,
 		}

@@ -2,7 +2,7 @@ go 1.23.6
 
 use (
 	./dockerclient
-	./dockerconfig
+	./config
 	./dockercontainer
 	./dockercontext
 	./image

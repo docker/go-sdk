@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"net/url"
 
-	"github.com/docker/go-sdk/dockerconfig/auth"
+	"github.com/docker/go-sdk/config/auth"
 )
 
 // ImageSubstitutor represents a way to substitute container image names

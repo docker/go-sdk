@@ -4,7 +4,7 @@ go 1.23.6
 
 replace (
 	github.com/docker/go-sdk/dockerclient => ../dockerclient
-	github.com/docker/go-sdk/dockerconfig => ../dockerconfig
+	github.com/docker/go-sdk/config => ../config
 	github.com/docker/go-sdk/dockercontext => ../dockercontext
 	github.com/docker/go-sdk/image => ../image
 	github.com/docker/go-sdk/network => ../network
@@ -16,7 +16,7 @@ require (
 	github.com/docker/docker v28.2.2+incompatible
 	github.com/docker/go-connections v0.5.0
 	github.com/docker/go-sdk/dockerclient v0.1.0
-	github.com/docker/go-sdk/dockerconfig v0.1.0
+	github.com/docker/go-sdk/config v0.1.0
 	github.com/docker/go-sdk/image v0.1.0
 	github.com/docker/go-sdk/network v0.1.0
 	github.com/stretchr/testify v1.10.0

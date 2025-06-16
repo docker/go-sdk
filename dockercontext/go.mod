@@ -2,10 +2,10 @@ module github.com/docker/go-sdk/dockercontext
 
 go 1.23.6
 
-replace github.com/docker/go-sdk/dockerconfig => ../dockerconfig
+replace github.com/docker/go-sdk/config => ../config
 
 require (
-	github.com/docker/go-sdk/dockerconfig v0.1.0
+	github.com/docker/go-sdk/config v0.1.0
 	github.com/stretchr/testify v1.10.0
 )
 
