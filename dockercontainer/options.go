@@ -11,7 +11,7 @@ import (
 	"github.com/docker/go-sdk/dockerclient"
 	"github.com/docker/go-sdk/dockercontainer/exec"
 	"github.com/docker/go-sdk/dockercontainer/wait"
-	"github.com/docker/go-sdk/dockernetwork"
+	"github.com/docker/go-sdk/network"
 )
 
 var ErrReuseEmptyName = errors.New("with reuse option a container name mustn't be empty")
@@ -145,7 +145,7 @@ func WithLogConsumerConfig(config *LogConsumerConfig) CustomizeDefinitionOption 
 
 // WithNetwork reuses an already existing network, attaching the container to it.
 // Finally it sets the network alias on that network to the given alias.
-func WithNetwork(aliases []string, nw *dockernetwork.Network) CustomizeDefinitionOption {
+func WithNetwork(aliases []string, nw *network.Network) CustomizeDefinitionOption {
 	return WithNetworkName(aliases, nw.Name())
 }
 
@@ -182,9 +182,9 @@ func WithBridgeNetwork() CustomizeDefinitionOption {
 
 // WithNewNetwork creates a new network with random name and customizers, and attaches the container to it.
 // Finally it sets the network alias on that network to the given alias.
-func WithNewNetwork(ctx context.Context, aliases []string, opts ...dockernetwork.Option) CustomizeDefinitionOption {
+func WithNewNetwork(ctx context.Context, aliases []string, opts ...network.Option) CustomizeDefinitionOption {
 	return func(def *Definition) error {
-		newNetwork, err := dockernetwork.New(ctx, opts...)
+		newNetwork, err := network.New(ctx, opts...)
 		if err != nil {
 			return fmt.Errorf("new network: %w", err)
 		}

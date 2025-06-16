@@ -1,4 +1,4 @@
-module github.com/docker/go-sdk/dockernetwork
+module github.com/docker/go-sdk/network
 
 go 1.23.6
 

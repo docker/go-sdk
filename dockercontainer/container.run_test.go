@@ -19,7 +19,7 @@ import (
 	"github.com/docker/go-sdk/dockercontainer"
 	"github.com/docker/go-sdk/dockercontainer/exec"
 	"github.com/docker/go-sdk/dockercontainer/wait"
-	"github.com/docker/go-sdk/dockernetwork"
+	"github.com/docker/go-sdk/network"
 )
 
 func TestRunContainer(t *testing.T) {
@@ -533,9 +533,9 @@ func TestRunContainerWithNetworks(t *testing.T) {
 			require.NoError(t, dockerClient.Close())
 		})
 
-		nw, err := dockernetwork.New(context.Background(), dockernetwork.WithClient(dockerClient))
+		nw, err := network.New(context.Background(), network.WithClient(dockerClient))
 		require.NoError(t, err)
-		dockernetwork.CleanupNetwork(t, nw)
+		network.CleanupNetwork(t, nw)
 
 		ctr, runErr := testRun(t, dockerClient, []dockercontainer.ContainerCustomizer{
 			dockercontainer.WithNetwork([]string{"ctr1"}, nw),
@@ -558,9 +558,9 @@ func TestRunContainerWithNetworks(t *testing.T) {
 			require.NoError(t, dockerClient.Close())
 		})
 
-		nw, err := dockernetwork.New(context.Background(), dockernetwork.WithClient(dockerClient))
+		nw, err := network.New(context.Background(), network.WithClient(dockerClient))
 		require.NoError(t, err)
-		dockernetwork.CleanupNetwork(t, nw)
+		network.CleanupNetwork(t, nw)
 
 		ctr, runErr := testRun(t, dockerClient, []dockercontainer.ContainerCustomizer{
 			dockercontainer.WithBridgeNetwork(),
@@ -585,14 +585,14 @@ func TestRunContainerWithNetworks(t *testing.T) {
 
 		ctr, runErr := testRun(t, dockerClient, []dockercontainer.ContainerCustomizer{
 			// the network is going to be created using the same docker client
-			dockercontainer.WithNewNetwork(context.Background(), []string{"ctr1"}, dockernetwork.WithClient(dockerClient)),
+			dockercontainer.WithNewNetwork(context.Background(), []string{"ctr1"}, network.WithClient(dockerClient)),
 		})
 
 		// We need to clean up the network first, else it fails
 		// because the network would have active endpoints (containers)
 		inspect := testInspect(t, ctr)
 		for k := range inspect.NetworkSettings.Networks {
-			dockernetwork.CleanupNetworkByID(t, k)
+			network.CleanupNetworkByID(t, k)
 		}
 
 		// Evaluate the run error last, as we need to clean up the network
@@ -614,8 +614,8 @@ func TestRunContainerWithNetworks(t *testing.T) {
 			require.NoError(t, dockerClient.Close())
 		})
 
-		newNetwork, err := dockernetwork.New(context.Background(), dockernetwork.WithClient(dockerClient))
-		dockernetwork.CleanupNetwork(t, newNetwork)
+		newNetwork, err := network.New(context.Background(), network.WithClient(dockerClient))
+		network.CleanupNetwork(t, newNetwork)
 		require.NoError(t, err)
 		require.NotNil(t, newNetwork)
 
@@ -641,13 +641,13 @@ func TestRunContainerWithNetworks(t *testing.T) {
 			require.NoError(t, dockerClient.Close())
 		})
 
-		nw1, err := dockernetwork.New(context.Background(), dockernetwork.WithClient(dockerClient))
+		nw1, err := network.New(context.Background(), network.WithClient(dockerClient))
 		require.NoError(t, err)
-		dockernetwork.CleanupNetwork(t, nw1)
+		network.CleanupNetwork(t, nw1)
 
-		nw2, err := dockernetwork.New(context.Background(), dockernetwork.WithClient(dockerClient))
+		nw2, err := network.New(context.Background(), network.WithClient(dockerClient))
 		require.NoError(t, err)
-		dockernetwork.CleanupNetwork(t, nw2)
+		network.CleanupNetwork(t, nw2)
 
 		ctr, runErr := testRun(t, dockerClient, []dockercontainer.ContainerCustomizer{
 			dockercontainer.WithNetwork([]string{"ctr1"}, nw1),

@@ -6,5 +6,5 @@ use (
 	./dockercontainer
 	./dockercontext
 	./dockerimage
-	./dockernetwork
+	./network
 )

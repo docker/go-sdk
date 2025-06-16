@@ -1,4 +1,4 @@
-package dockernetwork_test
+package network_test
 
 import (
 	"context"
@@ -6,7 +6,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/docker/go-sdk/dockernetwork"
+	"github.com/docker/go-sdk/network"
 )
 
 func TestTerminate(t *testing.T) {
@@ -14,13 +14,13 @@ func TestTerminate(t *testing.T) {
 	defer dockerClient.Close()
 
 	t.Run("network-does-not-exist", func(t *testing.T) {
-		n := &dockernetwork.Network{}
+		n := &network.Network{}
 		require.Error(t, n.Terminate(context.Background()))
 	})
 
 	t.Run("network-exist", func(t *testing.T) {
-		nw, err := dockernetwork.New(context.Background(),
-			dockernetwork.WithClient(dockerClient),
+		nw, err := network.New(context.Background(),
+			network.WithClient(dockerClient),
 		)
 		require.NoError(t, err)
 		require.NoError(t, nw.Terminate(context.Background()))

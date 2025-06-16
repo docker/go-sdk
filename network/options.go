@@ -1,4 +1,4 @@
-package dockernetwork
+package network
 
 import (
 	"errors"

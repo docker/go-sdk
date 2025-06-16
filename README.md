@@ -94,10 +94,10 @@ if err != nil {
 
 ```
 
-### dockernetwork
+### network
 
 ```go
-nw, err := dockernetwork.New(ctx)
+nw, err := network.New(ctx)
 if err != nil {
     log.Fatalf("failed to create network: %v", err)
 }

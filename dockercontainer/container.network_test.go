@@ -10,7 +10,7 @@ import (
 
 	"github.com/docker/go-sdk/dockerclient"
 	"github.com/docker/go-sdk/dockercontainer"
-	"github.com/docker/go-sdk/dockernetwork"
+	"github.com/docker/go-sdk/network"
 )
 
 func TestContainer_ContainerIPs(t *testing.T) {
@@ -23,13 +23,13 @@ func TestContainer_ContainerIPs(t *testing.T) {
 		require.NoError(t, dockerClient.Close())
 	})
 
-	nw1, err := dockernetwork.New(context.Background(), dockernetwork.WithClient(dockerClient))
+	nw1, err := network.New(context.Background(), network.WithClient(dockerClient))
 	require.NoError(t, err)
-	dockernetwork.CleanupNetwork(t, nw1)
+	network.CleanupNetwork(t, nw1)
 
-	nw2, err := dockernetwork.New(context.Background(), dockernetwork.WithClient(dockerClient))
+	nw2, err := network.New(context.Background(), network.WithClient(dockerClient))
 	require.NoError(t, err)
-	dockernetwork.CleanupNetwork(t, nw2)
+	network.CleanupNetwork(t, nw2)
 
 	ctr, err := dockercontainer.Run(
 		context.Background(),
@@ -79,8 +79,8 @@ func TestContainer_Networks(t *testing.T) {
 		require.NoError(t, dockerClient.Close())
 	})
 
-	nw, err := dockernetwork.New(context.Background(), dockernetwork.WithClient(dockerClient))
-	dockernetwork.CleanupNetwork(t, nw)
+	nw, err := network.New(context.Background(), network.WithClient(dockerClient))
+	network.CleanupNetwork(t, nw)
 	require.NoError(t, err)
 
 	ctr, err := dockercontainer.Run(
@@ -107,8 +107,8 @@ func TestContainer_NetworkAliases(t *testing.T) {
 		require.NoError(t, dockerClient.Close())
 	})
 
-	nw, err := dockernetwork.New(context.Background(), dockernetwork.WithClient(dockerClient))
-	dockernetwork.CleanupNetwork(t, nw)
+	nw, err := network.New(context.Background(), network.WithClient(dockerClient))
+	network.CleanupNetwork(t, nw)
 	require.NoError(t, err)
 
 	ctr, err := dockercontainer.Run(

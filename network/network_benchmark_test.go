@@ -1,4 +1,4 @@
-package dockernetwork_test
+package network_test
 
 import (
 	"context"
@@ -6,7 +6,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/docker/go-sdk/dockernetwork"
+	"github.com/docker/go-sdk/network"
 )
 
 func BenchmarkNetworkOperations(b *testing.B) {
@@ -16,18 +16,18 @@ func BenchmarkNetworkOperations(b *testing.B) {
 		b.ReportAllocs()
 		b.ResetTimer()
 		for range b.N {
-			nw, err := dockernetwork.New(ctx)
-			dockernetwork.CleanupNetwork(b, nw)
+			nw, err := network.New(ctx)
+			network.CleanupNetwork(b, nw)
 			require.NoError(b, err)
 		}
 	})
 
 	b.Run("create-network-with-options", func(b *testing.B) {
-		opts := []dockernetwork.Option{
-			dockernetwork.WithInternal(),
-			dockernetwork.WithEnableIPv6(),
-			dockernetwork.WithAttachable(),
-			dockernetwork.WithLabels(map[string]string{
+		opts := []network.Option{
+			network.WithInternal(),
+			network.WithEnableIPv6(),
+			network.WithAttachable(),
+			network.WithLabels(map[string]string{
 				"test": "benchmark",
 				"env":  "bench",
 			}),
@@ -36,15 +36,15 @@ func BenchmarkNetworkOperations(b *testing.B) {
 		b.ReportAllocs()
 		b.ResetTimer()
 		for range b.N {
-			nw, err := dockernetwork.New(ctx, opts...)
-			dockernetwork.CleanupNetwork(b, nw)
+			nw, err := network.New(ctx, opts...)
+			network.CleanupNetwork(b, nw)
 			require.NoError(b, err)
 		}
 	})
 
 	b.Run("inspect-network", func(b *testing.B) {
-		nw, err := dockernetwork.New(ctx)
-		dockernetwork.CleanupNetwork(b, nw)
+		nw, err := network.New(ctx)
+		network.CleanupNetwork(b, nw)
 		require.NoError(b, err)
 
 		b.ReportAllocs()
@@ -56,8 +56,8 @@ func BenchmarkNetworkOperations(b *testing.B) {
 	})
 
 	b.Run("inspect-network-with-cache", func(b *testing.B) {
-		nw, err := dockernetwork.New(ctx)
-		dockernetwork.CleanupNetwork(b, nw)
+		nw, err := network.New(ctx)
+		network.CleanupNetwork(b, nw)
 		require.NoError(b, err)
 
 		// First inspect to populate cache
@@ -73,14 +73,14 @@ func BenchmarkNetworkOperations(b *testing.B) {
 	})
 
 	b.Run("inspect-network-without-cache", func(b *testing.B) {
-		nw, err := dockernetwork.New(ctx)
-		dockernetwork.CleanupNetwork(b, nw)
+		nw, err := network.New(ctx)
+		network.CleanupNetwork(b, nw)
 		require.NoError(b, err)
 
 		b.ReportAllocs()
 		b.ResetTimer()
 		for range b.N {
-			_, err := nw.Inspect(ctx, dockernetwork.WithNoCache())
+			_, err := nw.Inspect(ctx, network.WithNoCache())
 			require.NoError(b, err)
 		}
 	})
@@ -89,8 +89,8 @@ func BenchmarkNetworkOperations(b *testing.B) {
 		b.ReportAllocs()
 		b.ResetTimer()
 		for range b.N {
-			nw, err := dockernetwork.New(ctx)
-			dockernetwork.CleanupNetwork(b, nw)
+			nw, err := network.New(ctx)
+			network.CleanupNetwork(b, nw)
 			require.NoError(b, err)
 			require.NoError(b, nw.Terminate(ctx))
 		}
@@ -100,8 +100,8 @@ func BenchmarkNetworkOperations(b *testing.B) {
 		b.ReportAllocs()
 		b.ResetTimer()
 		for range b.N {
-			nw, err := dockernetwork.New(ctx)
-			dockernetwork.CleanupNetwork(b, nw)
+			nw, err := network.New(ctx)
+			network.CleanupNetwork(b, nw)
 			require.NoError(b, err)
 			require.NoError(b, nw.Terminate(ctx))
 		}
@@ -117,16 +117,16 @@ func BenchmarkNetworkConcurrent(b *testing.B) {
 
 		b.RunParallel(func(pb *testing.PB) {
 			for pb.Next() {
-				nw, err := dockernetwork.New(ctx)
-				dockernetwork.CleanupNetwork(b, nw)
+				nw, err := network.New(ctx)
+				network.CleanupNetwork(b, nw)
 				require.NoError(b, err)
 			}
 		})
 	})
 
 	b.Run("concurrent-network-inspection-with-cache", func(b *testing.B) {
-		nw, err := dockernetwork.New(ctx)
-		dockernetwork.CleanupNetwork(b, nw)
+		nw, err := network.New(ctx)
+		network.CleanupNetwork(b, nw)
 		require.NoError(b, err)
 
 		b.ReportAllocs()
@@ -140,15 +140,15 @@ func BenchmarkNetworkConcurrent(b *testing.B) {
 	})
 
 	b.Run("concurrent-network-inspection-with-no-cache", func(b *testing.B) {
-		nw, err := dockernetwork.New(ctx)
-		dockernetwork.CleanupNetwork(b, nw)
+		nw, err := network.New(ctx)
+		network.CleanupNetwork(b, nw)
 		require.NoError(b, err)
 
 		b.ReportAllocs()
 		b.ResetTimer()
 		b.RunParallel(func(pb *testing.PB) {
 			for pb.Next() {
-				_, err := nw.Inspect(ctx, dockernetwork.WithNoCache())
+				_, err := nw.Inspect(ctx, network.WithNoCache())
 				require.NoError(b, err)
 			}
 		})
@@ -159,7 +159,7 @@ func BenchmarkNetworkConcurrent(b *testing.B) {
 		b.ResetTimer()
 		b.RunParallel(func(pb *testing.PB) {
 			for pb.Next() {
-				nw, err := dockernetwork.New(ctx)
+				nw, err := network.New(ctx)
 				require.NoError(b, err)
 				require.NoError(b, nw.Terminate(ctx))
 			}

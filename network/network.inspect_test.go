@@ -1,4 +1,4 @@
-package dockernetwork_test
+package network_test
 
 import (
 	"bytes"
@@ -9,15 +9,15 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/docker/docker/api/types/network"
+	apinetwork "github.com/docker/docker/api/types/network"
 	"github.com/docker/go-sdk/dockerclient"
-	"github.com/docker/go-sdk/dockernetwork"
+	"github.com/docker/go-sdk/network"
 )
 
 func TestInspect(t *testing.T) {
 	t.Run("network-exists", func(t *testing.T) {
-		nw, err := dockernetwork.New(context.Background())
-		dockernetwork.CleanupNetwork(t, nw)
+		nw, err := network.New(context.Background())
+		network.CleanupNetwork(t, nw)
 		require.NoError(t, err)
 
 		inspect, err := nw.Inspect(context.Background())
@@ -26,7 +26,7 @@ func TestInspect(t *testing.T) {
 	})
 
 	t.Run("network-does-not-exist", func(t *testing.T) {
-		n := &dockernetwork.Network{}
+		n := &network.Network{}
 
 		inspect, err := n.Inspect(context.Background())
 		require.Error(t, err)
@@ -38,12 +38,12 @@ func TestInspect(t *testing.T) {
 			dockerClient, _ := testClientWithLogger(t)
 			defer dockerClient.Close()
 
-			nw, err := dockernetwork.New(context.Background(), dockernetwork.WithName("test-network-option-error"), dockernetwork.WithClient(dockerClient))
-			dockernetwork.CleanupNetwork(t, nw)
+			nw, err := network.New(context.Background(), network.WithName("test-network-option-error"), network.WithClient(dockerClient))
+			network.CleanupNetwork(t, nw)
 			require.NoError(t, err)
 
 			// Create an invalid inspect option that will cause an error
-			invalidOption := dockernetwork.WithInspectOptions(network.InspectOptions{
+			invalidOption := network.WithInspectOptions(apinetwork.InspectOptions{
 				Scope: "invalid-scope", // Using an invalid scope value
 			})
 
@@ -56,11 +56,11 @@ func TestInspect(t *testing.T) {
 			dockerClient, buf := testClientWithLogger(t)
 			defer dockerClient.Close()
 
-			nw, err := dockernetwork.New(context.Background(), dockernetwork.WithName("test-network-no-cache"), dockernetwork.WithClient(dockerClient))
-			dockernetwork.CleanupNetwork(t, nw)
+			nw, err := network.New(context.Background(), network.WithName("test-network-no-cache"), network.WithClient(dockerClient))
+			network.CleanupNetwork(t, nw)
 			require.NoError(t, err)
 
-			inspect, err := nw.Inspect(context.Background(), dockernetwork.WithNoCache())
+			inspect, err := nw.Inspect(context.Background(), network.WithNoCache())
 			require.NoError(t, err)
 			require.NotNil(t, inspect)
 
@@ -72,8 +72,8 @@ func TestInspect(t *testing.T) {
 			dockerClient, buf := testClientWithLogger(t)
 			defer dockerClient.Close()
 
-			nw, err := dockernetwork.New(context.Background(), dockernetwork.WithName("test-network-with-cache"), dockernetwork.WithClient(dockerClient))
-			dockernetwork.CleanupNetwork(t, nw)
+			nw, err := network.New(context.Background(), network.WithName("test-network-with-cache"), network.WithClient(dockerClient))
+			network.CleanupNetwork(t, nw)
 			require.NoError(t, err)
 
 			// first time inspecting the network: it will be cached

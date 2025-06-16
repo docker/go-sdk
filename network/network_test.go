@@ -1,4 +1,4 @@
-package dockernetwork_test
+package network_test
 
 import (
 	"context"
@@ -7,9 +7,9 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/docker/docker/api/types/network"
+	apinetwork "github.com/docker/docker/api/types/network"
 	"github.com/docker/go-sdk/dockerclient"
-	"github.com/docker/go-sdk/dockernetwork"
+	"github.com/docker/go-sdk/network"
 )
 
 func TestNew(t *testing.T) {
@@ -21,10 +21,10 @@ func TestNew(t *testing.T) {
 			driver = "nat"
 		}
 
-		nw, err := dockernetwork.New(ctx,
-			dockernetwork.WithDriver(driver),
+		nw, err := network.New(ctx,
+			network.WithDriver(driver),
 		)
-		dockernetwork.CleanupNetwork(t, nw)
+		network.CleanupNetwork(t, nw)
 		require.NoError(t, err)
 		require.NotNil(t, nw)
 		require.NotEmpty(t, nw.Name())
@@ -34,10 +34,10 @@ func TestNew(t *testing.T) {
 	t.Run("with-name", func(t *testing.T) {
 		ctx := context.Background()
 
-		nw, err := dockernetwork.New(ctx,
-			dockernetwork.WithName("test-network"),
+		nw, err := network.New(ctx,
+			network.WithName("test-network"),
 		)
-		dockernetwork.CleanupNetwork(t, nw)
+		network.CleanupNetwork(t, nw)
 		require.NoError(t, err)
 		require.NotNil(t, nw)
 		require.Equal(t, "test-network", nw.Name())
@@ -46,10 +46,10 @@ func TestNew(t *testing.T) {
 	t.Run("with-empty-name", func(t *testing.T) {
 		ctx := context.Background()
 
-		nw, err := dockernetwork.New(ctx,
-			dockernetwork.WithName(""),
+		nw, err := network.New(ctx,
+			network.WithName(""),
 		)
-		dockernetwork.CleanupNetwork(t, nw)
+		network.CleanupNetwork(t, nw)
 		require.Error(t, err)
 		require.Nil(t, nw)
 	})
@@ -57,9 +57,9 @@ func TestNew(t *testing.T) {
 	t.Run("with-ipam", func(t *testing.T) {
 		ctx := context.Background()
 
-		ipamConfig := network.IPAM{
+		ipamConfig := apinetwork.IPAM{
 			Driver: "default",
-			Config: []network.IPAMConfig{
+			Config: []apinetwork.IPAMConfig{
 				{
 					Subnet:  "10.1.1.0/24",
 					Gateway: "10.1.1.254",
@@ -69,10 +69,10 @@ func TestNew(t *testing.T) {
 				"driver": "host-local",
 			},
 		}
-		nw, err := dockernetwork.New(ctx,
-			dockernetwork.WithIPAM(&ipamConfig),
+		nw, err := network.New(ctx,
+			network.WithIPAM(&ipamConfig),
 		)
-		dockernetwork.CleanupNetwork(t, nw)
+		network.CleanupNetwork(t, nw)
 		require.NoError(t, err)
 		require.NotNil(t, nw)
 	})
@@ -80,10 +80,10 @@ func TestNew(t *testing.T) {
 	t.Run("with-attachable", func(t *testing.T) {
 		ctx := context.Background()
 
-		nw, err := dockernetwork.New(ctx,
-			dockernetwork.WithAttachable(),
+		nw, err := network.New(ctx,
+			network.WithAttachable(),
 		)
-		dockernetwork.CleanupNetwork(t, nw)
+		network.CleanupNetwork(t, nw)
 		require.NoError(t, err)
 		require.NotNil(t, nw)
 	})
@@ -91,10 +91,10 @@ func TestNew(t *testing.T) {
 	t.Run("with-internal", func(t *testing.T) {
 		ctx := context.Background()
 
-		nw, err := dockernetwork.New(ctx,
-			dockernetwork.WithInternal(),
+		nw, err := network.New(ctx,
+			network.WithInternal(),
 		)
-		dockernetwork.CleanupNetwork(t, nw)
+		network.CleanupNetwork(t, nw)
 		require.NoError(t, err)
 		require.NotNil(t, nw)
 	})
@@ -102,10 +102,10 @@ func TestNew(t *testing.T) {
 	t.Run("with-enable-ipv6", func(t *testing.T) {
 		ctx := context.Background()
 
-		nw, err := dockernetwork.New(ctx,
-			dockernetwork.WithEnableIPv6(),
+		nw, err := network.New(ctx,
+			network.WithEnableIPv6(),
 		)
-		dockernetwork.CleanupNetwork(t, nw)
+		network.CleanupNetwork(t, nw)
 		require.NoError(t, err)
 		require.NotNil(t, nw)
 	})
@@ -113,10 +113,10 @@ func TestNew(t *testing.T) {
 	t.Run("with-labels", func(t *testing.T) {
 		ctx := context.Background()
 
-		nw, err := dockernetwork.New(ctx,
-			dockernetwork.WithLabels(map[string]string{"test": "test"}),
+		nw, err := network.New(ctx,
+			network.WithLabels(map[string]string{"test": "test"}),
 		)
-		dockernetwork.CleanupNetwork(t, nw)
+		network.CleanupNetwork(t, nw)
 		require.NoError(t, err)
 		require.NotNil(t, nw)
 
@@ -133,15 +133,15 @@ func TestNew(t *testing.T) {
 func TestDuplicatedName(t *testing.T) {
 	ctx := context.Background()
 
-	nw, err := dockernetwork.New(ctx,
-		dockernetwork.WithName("foo-network"),
+	nw, err := network.New(ctx,
+		network.WithName("foo-network"),
 	)
-	dockernetwork.CleanupNetwork(t, nw)
+	network.CleanupNetwork(t, nw)
 	require.NoError(t, err)
 	require.NotNil(t, nw)
 
-	nw2, err := dockernetwork.New(ctx,
-		dockernetwork.WithName("foo-network"),
+	nw2, err := network.New(ctx,
+		network.WithName("foo-network"),
 	)
 	require.Error(t, err)
 	require.Nil(t, nw2)
