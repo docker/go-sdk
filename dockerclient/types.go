@@ -8,7 +8,7 @@ import (
 
 	"github.com/docker/docker/api/types/system"
 	"github.com/docker/docker/client"
-	"github.com/docker/go-sdk/dockercontext"
+	dockercontext "github.com/docker/go-sdk/context"
 )
 
 // packagePath is the package path for the docker-go-sdk package.

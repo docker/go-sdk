@@ -1,4 +1,4 @@
-package dockercontext
+package context
 
 import (
 	"fmt"
@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/docker/go-sdk/config"
-	"github.com/docker/go-sdk/dockercontext/internal"
+	"github.com/docker/go-sdk/context/internal"
 )
 
 func TestCurrent(t *testing.T) {

@@ -4,7 +4,7 @@ use (
 	./dockerclient
 	./config
 	./dockercontainer
-	./dockercontext
+	./context
 	./image
 	./network
 )

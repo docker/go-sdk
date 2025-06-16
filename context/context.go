@@ -1,4 +1,4 @@
-package dockercontext
+package context
 
 // The code in this file has been extracted from https://github.com/docker/cli,
 // more especifically from https://github.com/docker/cli/blob/master/cli/context/store/metadatastore.go
@@ -10,7 +10,7 @@ import (
 	"path/filepath"
 
 	"github.com/docker/go-sdk/config"
-	"github.com/docker/go-sdk/dockercontext/internal"
+	"github.com/docker/go-sdk/context/internal"
 )
 
 const (

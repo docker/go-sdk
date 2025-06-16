@@ -1,4 +1,4 @@
-package dockercontext
+package context
 
 import (
 	"testing"

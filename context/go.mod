@@ -1,4 +1,4 @@
-module github.com/docker/go-sdk/dockercontext
+module github.com/docker/go-sdk/context
 
 go 1.23.6
 

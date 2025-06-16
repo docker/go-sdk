@@ -75,10 +75,10 @@ if err != nil {
 dockercontainer.TerminateContainer(ctr)
 ```
 
-### dockercontext
+### context
 
 ```go
-dockerHost, err := dockercontext.CurrentDockerHost()
+dockerHost, err := context.CurrentDockerHost()
 if err != nil {
     log.Fatalf("failed to get current docker host: %v", err)
 }

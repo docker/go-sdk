@@ -10,8 +10,8 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/docker/docker/client"
+	dockercontext "github.com/docker/go-sdk/context"
 	"github.com/docker/go-sdk/dockerclient"
-	"github.com/docker/go-sdk/dockercontext"
 )
 
 func TestNew(t *testing.T) {
