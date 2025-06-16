@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/docker/docker/api/types/container"
-	"github.com/docker/docker/api/types/network"
+	apinetwork "github.com/docker/docker/api/types/network"
 	"github.com/docker/go-sdk/dockerclient"
 	"github.com/docker/go-sdk/dockercontainer/exec"
 	"github.com/docker/go-sdk/dockercontainer/wait"
@@ -50,7 +50,7 @@ func WithConfigModifier(modifier func(config *container.Config)) CustomizeDefini
 }
 
 // WithEndpointSettingsModifier allows to override the default endpoint settings
-func WithEndpointSettingsModifier(modifier func(settings map[string]*network.EndpointSettings)) CustomizeDefinitionOption {
+func WithEndpointSettingsModifier(modifier func(settings map[string]*apinetwork.EndpointSettings)) CustomizeDefinitionOption {
 	return func(def *Definition) error {
 		def.endpointSettingsModifier = modifier
 

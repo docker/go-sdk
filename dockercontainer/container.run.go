@@ -9,7 +9,7 @@ import (
 
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/image"
-	"github.com/docker/docker/api/types/network"
+	apinetwork "github.com/docker/docker/api/types/network"
 	"github.com/docker/go-sdk/dockerclient"
 	"github.com/docker/go-sdk/dockerimage"
 )
@@ -116,7 +116,7 @@ func Run(ctx context.Context, opts ...ContainerCustomizer) (*Container, error) {
 
 	hostConfig := &container.HostConfig{}
 
-	networkingConfig := &network.NetworkingConfig{}
+	networkingConfig := &apinetwork.NetworkingConfig{}
 
 	// default hooks include logger hook and pre-create hook
 	defaultHooks = append(defaultHooks,
@@ -157,14 +157,14 @@ func Run(ctx context.Context, opts ...ContainerCustomizer) (*Container, error) {
 	// If there is more than one network specified in the request attach newly created container to them one by one
 	if len(def.networks) > 1 {
 		for _, n := range def.networks[1:] {
-			nwInspect, err := def.dockerClient.NetworkInspect(ctx, n, network.InspectOptions{
+			nwInspect, err := def.dockerClient.NetworkInspect(ctx, n, apinetwork.InspectOptions{
 				Verbose: true,
 			})
 			if err != nil {
 				return ctr, fmt.Errorf("network inspect: %w", err)
 			}
 
-			endpointSetting := network.EndpointSettings{
+			endpointSetting := apinetwork.EndpointSettings{
 				Aliases: def.networkAliases[n],
 			}
 			err = def.dockerClient.NetworkConnect(ctx, nwInspect.ID, resp.ID, &endpointSetting)
