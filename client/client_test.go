@@ -1,4 +1,4 @@
-package dockerclient_test
+package client_test
 
 import (
 	"context"
@@ -9,14 +9,14 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/docker/docker/client"
+	dockerclient "github.com/docker/docker/client"
+	"github.com/docker/go-sdk/client"
 	dockercontext "github.com/docker/go-sdk/context"
-	"github.com/docker/go-sdk/dockerclient"
 )
 
 func TestNew(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
-		cli, err := dockerclient.New(context.Background())
+		cli, err := client.New(context.Background())
 		require.NoError(t, err)
 		require.NotNil(t, cli)
 
@@ -26,7 +26,7 @@ func TestNew(t *testing.T) {
 	})
 
 	t.Run("client", func(t *testing.T) {
-		cli, err := dockerclient.New(context.Background())
+		cli, err := client.New(context.Background())
 		require.NoError(t, err)
 		require.NotNil(t, cli)
 
@@ -34,7 +34,7 @@ func TestNew(t *testing.T) {
 	})
 
 	t.Run("close", func(t *testing.T) {
-		cli, err := dockerclient.New(context.Background())
+		cli, err := client.New(context.Background())
 		require.NoError(t, err)
 		require.NotNil(t, cli)
 
@@ -47,50 +47,50 @@ func TestNew(t *testing.T) {
 		t.Setenv("DOCKER_TLS_VERIFY", "1")
 		t.Setenv("DOCKER_CERT_PATH", filepath.Join("testdata", "certificates"))
 
-		cli, err := dockerclient.New(context.Background())
+		cli, err := client.New(context.Background())
 		require.Error(t, err)
 		require.Nil(t, cli)
 	})
 
 	t.Run("success/apply-option", func(t *testing.T) {
-		cli, err := dockerclient.New(context.Background(), dockerclient.FromDockerOpt(client.WithHost("tcp://foobar:2375")))
+		cli, err := client.New(context.Background(), client.FromDockerOpt(dockerclient.WithHost("tcp://foobar:2375")))
 		require.NoError(t, err)
 		require.NotNil(t, cli)
 	})
 
 	t.Run("error", func(t *testing.T) {
-		cli, err := dockerclient.New(context.Background(), dockerclient.FromDockerOpt(client.WithHost("foobar")))
+		cli, err := client.New(context.Background(), client.FromDockerOpt(dockerclient.WithHost("foobar")))
 		require.Error(t, err)
 		require.Nil(t, cli)
 	})
 
 	t.Run("error/apply-option", func(t *testing.T) {
 		// custom option that always fails to apply
-		customOpt := func() dockerclient.ClientOption {
-			return dockerclient.NewClientOption(func(_ *dockerclient.Client) error {
+		customOpt := func() client.ClientOption {
+			return client.NewClientOption(func(_ *client.Client) error {
 				return errors.New("apply option")
 			})
 		}
 
-		cli, err := dockerclient.New(context.Background(), customOpt())
+		cli, err := client.New(context.Background(), customOpt())
 		require.ErrorContains(t, err, "apply option")
 		require.Nil(t, cli)
 	})
 
 	t.Run("healthcheck/nil", func(t *testing.T) {
-		cli, err := dockerclient.New(context.Background(), dockerclient.WithHealthCheck(nil))
+		cli, err := client.New(context.Background(), client.WithHealthCheck(nil))
 		require.ErrorContains(t, err, "health check is nil")
 		require.Nil(t, cli)
 	})
 
 	t.Run("healthcheck/noop", func(t *testing.T) {
-		noopHealthCheck := func(_ context.Context) func(c *dockerclient.Client) error {
-			return func(_ *dockerclient.Client) error {
+		noopHealthCheck := func(_ context.Context) func(c *client.Client) error {
+			return func(_ *client.Client) error {
 				return nil
 			}
 		}
 
-		cli, err := dockerclient.New(context.Background(), dockerclient.WithHealthCheck(noopHealthCheck))
+		cli, err := client.New(context.Background(), client.WithHealthCheck(noopHealthCheck))
 		require.NoError(t, err)
 		require.NotNil(t, cli)
 	})
@@ -98,14 +98,14 @@ func TestNew(t *testing.T) {
 	t.Run("healthcheck/info", func(t *testing.T) {
 		t.Setenv(dockercontext.EnvOverrideHost, "tcp://foobar:2375") // this URL is parseable, although not reachable
 
-		infoHealthCheck := func(ctx context.Context) func(c *dockerclient.Client) error {
-			return func(c *dockerclient.Client) error {
+		infoHealthCheck := func(ctx context.Context) func(c *client.Client) error {
+			return func(c *client.Client) error {
 				_, err := c.Info(ctx)
 				return err
 			}
 		}
 
-		cli, err := dockerclient.New(context.Background(), dockerclient.WithHealthCheck(infoHealthCheck))
+		cli, err := client.New(context.Background(), client.WithHealthCheck(infoHealthCheck))
 		require.Error(t, err)
 		require.Nil(t, cli)
 	})
@@ -113,21 +113,21 @@ func TestNew(t *testing.T) {
 	t.Run("docker-host/precedence", func(t *testing.T) {
 		t.Run("env-var-wins", func(t *testing.T) {
 			t.Setenv(dockercontext.EnvOverrideHost, "tcp://foobar:2375") // this URL is parseable, although not reachable
-			cli, err := dockerclient.New(context.Background())
+			cli, err := client.New(context.Background())
 			require.Error(t, err)
 			require.Nil(t, cli)
 		})
 
 		t.Run("context-wins/found", func(t *testing.T) {
 			t.Setenv(dockercontext.EnvOverrideContext, dockercontext.DefaultContextName)
-			cli, err := dockerclient.New(context.Background())
+			cli, err := client.New(context.Background())
 			require.NoError(t, err)
 			require.NotNil(t, cli)
 		})
 
 		t.Run("context-wins/not-found", func(t *testing.T) {
 			t.Setenv(dockercontext.EnvOverrideContext, "foocontext") // this context does not exist
-			cli, err := dockerclient.New(context.Background())
+			cli, err := client.New(context.Background())
 			require.ErrorIs(t, err, dockercontext.ErrDockerContextNotFound)
 			require.Nil(t, cli)
 		})
@@ -136,7 +136,7 @@ func TestNew(t *testing.T) {
 
 func TestClientConcurrentAccess(t *testing.T) {
 	t.Run("concurrent-client-close", func(t *testing.T) {
-		client, err := dockerclient.New(context.Background())
+		client, err := client.New(context.Background())
 		require.NoError(t, err)
 		require.NotNil(t, client)
 
@@ -176,7 +176,7 @@ func TestClientConcurrentAccess(t *testing.T) {
 	})
 
 	t.Run("concurrent-client-calls", func(t *testing.T) {
-		client, err := dockerclient.New(context.Background())
+		client, err := client.New(context.Background())
 		require.NoError(t, err)
 		require.NotNil(t, client)
 

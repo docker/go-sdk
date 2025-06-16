@@ -2,14 +2,14 @@ package network
 
 import (
 	"github.com/docker/docker/api/types/network"
-	"github.com/docker/go-sdk/dockerclient"
+	"github.com/docker/go-sdk/client"
 )
 
 // Network represents a Docker network.
 type Network struct {
 	response     network.CreateResponse
 	inspect      network.Inspect
-	dockerClient *dockerclient.Client
+	dockerClient *client.Client
 	opts         *options
 	name         string
 }

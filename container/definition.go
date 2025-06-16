@@ -5,14 +5,14 @@ import (
 
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/network"
+	"github.com/docker/go-sdk/client"
 	"github.com/docker/go-sdk/container/wait"
-	"github.com/docker/go-sdk/dockerclient"
 )
 
 // Definition is the Definition of a container.
 type Definition struct {
 	// dockerClient the docker client to use for the container.
-	dockerClient *dockerclient.Client
+	dockerClient *client.Client
 
 	// configModifier the modifier for the config before container creation
 	configModifier func(*container.Config)
@@ -85,7 +85,7 @@ func (d *Definition) validate() error {
 }
 
 // DockerClient returns the docker client used by the definition.
-func (d *Definition) DockerClient() *dockerclient.Client {
+func (d *Definition) DockerClient() *client.Client {
 	return d.dockerClient
 }
 

@@ -1,4 +1,4 @@
-package dockerclient
+package client
 
 import (
 	"context"
@@ -57,13 +57,13 @@ var (
 // do so by providing the [FromDockerOpt] options adapter.
 // E.g.
 //
-//	cli, err := dockerclient.New(context.Background(), dockerclient.FromDockerOpt(client.WithHost("tcp://foobar:2375")))
+//	cli, err := client.New(context.Background(), client.FromDockerOpt(client.WithHost("tcp://foobar:2375")))
 //
 // The client uses a logger that is initialized to [io.Discard]; you can change it by
 // providing the [WithLogger] option.
 // E.g.
 //
-//	cli, err := dockerclient.New(context.Background(), dockerclient.WithLogger(slog.Default()))
+//	cli, err := client.New(context.Background(), client.WithLogger(slog.Default()))
 //
 // The client is safe for concurrent use by multiple goroutines.
 func New(ctx context.Context, options ...ClientOption) (*Client, error) {

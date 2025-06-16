@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/docker/docker/api/types/container"
-	"github.com/docker/go-sdk/dockerclient"
+	"github.com/docker/go-sdk/client"
 )
 
 // TerminableContainer is a container that can be terminated.
@@ -38,7 +38,7 @@ func NewTerminateOptions(ctx context.Context, opts ...TerminateOption) *Terminat
 }
 
 // Cleanup performs any clean up needed
-func (o *TerminateOptions) Cleanup(cli *dockerclient.Client) error {
+func (o *TerminateOptions) Cleanup(cli *client.Client) error {
 	if len(o.volumes) == 0 {
 		return nil
 	}

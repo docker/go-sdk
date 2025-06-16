@@ -8,8 +8,8 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/docker/go-sdk/client"
 	"github.com/docker/go-sdk/container"
-	"github.com/docker/go-sdk/dockerclient"
 	"github.com/docker/go-sdk/network"
 )
 
@@ -17,7 +17,7 @@ func TestContainer_ContainerIPs(t *testing.T) {
 	bufLogger := &bytes.Buffer{}
 	logger := slog.New(slog.NewTextHandler(bufLogger, nil))
 
-	dockerClient, err := dockerclient.New(context.Background(), dockerclient.WithLogger(logger))
+	dockerClient, err := client.New(context.Background(), client.WithLogger(logger))
 	require.NoError(t, err)
 	t.Cleanup(func() {
 		require.NoError(t, dockerClient.Close())
@@ -73,7 +73,7 @@ func TestContainer_Networks(t *testing.T) {
 	bufLogger := &bytes.Buffer{}
 	logger := slog.New(slog.NewTextHandler(bufLogger, nil))
 
-	dockerClient, err := dockerclient.New(context.Background(), dockerclient.WithLogger(logger))
+	dockerClient, err := client.New(context.Background(), client.WithLogger(logger))
 	require.NoError(t, err)
 	t.Cleanup(func() {
 		require.NoError(t, dockerClient.Close())
@@ -101,7 +101,7 @@ func TestContainer_NetworkAliases(t *testing.T) {
 	bufLogger := &bytes.Buffer{}
 	logger := slog.New(slog.NewTextHandler(bufLogger, nil))
 
-	dockerClient, err := dockerclient.New(context.Background(), dockerclient.WithLogger(logger))
+	dockerClient, err := client.New(context.Background(), client.WithLogger(logger))
 	require.NoError(t, err)
 	t.Cleanup(func() {
 		require.NoError(t, dockerClient.Close())

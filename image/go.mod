@@ -3,7 +3,7 @@ module github.com/docker/go-sdk/image
 go 1.23.6
 
 replace (
-	github.com/docker/go-sdk/dockerclient => ../dockerclient
+	github.com/docker/go-sdk/client => ../client
 	github.com/docker/go-sdk/config => ../config
 	github.com/docker/go-sdk/context => ../context
 )
@@ -12,7 +12,7 @@ require (
 	github.com/cenkalti/backoff/v4 v4.2.1
 	github.com/containerd/errdefs v1.0.0
 	github.com/docker/docker v28.2.2+incompatible
-	github.com/docker/go-sdk/dockerclient v0.1.0
+	github.com/docker/go-sdk/client v0.1.0
 	github.com/docker/go-sdk/config v0.1.0
 	github.com/stretchr/testify v1.10.0
 )

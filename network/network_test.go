@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	apinetwork "github.com/docker/docker/api/types/network"
-	"github.com/docker/go-sdk/dockerclient"
+	"github.com/docker/go-sdk/client"
 	"github.com/docker/go-sdk/network"
 )
 
@@ -124,9 +124,9 @@ func TestNew(t *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, inspect)
 
-		require.Contains(t, inspect.Labels, dockerclient.LabelBase)
-		require.Contains(t, inspect.Labels, dockerclient.LabelLang)
-		require.Contains(t, inspect.Labels, dockerclient.LabelVersion)
+		require.Contains(t, inspect.Labels, client.LabelBase)
+		require.Contains(t, inspect.Labels, client.LabelLang)
+		require.Contains(t, inspect.Labels, client.LabelVersion)
 	})
 }
 

@@ -7,7 +7,7 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/docker/docker/api/types/network"
-	"github.com/docker/go-sdk/dockerclient"
+	"github.com/docker/go-sdk/client"
 )
 
 // New creates a new network.
@@ -27,14 +27,14 @@ func New(ctx context.Context, opts ...Option) (*Network, error) {
 	}
 
 	if networkOptions.client == nil {
-		dockerClient, err := dockerclient.New(context.Background())
+		dockerClient, err := client.New(context.Background())
 		if err != nil {
 			return nil, fmt.Errorf("create docker client: %w", err)
 		}
 		networkOptions.client = dockerClient
 	}
 
-	dockerclient.AddSDKLabels(networkOptions.labels)
+	client.AddSDKLabels(networkOptions.labels)
 
 	nc := network.CreateOptions{
 		Driver:     networkOptions.driver,

@@ -6,13 +6,13 @@ import (
 	"sync"
 	"time"
 
+	"github.com/docker/go-sdk/client"
 	"github.com/docker/go-sdk/container/wait"
-	"github.com/docker/go-sdk/dockerclient"
 )
 
 // Container represents a container
 type Container struct {
-	dockerClient *dockerclient.Client
+	dockerClient *client.Client
 
 	// containerID the Container ID
 	containerID string

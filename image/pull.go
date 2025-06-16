@@ -12,8 +12,8 @@ import (
 	"github.com/cenkalti/backoff/v4"
 
 	"github.com/docker/docker/api/types/image"
+	"github.com/docker/go-sdk/client"
 	"github.com/docker/go-sdk/config"
-	"github.com/docker/go-sdk/dockerclient"
 )
 
 // ImagePullClient is a client that can pull images.
@@ -25,7 +25,7 @@ type ImagePullClient interface {
 }
 
 // Pull pulls an image from a remote registry, retrying on non-permanent errors.
-// See [dockerclient.IsPermanentClientError] for the list of non-permanent errors.
+// See [client.IsPermanentClientError] for the list of non-permanent errors.
 // It first extracts the registry credentials from the image name, and sets them in the pull options.
 // It needs to be called with a valid image name, and optional pull  options, see [PullOption].
 func Pull(ctx context.Context, imageName string, opts ...PullOption) error {
@@ -38,7 +38,7 @@ func Pull(ctx context.Context, imageName string, opts ...PullOption) error {
 
 	if pullOpts.pullClient == nil {
 		// create a new docker client if not set
-		cli, err := dockerclient.New(ctx)
+		cli, err := client.New(ctx)
 		if err != nil {
 			return fmt.Errorf("create docker client: %w", err)
 		}
@@ -73,7 +73,7 @@ func Pull(ctx context.Context, imageName string, opts ...PullOption) error {
 		func() error {
 			pull, err = pullOpts.pullClient.ImagePull(ctx, imageName, pullOpts.pullOptions)
 			if err != nil {
-				if dockerclient.IsPermanentClientError(err) {
+				if client.IsPermanentClientError(err) {
 					return backoff.Permanent(err)
 				}
 				return err

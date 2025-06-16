@@ -7,13 +7,13 @@ import (
 	"github.com/stretchr/testify/require"
 
 	apiimage "github.com/docker/docker/api/types/image"
-	"github.com/docker/go-sdk/dockerclient"
+	"github.com/docker/go-sdk/client"
 	"github.com/docker/go-sdk/image"
 )
 
 func TestPull(t *testing.T) {
 	ctx := context.Background()
-	dockerClient, err := dockerclient.New(ctx)
+	dockerClient, err := client.New(ctx)
 	require.NoError(t, err)
 	defer dockerClient.Close()
 

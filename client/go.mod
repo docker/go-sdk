@@ -1,4 +1,4 @@
-module github.com/docker/go-sdk/dockerclient
+module github.com/docker/go-sdk/client
 
 go 1.23.6
 

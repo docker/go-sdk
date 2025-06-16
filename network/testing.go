@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/docker/docker/api/types/network"
-	"github.com/docker/go-sdk/dockerclient"
+	"github.com/docker/go-sdk/client"
 )
 
 // errAlreadyInProgress is a regular expression that matches the error for a network
@@ -54,7 +54,7 @@ func CleanupNetwork(tb testing.TB, nw TerminableNetwork) {
 func CleanupNetworkByID(tb testing.TB, id string) {
 	tb.Helper()
 
-	dockerClient, err := dockerclient.New(context.Background())
+	dockerClient, err := client.New(context.Background())
 	if err != nil {
 		noErrorOrIgnored(tb, err)
 	}

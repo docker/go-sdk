@@ -15,10 +15,10 @@ import (
 
 	apicontainer "github.com/docker/docker/api/types/container"
 	apinetwork "github.com/docker/docker/api/types/network"
+	"github.com/docker/go-sdk/client"
 	"github.com/docker/go-sdk/container"
 	"github.com/docker/go-sdk/container/exec"
 	"github.com/docker/go-sdk/container/wait"
-	"github.com/docker/go-sdk/dockerclient"
 	"github.com/docker/go-sdk/network"
 )
 
@@ -58,10 +58,10 @@ func TestRunContainer(t *testing.T) {
 		require.NotNil(t, ctr)
 	})
 
-	t.Run("with-dockerclient", func(t *testing.T) {
+	t.Run("with-client", func(t *testing.T) {
 		// Initialize the docker client. It will be closed when the container is terminated,
 		// so no need to close it during the entire container lifecycle.
-		dockerClient, err := dockerclient.New(context.Background())
+		dockerClient, err := client.New(context.Background())
 		require.NoError(t, err)
 		t.Cleanup(func() {
 			require.NoError(t, dockerClient.Close())
@@ -285,7 +285,7 @@ echo "done"
 		require.Equal(t, "/tmp/.container-test\n", string(content))
 	})
 
-	t.Run("no-dockerclient-uses-default", func(t *testing.T) {
+	t.Run("no-client-uses-default", func(t *testing.T) {
 		ctr, err := container.Run(context.Background(),
 			container.WithImage(nginxAlpineImage),
 		)
@@ -360,7 +360,7 @@ echo "done"
 }
 
 func TestRunContainer_addSDKLabels(t *testing.T) {
-	dockerClient, err := dockerclient.New(context.Background())
+	dockerClient, err := client.New(context.Background())
 	require.NoError(t, err)
 	t.Cleanup(func() {
 		require.NoError(t, dockerClient.Close())
@@ -377,9 +377,9 @@ func TestRunContainer_addSDKLabels(t *testing.T) {
 	inspect, err := ctr.Inspect(context.Background())
 	require.NoError(t, err)
 
-	require.Contains(t, inspect.Config.Labels, dockerclient.LabelBase)
-	require.Contains(t, inspect.Config.Labels, dockerclient.LabelLang)
-	require.Contains(t, inspect.Config.Labels, dockerclient.LabelVersion)
+	require.Contains(t, inspect.Config.Labels, client.LabelBase)
+	require.Contains(t, inspect.Config.Labels, client.LabelLang)
+	require.Contains(t, inspect.Config.Labels, client.LabelVersion)
 }
 
 func TestRunContainerWithLifecycleHooks(t *testing.T) {
@@ -389,7 +389,7 @@ func TestRunContainerWithLifecycleHooks(t *testing.T) {
 		bufLogger := &bytes.Buffer{}
 		logger := slog.New(slog.NewTextHandler(bufLogger, nil))
 
-		dockerClient, err := dockerclient.New(context.Background(), dockerclient.WithLogger(logger))
+		dockerClient, err := client.New(context.Background(), client.WithLogger(logger))
 		require.NoError(t, err)
 		t.Cleanup(func() {
 			require.NoError(t, dockerClient.Close())
@@ -500,7 +500,7 @@ func TestRunContainerWithLifecycleHooks(t *testing.T) {
 }
 
 func TestRunContainerWithNetworks(t *testing.T) {
-	testRun := func(t *testing.T, dockerClient *dockerclient.Client, networkOptions []container.ContainerCustomizer) (*container.Container, error) {
+	testRun := func(t *testing.T, dockerClient *client.Client, networkOptions []container.ContainerCustomizer) (*container.Container, error) {
 		t.Helper()
 
 		opts := []container.ContainerCustomizer{
@@ -527,7 +527,7 @@ func TestRunContainerWithNetworks(t *testing.T) {
 		bufLogger := &bytes.Buffer{}
 		logger := slog.New(slog.NewTextHandler(bufLogger, nil))
 
-		dockerClient, err := dockerclient.New(context.Background(), dockerclient.WithLogger(logger))
+		dockerClient, err := client.New(context.Background(), client.WithLogger(logger))
 		require.NoError(t, err)
 		t.Cleanup(func() {
 			require.NoError(t, dockerClient.Close())
@@ -552,7 +552,7 @@ func TestRunContainerWithNetworks(t *testing.T) {
 		bufLogger := &bytes.Buffer{}
 		logger := slog.New(slog.NewTextHandler(bufLogger, nil))
 
-		dockerClient, err := dockerclient.New(context.Background(), dockerclient.WithLogger(logger))
+		dockerClient, err := client.New(context.Background(), client.WithLogger(logger))
 		require.NoError(t, err)
 		t.Cleanup(func() {
 			require.NoError(t, dockerClient.Close())
@@ -577,7 +577,7 @@ func TestRunContainerWithNetworks(t *testing.T) {
 		bufLogger := &bytes.Buffer{}
 		logger := slog.New(slog.NewTextHandler(bufLogger, nil))
 
-		dockerClient, err := dockerclient.New(context.Background(), dockerclient.WithLogger(logger))
+		dockerClient, err := client.New(context.Background(), client.WithLogger(logger))
 		require.NoError(t, err)
 		t.Cleanup(func() {
 			require.NoError(t, dockerClient.Close())
@@ -608,7 +608,7 @@ func TestRunContainerWithNetworks(t *testing.T) {
 		bufLogger := &bytes.Buffer{}
 		logger := slog.New(slog.NewTextHandler(bufLogger, nil))
 
-		dockerClient, err := dockerclient.New(context.Background(), dockerclient.WithLogger(logger))
+		dockerClient, err := client.New(context.Background(), client.WithLogger(logger))
 		require.NoError(t, err)
 		t.Cleanup(func() {
 			require.NoError(t, dockerClient.Close())
@@ -635,7 +635,7 @@ func TestRunContainerWithNetworks(t *testing.T) {
 		bufLogger := &bytes.Buffer{}
 		logger := slog.New(slog.NewTextHandler(bufLogger, nil))
 
-		dockerClient, err := dockerclient.New(context.Background(), dockerclient.WithLogger(logger))
+		dockerClient, err := client.New(context.Background(), client.WithLogger(logger))
 		require.NoError(t, err)
 		t.Cleanup(func() {
 			require.NoError(t, dockerClient.Close())
@@ -670,7 +670,7 @@ func TestRunContainerWithWaitStrategy(t *testing.T) {
 		bufLogger := &bytes.Buffer{}
 		logger := slog.New(slog.NewTextHandler(bufLogger, nil))
 
-		dockerClient, err := dockerclient.New(context.Background(), dockerclient.WithLogger(logger))
+		dockerClient, err := client.New(context.Background(), client.WithLogger(logger))
 		require.NoError(t, err)
 		t.Cleanup(func() {
 			require.NoError(t, dockerClient.Close())
@@ -766,7 +766,7 @@ func TestRunContainerWithWaitStrategy(t *testing.T) {
 func testCreateNetwork(t *testing.T, networkName string) apinetwork.CreateResponse {
 	t.Helper()
 
-	dockerClient, err := dockerclient.New(context.Background())
+	dockerClient, err := client.New(context.Background())
 	require.NoError(t, err)
 	t.Cleanup(func() {
 		require.NoError(t, dockerClient.Close())

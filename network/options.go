@@ -4,11 +4,11 @@ import (
 	"errors"
 
 	"github.com/docker/docker/api/types/network"
-	"github.com/docker/go-sdk/dockerclient"
+	"github.com/docker/go-sdk/client"
 )
 
 type options struct {
-	client     *dockerclient.Client
+	client     *client.Client
 	ipam       *network.IPAM
 	labels     map[string]string
 	driver     string
@@ -22,7 +22,7 @@ type options struct {
 type Option func(*options) error
 
 // WithClient sets the docker client.
-func WithClient(client *dockerclient.Client) Option {
+func WithClient(client *client.Client) Option {
 	return func(o *options) error {
 		o.client = client
 		return nil

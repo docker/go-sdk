@@ -10,11 +10,11 @@ import (
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/network"
 	"github.com/docker/go-connections/nat"
-	"github.com/docker/go-sdk/dockerclient"
+	"github.com/docker/go-sdk/client"
 )
 
 // defaultPreCreateHook is a hook that will apply the default configuration to the container
-var defaultPreCreateHook = func(dockerClient *dockerclient.Client, dockerInput *container.Config, hostConfig *container.HostConfig, networkingConfig *network.NetworkingConfig) LifecycleHooks {
+var defaultPreCreateHook = func(dockerClient *client.Client, dockerInput *container.Config, hostConfig *container.HostConfig, networkingConfig *network.NetworkingConfig) LifecycleHooks {
 	return LifecycleHooks{
 		PreCreates: []DefinitionHook{
 			func(ctx context.Context, def *Definition) error {
@@ -149,7 +149,7 @@ func mergePortBindings(configPortMap, exposedPortMap nat.PortMap, exposedPorts [
 	return exposedPortMap
 }
 
-func preCreateContainerHook(ctx context.Context, dockerClient *dockerclient.Client, def *Definition, dockerInput *container.Config, hostConfig *container.HostConfig, networkingConfig *network.NetworkingConfig) error {
+func preCreateContainerHook(ctx context.Context, dockerClient *client.Client, def *Definition, dockerInput *container.Config, hostConfig *container.HostConfig, networkingConfig *network.NetworkingConfig) error {
 	endpointSettings := map[string]*network.EndpointSettings{}
 
 	// Docker allows only one network to be specified during container creation

@@ -8,9 +8,9 @@ import (
 
 	"github.com/docker/docker/api/types/container"
 	apinetwork "github.com/docker/docker/api/types/network"
+	"github.com/docker/go-sdk/client"
 	"github.com/docker/go-sdk/container/exec"
 	"github.com/docker/go-sdk/container/wait"
-	"github.com/docker/go-sdk/dockerclient"
 	"github.com/docker/go-sdk/network"
 )
 
@@ -32,7 +32,7 @@ func (opt CustomizeDefinitionOption) Customize(def *Definition) error {
 }
 
 // WithDockerClient sets the docker client for a container
-func WithDockerClient(dockerClient *dockerclient.Client) CustomizeDefinitionOption {
+func WithDockerClient(dockerClient *client.Client) CustomizeDefinitionOption {
 	return func(def *Definition) error {
 		def.dockerClient = dockerClient
 

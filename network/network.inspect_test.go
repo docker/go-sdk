@@ -10,7 +10,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	apinetwork "github.com/docker/docker/api/types/network"
-	"github.com/docker/go-sdk/dockerclient"
+	"github.com/docker/go-sdk/client"
 	"github.com/docker/go-sdk/network"
 )
 
@@ -96,14 +96,14 @@ func TestInspect(t *testing.T) {
 	})
 }
 
-func testClientWithLogger(t *testing.T) (*dockerclient.Client, *bytes.Buffer) {
+func testClientWithLogger(t *testing.T) (*client.Client, *bytes.Buffer) {
 	t.Helper()
 
 	buf := &bytes.Buffer{}
 	logger := slog.New(slog.NewTextHandler(buf, nil))
 
 	// use a custom client with a custom logger
-	dockerClient, err := dockerclient.New(context.Background(), dockerclient.WithLogger(logger))
+	dockerClient, err := client.New(context.Background(), client.WithLogger(logger))
 	require.NoError(t, err)
 
 	return dockerClient, buf

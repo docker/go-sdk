@@ -32,10 +32,10 @@ go get github.com/docker/go-sdk
 
 ## Usage
 
-### dockerclient
+### client
 
 ```go
-cli, err := dockerclient.New(context.Background())
+cli, err := client.New(context.Background())
 if err != nil {
     log.Fatalf("failed to create docker client: %v", err)
 }

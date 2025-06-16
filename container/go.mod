@@ -3,7 +3,7 @@ module github.com/docker/go-sdk/container
 go 1.23.6
 
 replace (
-	github.com/docker/go-sdk/dockerclient => ../dockerclient
+	github.com/docker/go-sdk/client => ../client
 	github.com/docker/go-sdk/config => ../config
 	github.com/docker/go-sdk/context => ../context
 	github.com/docker/go-sdk/image => ../image
@@ -15,7 +15,7 @@ require (
 	github.com/containerd/platforms v0.2.1
 	github.com/docker/docker v28.2.2+incompatible
 	github.com/docker/go-connections v0.5.0
-	github.com/docker/go-sdk/dockerclient v0.1.0
+	github.com/docker/go-sdk/client v0.1.0
 	github.com/docker/go-sdk/config v0.1.0
 	github.com/docker/go-sdk/image v0.1.0
 	github.com/docker/go-sdk/network v0.1.0

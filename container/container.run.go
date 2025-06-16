@@ -10,7 +10,7 @@ import (
 	"github.com/docker/docker/api/types/container"
 	apiimage "github.com/docker/docker/api/types/image"
 	apinetwork "github.com/docker/docker/api/types/network"
-	"github.com/docker/go-sdk/dockerclient"
+	"github.com/docker/go-sdk/client"
 	"github.com/docker/go-sdk/image"
 )
 
@@ -35,7 +35,7 @@ func Run(ctx context.Context, opts ...ContainerCustomizer) (*Container, error) {
 
 	if def.dockerClient == nil {
 		// use the default docker client
-		cli, err := dockerclient.New(ctx)
+		cli, err := client.New(ctx)
 		if err != nil {
 			return nil, fmt.Errorf("new docker client: %w", err)
 		}
@@ -104,7 +104,7 @@ func Run(ctx context.Context, opts ...ContainerCustomizer) (*Container, error) {
 	}
 
 	// Add the labels that identify this as a container created by the SDK.
-	dockerclient.AddSDKLabels(def.labels)
+	client.AddSDKLabels(def.labels)
 
 	dockerInput := &container.Config{
 		Entrypoint: def.entrypoint,
