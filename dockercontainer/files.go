@@ -14,7 +14,6 @@ import (
 	"strings"
 
 	"github.com/docker/docker/api/types/container"
-	"github.com/docker/go-sdk/dockerclient"
 )
 
 // File represents a file that will be copied when container starts
@@ -101,12 +100,7 @@ func (c *Container) CopyToContainer(ctx context.Context, fileContent []byte, con
 		return fmt.Errorf("tar file: %w", err)
 	}
 
-	dockerClient, err := dockerclient.New(ctx)
-	if err != nil {
-		return fmt.Errorf("new docker client: %w", err)
-	}
-
-	err = dockerClient.CopyToContainer(ctx, c.ID(), "/", buffer, container.CopyToContainerOptions{})
+	err = c.dockerClient.CopyToContainer(ctx, c.ID(), "/", buffer, container.CopyToContainerOptions{})
 	if err != nil {
 		return fmt.Errorf("copy to container: %w", err)
 	}
