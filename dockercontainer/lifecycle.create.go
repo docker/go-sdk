@@ -75,10 +75,7 @@ var defaultLogConsumersHook = func(cfg *LogConsumerConfig) LifecycleHooks {
 					return nil
 				}
 
-				c.consumers = c.consumers[:0]
-				for _, consumer := range cfg.Consumers {
-					c.followOutput(consumer)
-				}
+				c.resetConsumers(cfg.Consumers)
 
 				return c.startLogProduction(ctx, cfg.Opts...)
 			},

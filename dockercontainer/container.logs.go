@@ -8,6 +8,7 @@ import (
 	"io"
 	"log/slog"
 	"net"
+	"slices"
 	"time"
 
 	"github.com/docker/docker/api/types/container"
@@ -143,10 +144,21 @@ func (c *Container) copyLogsTimeout(stdout, stderr io.Writer, options *container
 	return true
 }
 
-// followOutput adds a LogConsumer to be sent logs from the container's
-// STDOUT and STDERR
-func (c *Container) followOutput(consumer LogConsumer) {
-	c.consumers = append(c.consumers, consumer)
+// consumersCopy returns a copy of the current consumers.
+func (c *Container) consumersCopy() []LogConsumer {
+	c.consumersMtx.Lock()
+	defer c.consumersMtx.Unlock()
+
+	return slices.Clone(c.consumers)
+}
+
+// resetConsumers resets the current consumers to the provided ones.
+func (c *Container) resetConsumers(consumers []LogConsumer) {
+	c.consumersMtx.Lock()
+	defer c.consumersMtx.Unlock()
+
+	c.consumers = c.consumers[:0]
+	c.consumers = append(c.consumers, consumers...)
 }
 
 // logProducer read logs from the container and writes them to stdout, stderr until either:
@@ -213,8 +225,7 @@ func (c *Container) startLogProduction(ctx context.Context, opts ...LogProductio
 	}
 
 	// Get a snapshot of current consumers
-	consumers := make([]LogConsumer, len(c.consumers))
-	copy(consumers, c.consumers)
+	consumers := c.consumersCopy()
 
 	// Setup the log writers.
 	stdout := newLogConsumerWriter(StdoutLog, consumers)
