@@ -208,8 +208,3 @@ func (c *Client) Close() error {
 
 	return err
 }
-
-// Logger returns the logger for the client.
-func (c *Client) Logger() *slog.Logger {
-	return c.log
-}

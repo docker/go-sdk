@@ -64,6 +64,11 @@ func (c *Client) Client() *client.Client {
 	return c.dockerClient
 }
 
+// Logger returns the logger for the client.
+func (c *Client) Logger() *slog.Logger {
+	return c.log
+}
+
 // Info returns information about the docker server. The result of Info is cached
 // and reused every time Info is called.
 // It will also print out the docker server info, and the resolved Docker paths, to the default logger.
