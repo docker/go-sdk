@@ -17,10 +17,10 @@ func TestWithOptions(t *testing.T) {
 			require.Equal(t, "tcp://localhost:2375", cli.dockerHost)
 		})
 
-		t.Run("current-context", func(t *testing.T) {
+		t.Run("docker-context", func(t *testing.T) {
 			cli := &Client{}
-			require.NoError(t, WithCurrentContext("test-context").Apply(cli))
-			require.Equal(t, "test-context", cli.currentContext)
+			require.NoError(t, WithDockerContext("test-context").Apply(cli))
+			require.Equal(t, "test-context", cli.dockerContext)
 		})
 
 		t.Run("extra-headers", func(t *testing.T) {
@@ -43,5 +43,4 @@ func TestWithOptions(t *testing.T) {
 			require.NotNil(t, cli.log)
 		})
 	})
-
 }

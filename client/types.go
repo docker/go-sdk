@@ -37,8 +37,8 @@ type Client struct {
 	// dockerOpts are options to be passed to the docker client.
 	dockerOpts []client.Opt
 
-	// currentContext is the current context of the docker daemon.
-	currentContext string
+	// dockerContext is the current context of the docker daemon.
+	dockerContext string
 
 	// dockerHost is the host of the docker daemon.
 	dockerHost string
@@ -98,7 +98,7 @@ func (c *Client) Info(ctx context.Context) (system.Info, error) {
 		"operating_system", c.dockerInfo.OperatingSystem,
 		"mem_total", c.dockerInfo.MemTotal/1024/1024,
 		"labels", infoLabels,
-		"current_context", c.currentContext,
+		"docker_context", c.dockerContext,
 		"docker_host", c.dockerHost,
 	)
 

@@ -53,10 +53,12 @@ func WithDockerHost(dockerHost string) ClientOption {
 	})
 }
 
-// WithCurrentContext returns a client option that sets the current context for the client.
-func WithCurrentContext(currentContext string) ClientOption {
+// WithDockerContext returns a client option that sets the docker context for the client.
+// If set, the client will use the docker context to determine the docker host.
+// If used in combination with [WithDockerHost], the host in the context will take precedence.
+func WithDockerContext(dockerContext string) ClientOption {
 	return NewClientOption(func(c *Client) error {
-		c.currentContext = currentContext
+		c.dockerContext = dockerContext
 		return nil
 	})
 }
