@@ -110,8 +110,7 @@ func TestMergePortBindings(t *testing.T) {
 func TestPreCreateModifierHook(t *testing.T) {
 	ctx := context.Background()
 
-	dockerClient, err := client.New(context.Background())
-	require.NoError(t, err)
+	dockerClient := client.DefaultClient
 	t.Cleanup(func() {
 		require.NoError(t, dockerClient.Close())
 	})
@@ -233,7 +232,7 @@ func TestPreCreateModifierHook(t *testing.T) {
 		inputHostConfig := &container.HostConfig{}
 		inputNetworkingConfig := &network.NetworkingConfig{}
 
-		err = preCreateContainerHook(ctx, dockerClient, def, inputConfig, inputHostConfig, inputNetworkingConfig)
+		err := preCreateContainerHook(ctx, dockerClient, def, inputConfig, inputHostConfig, inputNetworkingConfig)
 		require.NoError(t, err)
 
 		// assertions
@@ -268,7 +267,7 @@ func TestPreCreateModifierHook(t *testing.T) {
 		inputHostConfig := &container.HostConfig{}
 		inputNetworkingConfig := &network.NetworkingConfig{}
 
-		err = preCreateContainerHook(ctx, dockerClient, def, inputConfig, inputHostConfig, inputNetworkingConfig)
+		err := preCreateContainerHook(ctx, dockerClient, def, inputConfig, inputHostConfig, inputNetworkingConfig)
 		require.NoError(t, err)
 
 		// assertions
@@ -411,8 +410,7 @@ func TestLifecycleHooks_WithMultipleHooks(t *testing.T) {
 func testCreateNetwork(t *testing.T, networkName string) network.CreateResponse {
 	t.Helper()
 
-	dockerClient, err := client.New(context.Background())
-	require.NoError(t, err)
+	dockerClient := client.DefaultClient
 	t.Cleanup(func() {
 		require.NoError(t, dockerClient.Close())
 	})
