@@ -101,23 +101,15 @@ func (c *Client) initOnce(_ context.Context) error {
 	c.mtx.Lock()
 	defer c.mtx.Unlock()
 
-	if c.log == nil {
-		c.log = defaultLogger
+	// Set the default values for the client:
+	// - log
+	// - dockerHost
+	// - currentContext
+	if c.err = c.defaultValues(); c.err != nil {
+		return fmt.Errorf("default values: %w", c.err)
 	}
 
-	dockerHost, err := dockercontext.CurrentDockerHost()
-	if err != nil {
-		return fmt.Errorf("current docker host: %w", err)
-	}
-	c.dockerHost = dockerHost
-
-	currentContext, err := dockercontext.Current()
-	if err != nil {
-		return fmt.Errorf("current context: %w", err)
-	}
-	c.currentContext = currentContext
-
-	if c.cfg, c.err = newConfig(dockerHost); c.err != nil {
+	if c.cfg, c.err = newConfig(c.dockerHost); c.err != nil {
 		return c.err
 	}
 
@@ -154,6 +146,34 @@ func (c *Client) initOnce(_ context.Context) error {
 	if c.Client, c.err = client.NewClientWithOpts(opts...); c.err != nil {
 		c.err = fmt.Errorf("new client: %w", c.err)
 		return c.err
+	}
+
+	return nil
+}
+
+// defaultValues sets the default values for the client.
+// If no logger is provided, the default one is used.
+// If no docker host is provided, the current docker host is used.
+// If no current context is provided, the current context is used.
+func (c *Client) defaultValues() error {
+	if c.log == nil {
+		c.log = defaultLogger
+	}
+
+	if c.dockerHost == "" {
+		dockerHost, err := dockercontext.CurrentDockerHost()
+		if err != nil {
+			return fmt.Errorf("current docker host: %w", err)
+		}
+		c.dockerHost = dockerHost
+	}
+
+	if c.currentContext == "" {
+		currentContext, err := dockercontext.Current()
+		if err != nil {
+			return fmt.Errorf("current context: %w", err)
+		}
+		c.currentContext = currentContext
 	}
 
 	return nil
