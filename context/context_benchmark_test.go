@@ -7,7 +7,7 @@ import (
 )
 
 func BenchmarkContextOperations(b *testing.B) {
-	setupDockerContexts(b, 1, 3) // current context is context1
+	SetupTestDockerContexts(b, 1, 3) // current context is context1
 
 	b.Run("current-context", func(b *testing.B) {
 		b.ResetTimer()
@@ -86,7 +86,7 @@ func BenchmarkContextOperations(b *testing.B) {
 }
 
 func BenchmarkContextList(b *testing.B) {
-	setupDockerContexts(b, 1, 3) // Creates 3 contexts at root level
+	SetupTestDockerContexts(b, 1, 3) // Creates 3 contexts at root level
 
 	metaDir, err := metaRoot()
 	require.NoError(b, err)
