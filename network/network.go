@@ -27,11 +27,7 @@ func New(ctx context.Context, opts ...Option) (*Network, error) {
 	}
 
 	if networkOptions.client == nil {
-		dockerClient, err := client.New(context.Background())
-		if err != nil {
-			return nil, fmt.Errorf("create docker client: %w", err)
-		}
-		networkOptions.client = dockerClient
+		networkOptions.client = client.DefaultClient
 	}
 
 	client.AddSDKLabels(networkOptions.labels)
