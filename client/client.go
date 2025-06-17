@@ -34,7 +34,7 @@ var (
 		return func(c *Client) error {
 			var pingErr error
 			for i := range 3 {
-				if _, pingErr = c.Client().Ping(ctx); pingErr == nil {
+				if _, pingErr = c.dockerClient.Ping(ctx); pingErr == nil {
 					return nil
 				}
 				select {
@@ -91,7 +91,7 @@ func New(ctx context.Context, options ...ClientOption) (*Client, error) {
 // This method is safe for concurrent use by multiple goroutines.
 func (c *Client) initOnce(_ context.Context) error {
 	c.mtx.RLock()
-	if c.Client() != nil || c.err != nil {
+	if c.dockerClient != nil || c.err != nil {
 		err := c.err
 		c.mtx.RUnlock()
 		return err
@@ -185,12 +185,12 @@ func (c *Client) Close() error {
 	c.mtx.Lock()
 	defer c.mtx.Unlock()
 
-	if c.Client() == nil {
+	if c.dockerClient == nil {
 		return nil
 	}
 
 	// Store the error before clearing the client
-	err := c.Client().Close()
+	err := c.dockerClient.Close()
 
 	// Clear the client after closing to prevent use-after-close issues
 	c.dockerInfo = system.Info{}
