@@ -8,6 +8,8 @@ import (
 	"log/slog"
 	"testing"
 
+	dockercontext "github.com/docker/go-sdk/context"
+
 	"github.com/stretchr/testify/require"
 )
 
@@ -73,4 +75,80 @@ func TestNew_internal_state(t *testing.T) {
 		require.ErrorContains(t, err, "healthcheck error")
 		require.Nil(t, client)
 	})
+
+	t.Run("with-dockerhost", func(t *testing.T) {
+		noopHealthCheck := func(_ context.Context) func(*Client) error {
+			return func(_ *Client) error {
+				// NOOP for testing
+				return nil
+			}
+		}
+
+		client, err := New(context.Background(), WithHealthCheck(noopHealthCheck), WithDockerHost("unix:///var/run/docker.sock"))
+		require.NoError(t, err)
+		require.NotNil(t, client)
+		require.Equal(t, "unix:///var/run/docker.sock", client.cfg.Host)
+	})
+
+	t.Run("with-dockerhost-and-dockercontext", func(t *testing.T) {
+		noopHealthCheck := func(_ context.Context) func(*Client) error {
+			return func(_ *Client) error {
+				// NOOP for testing
+				return nil
+			}
+		}
+
+		// current context is context1
+		dockercontext.SetupTestDockerContexts(t, 1, 1)
+
+		client, err := New(
+			context.Background(),
+			WithHealthCheck(noopHealthCheck),
+			WithDockerHost("wont-be-used"),
+			WithDockerContext("context1"),
+		)
+		require.NoError(t, err)
+		require.NotNil(t, client)
+
+		// the docker host from the context takes precedence over the one set with WithDockerHost
+		require.Equal(t, "tcp://127.0.0.1:1", client.cfg.Host)
+	})
+
+	t.Run("with-dockercontext", func(t *testing.T) {
+		noopHealthCheck := func(_ context.Context) func(*Client) error {
+			return func(_ *Client) error {
+				// NOOP for testing
+				return nil
+			}
+		}
+
+		// current context is context1
+		dockercontext.SetupTestDockerContexts(t, 1, 1)
+
+		client, err := New(
+			context.Background(),
+			WithHealthCheck(noopHealthCheck),
+			WithDockerContext("context1"),
+		)
+		require.NoError(t, err)
+		require.NotNil(t, client)
+
+		// the docker host from the context is used
+		require.Equal(t, "tcp://127.0.0.1:1", client.cfg.Host)
+	})
+
+	t.Run("with-docker-context/not-existing", func(t *testing.T) {
+		noopHealthCheck := func(_ context.Context) func(*Client) error {
+			return func(_ *Client) error {
+				// NOOP for testing
+				return nil
+			}
+		}
+
+		// the test context does not exist, so the client creation fails
+		client, err := New(context.Background(), WithHealthCheck(noopHealthCheck), WithDockerContext("test"))
+		require.ErrorContains(t, err, "docker host from context")
+		require.Nil(t, client)
+	})
+
 }

@@ -153,27 +153,37 @@ func (c *Client) initOnce(_ context.Context) error {
 
 // defaultValues sets the default values for the client.
 // If no logger is provided, the default one is used.
-// If no docker host is provided, the current docker host is used.
-// If no current context is provided, the current context is used.
+// If no docker host is provided and no docker context is provided, the current docker host and context are used.
+// If no docker host is provided but a docker context is provided, the docker host from the context is used.
+// If a docker host is provided, it is used as is.
 func (c *Client) defaultValues() error {
 	if c.log == nil {
 		c.log = defaultLogger
 	}
 
-	if c.dockerHost == "" {
-		dockerHost, err := dockercontext.CurrentDockerHost()
+	if c.dockerHost == "" && c.dockerContext == "" {
+		currentDockerHost, err := dockercontext.CurrentDockerHost()
 		if err != nil {
 			return fmt.Errorf("current docker host: %w", err)
 		}
-		c.dockerHost = dockerHost
-	}
-
-	if c.currentContext == "" {
 		currentContext, err := dockercontext.Current()
 		if err != nil {
 			return fmt.Errorf("current context: %w", err)
 		}
-		c.currentContext = currentContext
+
+		c.dockerHost = currentDockerHost
+		c.dockerContext = currentContext
+
+		return nil
+	}
+
+	if c.dockerContext != "" {
+		dockerHost, err := dockercontext.DockerHostFromContext(c.dockerContext)
+		if err != nil {
+			return fmt.Errorf("docker host from context: %w", err)
+		}
+
+		c.dockerHost = dockerHost
 	}
 
 	return nil
