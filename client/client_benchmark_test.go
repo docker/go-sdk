@@ -56,6 +56,16 @@ func BenchmarkNew(b *testing.B) {
 	})
 }
 
+func BenchmarkDefaultClient(b *testing.B) {
+	b.Run("default", func(b *testing.B) {
+		b.ResetTimer()
+		for range b.N {
+			cli := client.DefaultClient
+			require.NoError(b, cli.Close())
+		}
+	})
+}
+
 func BenchmarkClientConcurrentCreation(b *testing.B) {
 	b.Run("parallel-creation", func(b *testing.B) {
 		b.ResetTimer()
@@ -81,6 +91,19 @@ func BenchmarkClientConcurrentCreation(b *testing.B) {
 			}
 		})
 	})
+
+	b.Run("shared-default-client", func(b *testing.B) {
+		cli := client.DefaultClient
+		defer cli.Close()
+
+		b.ResetTimer()
+		b.RunParallel(func(pb *testing.PB) {
+			for pb.Next() {
+				// Just access the client to test concurrent access
+				_ = cli.Client()
+			}
+		})
+	})
 }
 
 func BenchmarkClientClose(b *testing.B) {
@@ -96,6 +119,16 @@ func BenchmarkClientClose(b *testing.B) {
 	b.Run("concurrent-close", func(b *testing.B) {
 		cli, err := client.New(context.Background())
 		require.NoError(b, err)
+		b.ResetTimer()
+		b.RunParallel(func(pb *testing.PB) {
+			for pb.Next() {
+				require.NoError(b, cli.Close())
+			}
+		})
+	})
+
+	b.Run("concurrent-close-default-client", func(b *testing.B) {
+		cli := client.DefaultClient
 		b.ResetTimer()
 		b.RunParallel(func(pb *testing.PB) {
 			for pb.Next() {

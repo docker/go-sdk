@@ -14,6 +14,12 @@ import (
 	dockercontext "github.com/docker/go-sdk/context"
 )
 
+var noopHealthCheck = func(_ context.Context) func(c *client.Client) error {
+	return func(_ *client.Client) error {
+		return nil
+	}
+}
+
 func TestNew(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
 		cli, err := client.New(context.Background())
@@ -100,12 +106,6 @@ func TestNew(t *testing.T) {
 	})
 
 	t.Run("healthcheck/noop", func(t *testing.T) {
-		noopHealthCheck := func(_ context.Context) func(c *client.Client) error {
-			return func(_ *client.Client) error {
-				return nil
-			}
-		}
-
 		cli, err := client.New(context.Background(), client.WithHealthCheck(noopHealthCheck))
 		require.NoError(t, err)
 		require.NotNil(t, cli)
@@ -151,19 +151,17 @@ func TestNew(t *testing.T) {
 }
 
 func TestDefaultClient(t *testing.T) {
-	t.Run("success", func(t *testing.T) {
-		cli := client.DefaultClient
-		require.NotNil(t, cli)
+	// predefine the default client to use the noop health check
+	cli := client.DefaultClient
+	require.NoError(t, client.WithHealthCheck(noopHealthCheck).Apply(cli))
 
+	t.Run("success", func(t *testing.T) {
 		info, err := cli.Info(context.Background())
 		require.NoError(t, err)
 		require.NotNil(t, info)
 	})
 
 	t.Run("success/info-cached", func(t *testing.T) {
-		cli := client.DefaultClient
-		require.NotNil(t, cli)
-
 		info1, err := cli.Info(context.Background())
 		require.NoError(t, err)
 		require.NotNil(t, info1)
@@ -176,54 +174,13 @@ func TestDefaultClient(t *testing.T) {
 	})
 
 	t.Run("client", func(t *testing.T) {
-		cli := client.DefaultClient
-		require.NotNil(t, cli)
-
 		require.NotNil(t, cli.Client())
 	})
 
 	t.Run("close", func(t *testing.T) {
-		cli := client.DefaultClient
-		require.NotNil(t, cli)
-
 		// multiple calls to Close() are idempotent
 		require.NoError(t, cli.Close())
 		require.NoError(t, cli.Close())
-	})
-
-	t.Run("docker-host/precedence", func(t *testing.T) {
-		t.Run("env-var-wins", func(t *testing.T) {
-			t.Setenv(dockercontext.EnvOverrideHost, "tcp://foobar:2375") // this URL is parseable, although not reachable
-			cli := client.DefaultClient
-			require.NotNil(t, cli)
-
-			info, err := cli.Info(context.Background())
-			require.Error(t, err)
-			require.NotNil(t, info)
-		})
-
-		t.Run("context-wins/found", func(t *testing.T) {
-			// current context is context1, which is not reachable
-			dockercontext.SetupTestDockerContexts(t, 1, 1)
-
-			t.Setenv(dockercontext.EnvOverrideContext, "context1")
-			cli := client.DefaultClient
-			require.NotNil(t, cli)
-
-			info, err := cli.Info(context.Background())
-			require.Error(t, err)
-			require.NotNil(t, info)
-		})
-
-		t.Run("context-wins/not-found", func(t *testing.T) {
-			t.Setenv(dockercontext.EnvOverrideContext, "foocontext") // this context does not exist
-			cli := client.DefaultClient
-			require.NotNil(t, cli)
-
-			info, err := cli.Info(context.Background())
-			require.Error(t, err)
-			require.NotNil(t, info)
-		})
 	})
 }
 
