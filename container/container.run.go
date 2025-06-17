@@ -35,11 +35,7 @@ func Run(ctx context.Context, opts ...ContainerCustomizer) (*Container, error) {
 
 	if def.dockerClient == nil {
 		// use the default docker client
-		cli, err := client.New(ctx)
-		if err != nil {
-			return nil, fmt.Errorf("new docker client: %w", err)
-		}
-		def.dockerClient = cli
+		def.dockerClient = client.DefaultClient
 	}
 
 	env := []string{}
