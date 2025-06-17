@@ -119,6 +119,16 @@ func CurrentDockerHost() (string, error) {
 	return internal.ExtractDockerHost(current, metaRoot)
 }
 
+// DockerHostFromContext returns the Docker host from the given context.
+func DockerHostFromContext(ctx string) (string, error) {
+	metaRoot, err := metaRoot()
+	if err != nil {
+		return "", fmt.Errorf("meta root: %w", err)
+	}
+
+	return internal.ExtractDockerHost(ctx, metaRoot)
+}
+
 // metaRoot returns the root directory of the Docker context metadata.
 func metaRoot() (string, error) {
 	dir, err := config.Dir()

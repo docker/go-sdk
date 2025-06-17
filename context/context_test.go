@@ -97,3 +97,47 @@ func TestCurrentDockerHost(t *testing.T) {
 		require.Empty(t, host)
 	})
 }
+
+func TestDockerHostFromContext(t *testing.T) {
+	t.Run("docker-context/override-host", func(tt *testing.T) {
+		SetupTestDockerContexts(tt, 1, 3) // current context is context1
+		tt.Setenv(EnvOverrideHost, "tcp://127.0.0.1:123")
+
+		host, err := DockerHostFromContext("context1")
+		require.NoError(t, err)
+		require.Equal(t, "tcp://127.0.0.1:1", host) // from context1
+	})
+
+	t.Run("docker-context/default", func(tt *testing.T) {
+		SetupTestDockerContexts(tt, 1, 3) // current context is context1
+		tt.Setenv(EnvOverrideContext, DefaultContextName)
+
+		host, err := DockerHostFromContext("context1")
+		require.NoError(t, err)
+		require.Equal(t, "tcp://127.0.0.1:1", host)
+	})
+
+	t.Run("docker-context/1", func(tt *testing.T) {
+		SetupTestDockerContexts(tt, 1, 3) // current context is context1
+
+		host, err := DockerHostFromContext("context1")
+		require.NoError(t, err)
+		require.Equal(t, "tcp://127.0.0.1:1", host) // from context1
+	})
+
+	t.Run("docker-context/2", func(tt *testing.T) {
+		SetupTestDockerContexts(tt, 2, 3) // current context is context2
+
+		host, err := DockerHostFromContext("context2")
+		require.NoError(t, err)
+		require.Equal(t, "tcp://127.0.0.1:2", host) // from context2
+	})
+
+	t.Run("docker-context/not-found", func(tt *testing.T) {
+		SetupTestDockerContexts(tt, 1, 1) // current context is context1
+
+		host, err := DockerHostFromContext("context-not-found")
+		require.Error(t, err)
+		require.Empty(t, host)
+	})
+}
