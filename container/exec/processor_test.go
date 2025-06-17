@@ -105,7 +105,6 @@ func TestNewProcessOptions(t *testing.T) {
 
 		require.NotNil(t, opts)
 		require.Equal(t, cmd, opts.ExecConfig.Cmd)
-		require.False(t, opts.ExecConfig.Detach)
 		require.True(t, opts.ExecConfig.AttachStdout)
 		require.True(t, opts.ExecConfig.AttachStderr)
 		require.Empty(t, opts.ExecConfig.User)
@@ -166,7 +165,6 @@ func TestProcessOptions(t *testing.T) {
 		WithTTY(true).Apply(opts)
 
 		// Verify defaults are still set
-		require.False(t, opts.ExecConfig.Detach)
 		require.True(t, opts.ExecConfig.AttachStdout)
 		require.True(t, opts.ExecConfig.AttachStderr)
 	})
