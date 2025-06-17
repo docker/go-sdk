@@ -31,11 +31,11 @@ type unwrapErrs interface {
 	Unwrap() []error
 }
 
-// CleanupNetwork is a helper function that schedules the network to be
+// Cleanup is a helper function that schedules the network to be
 // removed when the test ends.
-// This should be the first call after NewNetwork(...) in a test before
+// This should be the first call after [New] in a test before
 // any error check. If network is nil, it's a no-op.
-func CleanupNetwork(tb testing.TB, nw TerminableNetwork) {
+func Cleanup(tb testing.TB, nw TerminableNetwork) {
 	tb.Helper()
 
 	tb.Cleanup(func() {
@@ -45,13 +45,13 @@ func CleanupNetwork(tb testing.TB, nw TerminableNetwork) {
 	})
 }
 
-// CleanupNetworkByID is a helper function that schedules the network to be
+// CleanupByID is a helper function that schedules the network to be
 // removed, identified by its ID, when the test ends.
 // This should be the first call after NewNetwork(...) in a test before
 // any error check. If network is nil, it's a no-op.
 // It uses a new docker client to terminate the network, which is automatically
 // closed when the test ends.
-func CleanupNetworkByID(tb testing.TB, id string) {
+func CleanupByID(tb testing.TB, id string) {
 	tb.Helper()
 
 	dockerClient, err := client.New(context.Background())
@@ -70,7 +70,7 @@ func CleanupNetworkByID(tb testing.TB, id string) {
 		noErrorOrIgnored(tb, dockerClient.Close())
 	})
 
-	CleanupNetwork(tb, nw)
+	Cleanup(tb, nw)
 }
 
 // isCleanupSafe checks if an error is cleanup safe.

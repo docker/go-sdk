@@ -24,7 +24,7 @@ func TestNew(t *testing.T) {
 		nw, err := network.New(ctx,
 			network.WithDriver(driver),
 		)
-		network.CleanupNetwork(t, nw)
+		network.Cleanup(t, nw)
 		require.NoError(t, err)
 		require.NotNil(t, nw)
 		require.NotEmpty(t, nw.Name())
@@ -37,7 +37,7 @@ func TestNew(t *testing.T) {
 		nw, err := network.New(ctx,
 			network.WithName("test-network"),
 		)
-		network.CleanupNetwork(t, nw)
+		network.Cleanup(t, nw)
 		require.NoError(t, err)
 		require.NotNil(t, nw)
 		require.Equal(t, "test-network", nw.Name())
@@ -49,7 +49,7 @@ func TestNew(t *testing.T) {
 		nw, err := network.New(ctx,
 			network.WithName(""),
 		)
-		network.CleanupNetwork(t, nw)
+		network.Cleanup(t, nw)
 		require.Error(t, err)
 		require.Nil(t, nw)
 	})
@@ -72,7 +72,7 @@ func TestNew(t *testing.T) {
 		nw, err := network.New(ctx,
 			network.WithIPAM(&ipamConfig),
 		)
-		network.CleanupNetwork(t, nw)
+		network.Cleanup(t, nw)
 		require.NoError(t, err)
 		require.NotNil(t, nw)
 	})
@@ -83,7 +83,7 @@ func TestNew(t *testing.T) {
 		nw, err := network.New(ctx,
 			network.WithAttachable(),
 		)
-		network.CleanupNetwork(t, nw)
+		network.Cleanup(t, nw)
 		require.NoError(t, err)
 		require.NotNil(t, nw)
 	})
@@ -94,7 +94,7 @@ func TestNew(t *testing.T) {
 		nw, err := network.New(ctx,
 			network.WithInternal(),
 		)
-		network.CleanupNetwork(t, nw)
+		network.Cleanup(t, nw)
 		require.NoError(t, err)
 		require.NotNil(t, nw)
 	})
@@ -105,7 +105,7 @@ func TestNew(t *testing.T) {
 		nw, err := network.New(ctx,
 			network.WithEnableIPv6(),
 		)
-		network.CleanupNetwork(t, nw)
+		network.Cleanup(t, nw)
 		require.NoError(t, err)
 		require.NotNil(t, nw)
 	})
@@ -116,7 +116,7 @@ func TestNew(t *testing.T) {
 		nw, err := network.New(ctx,
 			network.WithLabels(map[string]string{"test": "test"}),
 		)
-		network.CleanupNetwork(t, nw)
+		network.Cleanup(t, nw)
 		require.NoError(t, err)
 		require.NotNil(t, nw)
 
@@ -136,7 +136,7 @@ func TestDuplicatedName(t *testing.T) {
 	nw, err := network.New(ctx,
 		network.WithName("foo-network"),
 	)
-	network.CleanupNetwork(t, nw)
+	network.Cleanup(t, nw)
 	require.NoError(t, err)
 	require.NotNil(t, nw)
 

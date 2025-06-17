@@ -17,7 +17,7 @@ import (
 func TestInspect(t *testing.T) {
 	t.Run("network-exists", func(t *testing.T) {
 		nw, err := network.New(context.Background())
-		network.CleanupNetwork(t, nw)
+		network.Cleanup(t, nw)
 		require.NoError(t, err)
 
 		inspect, err := nw.Inspect(context.Background())
@@ -39,7 +39,7 @@ func TestInspect(t *testing.T) {
 			defer dockerClient.Close()
 
 			nw, err := network.New(context.Background(), network.WithName("test-network-option-error"), network.WithClient(dockerClient))
-			network.CleanupNetwork(t, nw)
+			network.Cleanup(t, nw)
 			require.NoError(t, err)
 
 			// Create an invalid inspect option that will cause an error
@@ -57,7 +57,7 @@ func TestInspect(t *testing.T) {
 			defer dockerClient.Close()
 
 			nw, err := network.New(context.Background(), network.WithName("test-network-no-cache"), network.WithClient(dockerClient))
-			network.CleanupNetwork(t, nw)
+			network.Cleanup(t, nw)
 			require.NoError(t, err)
 
 			inspect, err := nw.Inspect(context.Background(), network.WithNoCache())
@@ -73,7 +73,7 @@ func TestInspect(t *testing.T) {
 			defer dockerClient.Close()
 
 			nw, err := network.New(context.Background(), network.WithName("test-network-with-cache"), network.WithClient(dockerClient))
-			network.CleanupNetwork(t, nw)
+			network.Cleanup(t, nw)
 			require.NoError(t, err)
 
 			// first time inspecting the network: it will be cached

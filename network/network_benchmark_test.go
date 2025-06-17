@@ -17,7 +17,7 @@ func BenchmarkNetworkOperations(b *testing.B) {
 		b.ResetTimer()
 		for range b.N {
 			nw, err := network.New(ctx)
-			network.CleanupNetwork(b, nw)
+			network.Cleanup(b, nw)
 			require.NoError(b, err)
 		}
 	})
@@ -37,14 +37,14 @@ func BenchmarkNetworkOperations(b *testing.B) {
 		b.ResetTimer()
 		for range b.N {
 			nw, err := network.New(ctx, opts...)
-			network.CleanupNetwork(b, nw)
+			network.Cleanup(b, nw)
 			require.NoError(b, err)
 		}
 	})
 
 	b.Run("inspect-network", func(b *testing.B) {
 		nw, err := network.New(ctx)
-		network.CleanupNetwork(b, nw)
+		network.Cleanup(b, nw)
 		require.NoError(b, err)
 
 		b.ReportAllocs()
@@ -57,7 +57,7 @@ func BenchmarkNetworkOperations(b *testing.B) {
 
 	b.Run("inspect-network-with-cache", func(b *testing.B) {
 		nw, err := network.New(ctx)
-		network.CleanupNetwork(b, nw)
+		network.Cleanup(b, nw)
 		require.NoError(b, err)
 
 		// First inspect to populate cache
@@ -74,7 +74,7 @@ func BenchmarkNetworkOperations(b *testing.B) {
 
 	b.Run("inspect-network-without-cache", func(b *testing.B) {
 		nw, err := network.New(ctx)
-		network.CleanupNetwork(b, nw)
+		network.Cleanup(b, nw)
 		require.NoError(b, err)
 
 		b.ReportAllocs()
@@ -90,7 +90,7 @@ func BenchmarkNetworkOperations(b *testing.B) {
 		b.ResetTimer()
 		for range b.N {
 			nw, err := network.New(ctx)
-			network.CleanupNetwork(b, nw)
+			network.Cleanup(b, nw)
 			require.NoError(b, err)
 			require.NoError(b, nw.Terminate(ctx))
 		}
@@ -101,7 +101,7 @@ func BenchmarkNetworkOperations(b *testing.B) {
 		b.ResetTimer()
 		for range b.N {
 			nw, err := network.New(ctx)
-			network.CleanupNetwork(b, nw)
+			network.Cleanup(b, nw)
 			require.NoError(b, err)
 			require.NoError(b, nw.Terminate(ctx))
 		}
@@ -118,7 +118,7 @@ func BenchmarkNetworkConcurrent(b *testing.B) {
 		b.RunParallel(func(pb *testing.PB) {
 			for pb.Next() {
 				nw, err := network.New(ctx)
-				network.CleanupNetwork(b, nw)
+				network.Cleanup(b, nw)
 				require.NoError(b, err)
 			}
 		})
@@ -126,7 +126,7 @@ func BenchmarkNetworkConcurrent(b *testing.B) {
 
 	b.Run("concurrent-network-inspection-with-cache", func(b *testing.B) {
 		nw, err := network.New(ctx)
-		network.CleanupNetwork(b, nw)
+		network.Cleanup(b, nw)
 		require.NoError(b, err)
 
 		b.ReportAllocs()
@@ -141,7 +141,7 @@ func BenchmarkNetworkConcurrent(b *testing.B) {
 
 	b.Run("concurrent-network-inspection-with-no-cache", func(b *testing.B) {
 		nw, err := network.New(ctx)
-		network.CleanupNetwork(b, nw)
+		network.Cleanup(b, nw)
 		require.NoError(b, err)
 
 		b.ReportAllocs()

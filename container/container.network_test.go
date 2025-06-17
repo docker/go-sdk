@@ -24,12 +24,12 @@ func TestContainer_ContainerIPs(t *testing.T) {
 	})
 
 	nw1, err := network.New(context.Background(), network.WithClient(dockerClient))
+	network.Cleanup(t, nw1)
 	require.NoError(t, err)
-	network.CleanupNetwork(t, nw1)
 
 	nw2, err := network.New(context.Background(), network.WithClient(dockerClient))
+	network.Cleanup(t, nw2)
 	require.NoError(t, err)
-	network.CleanupNetwork(t, nw2)
 
 	ctr, err := container.Run(
 		context.Background(),
@@ -80,7 +80,7 @@ func TestContainer_Networks(t *testing.T) {
 	})
 
 	nw, err := network.New(context.Background(), network.WithClient(dockerClient))
-	network.CleanupNetwork(t, nw)
+	network.Cleanup(t, nw)
 	require.NoError(t, err)
 
 	ctr, err := container.Run(
@@ -108,7 +108,7 @@ func TestContainer_NetworkAliases(t *testing.T) {
 	})
 
 	nw, err := network.New(context.Background(), network.WithClient(dockerClient))
-	network.CleanupNetwork(t, nw)
+	network.Cleanup(t, nw)
 	require.NoError(t, err)
 
 	ctr, err := container.Run(
