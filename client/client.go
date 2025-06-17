@@ -91,7 +91,10 @@ func New(ctx context.Context, options ...ClientOption) (*Client, error) {
 // This method is safe for concurrent use by multiple goroutines.
 func (c *Client) init(ctx context.Context) error {
 	c.once.Do(func() {
-		c.initOnce(ctx)
+		err := c.initOnce(ctx)
+		if err != nil {
+			c.err = err
+		}
 	})
 	return c.err
 }

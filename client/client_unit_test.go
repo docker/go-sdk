@@ -8,9 +8,9 @@ import (
 	"log/slog"
 	"testing"
 
-	dockercontext "github.com/docker/go-sdk/context"
-
 	"github.com/stretchr/testify/require"
+
+	dockercontext "github.com/docker/go-sdk/context"
 )
 
 func TestNew_internal_state(t *testing.T) {
@@ -150,5 +150,4 @@ func TestNew_internal_state(t *testing.T) {
 		require.ErrorContains(t, err, "docker host from context")
 		require.Nil(t, client)
 	})
-
 }

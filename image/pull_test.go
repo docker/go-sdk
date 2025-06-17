@@ -13,6 +13,8 @@ import (
 
 func TestPull(t *testing.T) {
 	pull := func(t *testing.T, dockerClient *client.Client) {
+		t.Helper()
+
 		ctx := context.Background()
 
 		err := image.Pull(ctx,

@@ -13,6 +13,8 @@ import (
 )
 
 func newNetworkSuite(t *testing.T, dockerClient *client.Client) {
+	t.Helper()
+
 	t.Run("no-name", func(t *testing.T) {
 		ctx := context.Background()
 
