@@ -25,6 +25,22 @@ func TestNew(t *testing.T) {
 		require.NotNil(t, info)
 	})
 
+	t.Run("success/info-cached", func(t *testing.T) {
+		cli, err := client.New(context.Background())
+		require.NoError(t, err)
+		require.NotNil(t, cli)
+
+		info1, err := cli.Info(context.Background())
+		require.NoError(t, err)
+		require.NotNil(t, info1)
+
+		info2, err := cli.Info(context.Background())
+		require.NoError(t, err)
+		require.NotNil(t, info2)
+
+		require.Equal(t, info1, info2)
+	})
+
 	t.Run("client", func(t *testing.T) {
 		cli, err := client.New(context.Background())
 		require.NoError(t, err)
