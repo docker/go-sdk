@@ -12,15 +12,26 @@ import (
 )
 
 func TestPull(t *testing.T) {
-	ctx := context.Background()
-	dockerClient, err := client.New(ctx)
-	require.NoError(t, err)
-	defer dockerClient.Close()
+	pull := func(t *testing.T, dockerClient *client.Client) {
+		ctx := context.Background()
 
-	err = image.Pull(ctx,
-		"nginx:alpine",
-		image.WithPullClient(dockerClient),
-		image.WithPullOptions(apiimage.PullOptions{}),
-	)
-	require.NoError(t, err)
+		err := image.Pull(ctx,
+			"nginx:alpine",
+			image.WithPullClient(dockerClient),
+			image.WithPullOptions(apiimage.PullOptions{}),
+		)
+		require.NoError(t, err)
+	}
+
+	t.Run("new-client", func(t *testing.T) {
+		dockerClient, err := client.New(context.Background())
+		require.NoError(t, err)
+		defer dockerClient.Close()
+
+		pull(t, dockerClient)
+	})
+
+	t.Run("default-client", func(t *testing.T) {
+		pull(t, client.DefaultClient)
+	})
 }
