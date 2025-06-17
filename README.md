@@ -34,8 +34,16 @@ go get github.com/docker/go-sdk
 
 ### client
 
+Using the default client:
+
 ```go
-cli, err := client.New(context.Background())
+cli := client.DefaultClient
+```
+
+Creating a new client, with optional configuration:
+
+```go
+cli, err := client.New(context.Background(), client.WithDockerContext("my-docker-context"))
 if err != nil {
     log.Fatalf("failed to create docker client: %v", err)
 }
@@ -43,6 +51,8 @@ if err != nil {
 // Close the docker client when done
 defer cli.Close()
 ```
+
+Please refer to the [client](./client/README.md) package for more information.
 
 ### config
 
