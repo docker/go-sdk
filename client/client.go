@@ -34,7 +34,7 @@ var (
 		return func(c *Client) error {
 			var pingErr error
 			for i := range 3 {
-				if _, pingErr = c.Ping(ctx); pingErr == nil {
+				if _, pingErr = c.Client().Ping(ctx); pingErr == nil {
 					return nil
 				}
 				select {
@@ -67,31 +67,31 @@ var (
 //
 // The client is safe for concurrent use by multiple goroutines.
 func New(ctx context.Context, options ...ClientOption) (*Client, error) {
-	client := &Client{
+	c := &Client{
 		healthCheck: defaultHealthCheck,
 	}
 	for _, opt := range options {
-		if err := opt.Apply(client); err != nil {
+		if err := opt.Apply(c); err != nil {
 			return nil, fmt.Errorf("apply option: %w", err)
 		}
 	}
 
-	if err := client.initOnce(ctx); err != nil {
+	if err := c.initOnce(ctx); err != nil {
 		return nil, fmt.Errorf("load config: %w", err)
 	}
 
-	if err := client.healthCheck(ctx)(client); err != nil {
+	if err := c.healthCheck(ctx)(c); err != nil {
 		return nil, fmt.Errorf("health check: %w", err)
 	}
 
-	return client, nil
+	return c, nil
 }
 
 // initOnce initializes the client once.
 // This method is safe for concurrent use by multiple goroutines.
 func (c *Client) initOnce(_ context.Context) error {
 	c.mtx.RLock()
-	if c.Client != nil || c.err != nil {
+	if c.Client() != nil || c.err != nil {
 		err := c.err
 		c.mtx.RUnlock()
 		return err
@@ -143,7 +143,7 @@ func (c *Client) initOnce(_ context.Context) error {
 
 	opts = append(opts, client.WithHTTPHeaders(httpHeaders))
 
-	if c.Client, c.err = client.NewClientWithOpts(opts...); c.err != nil {
+	if c.dockerClient, c.err = client.NewClientWithOpts(opts...); c.err != nil {
 		c.err = fmt.Errorf("new client: %w", c.err)
 		return c.err
 	}
@@ -185,12 +185,12 @@ func (c *Client) Close() error {
 	c.mtx.Lock()
 	defer c.mtx.Unlock()
 
-	if c.Client == nil {
+	if c.Client() == nil {
 		return nil
 	}
 
 	// Store the error before clearing the client
-	err := c.Client.Close()
+	err := c.Client().Close()
 
 	// Clear the client after closing to prevent use-after-close issues
 	c.dockerInfo = system.Info{}

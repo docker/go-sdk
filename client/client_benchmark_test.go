@@ -77,7 +77,7 @@ func BenchmarkClientConcurrentCreation(b *testing.B) {
 		b.RunParallel(func(pb *testing.PB) {
 			for pb.Next() {
 				// Just access the client to test concurrent access
-				_ = cli.Client
+				_ = cli.Client()
 			}
 		})
 	})

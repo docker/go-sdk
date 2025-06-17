@@ -46,7 +46,7 @@ func TestNew(t *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, cli)
 
-		require.NotNil(t, cli.Client)
+		require.NotNil(t, cli.Client())
 	})
 
 	t.Run("close", func(t *testing.T) {
@@ -171,7 +171,7 @@ func TestClientConcurrentAccess(t *testing.T) {
 
 				if id%2 == 0 {
 					// Even IDs call Client()
-					c := client.Client
+					c := client.Client()
 					// Client() might return nil if the client was closed by another goroutine
 					// This is expected behavior
 					if c != nil {

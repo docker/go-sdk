@@ -26,7 +26,7 @@ type Client struct {
 
 	// client is the underlying docker client, embedded to avoid
 	// having to re-implement all the methods.
-	*client.Client
+	dockerClient *client.Client
 
 	// cfg is the configuration for the client, obtained from the environment variables.
 	cfg *config
@@ -55,8 +55,14 @@ type Client struct {
 	healthCheck func(ctx context.Context) func(c *Client) error
 }
 
-// implements SystemAPIClient interface
-var _ client.SystemAPIClient = &Client{}
+// Client returns the underlying docker client.
+// It is safe to call this method concurrently.
+func (c *Client) Client() *client.Client {
+	c.mtx.RLock()
+	defer c.mtx.RUnlock()
+
+	return c.dockerClient
+}
 
 // Info returns information about the docker server. The result of Info is cached
 // and reused every time Info is called.
@@ -69,7 +75,7 @@ func (c *Client) Info(ctx context.Context) (system.Info, error) {
 		return c.dockerInfo, nil
 	}
 
-	info, err := c.Client.Info(ctx)
+	info, err := c.dockerClient.Info(ctx)
 	if err != nil {
 		return info, fmt.Errorf("docker info: %w", err)
 	}
@@ -88,7 +94,7 @@ func (c *Client) Info(ctx context.Context) (system.Info, error) {
 	c.log.Info("Connected to docker",
 		"package", packagePath,
 		"server_version", c.dockerInfo.ServerVersion,
-		"client_version", c.ClientVersion(),
+		"client_version", c.dockerClient.ClientVersion(),
 		"operating_system", c.dockerInfo.OperatingSystem,
 		"mem_total", c.dockerInfo.MemTotal/1024/1024,
 		"labels", infoLabels,
