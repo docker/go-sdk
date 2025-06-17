@@ -24,6 +24,9 @@ type Client struct {
 	// mtx is a mutex for synchronizing access to the fields below.
 	mtx sync.RWMutex
 
+	// once is used to initialize the client once.
+	once sync.Once
+
 	// client is the underlying docker client, embedded to avoid
 	// having to re-implement all the methods.
 	dockerClient *client.Client
@@ -56,10 +59,15 @@ type Client struct {
 }
 
 // Client returns the underlying docker client.
+// It verifies that the client is initialized.
 // It is safe to call this method concurrently.
 func (c *Client) Client() *client.Client {
-	c.mtx.RLock()
-	defer c.mtx.RUnlock()
+	ctx := context.Background()
+
+	if err := c.init(ctx); err != nil {
+		c.err = fmt.Errorf("load config: %w", err)
+		return c.dockerClient
+	}
 
 	return c.dockerClient
 }
@@ -73,14 +81,16 @@ func (c *Client) Logger() *slog.Logger {
 // and reused every time Info is called.
 // It will also print out the docker server info, and the resolved Docker paths, to the default logger.
 func (c *Client) Info(ctx context.Context) (system.Info, error) {
-	c.mtx.RLock()
-	defer c.mtx.RUnlock()
-
+	c.mtx.Lock()
 	if c.dockerInfoSet {
+		defer c.mtx.Unlock()
 		return c.dockerInfo, nil
 	}
+	c.mtx.Unlock()
 
-	info, err := c.dockerClient.Info(ctx)
+	cli := c.Client()
+
+	info, err := cli.Info(ctx)
 	if err != nil {
 		return info, fmt.Errorf("docker info: %w", err)
 	}
@@ -99,7 +109,7 @@ func (c *Client) Info(ctx context.Context) (system.Info, error) {
 	c.log.Info("Connected to docker",
 		"package", packagePath,
 		"server_version", c.dockerInfo.ServerVersion,
-		"client_version", c.dockerClient.ClientVersion(),
+		"client_version", cli.ClientVersion(),
 		"operating_system", c.dockerInfo.OperatingSystem,
 		"mem_total", c.dockerInfo.MemTotal/1024/1024,
 		"labels", infoLabels,

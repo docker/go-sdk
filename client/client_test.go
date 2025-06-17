@@ -150,6 +150,83 @@ func TestNew(t *testing.T) {
 	})
 }
 
+func TestDefaultClient(t *testing.T) {
+	t.Run("success", func(t *testing.T) {
+		cli := client.DefaultClient
+		require.NotNil(t, cli)
+
+		info, err := cli.Info(context.Background())
+		require.NoError(t, err)
+		require.NotNil(t, info)
+	})
+
+	t.Run("success/info-cached", func(t *testing.T) {
+		cli := client.DefaultClient
+		require.NotNil(t, cli)
+
+		info1, err := cli.Info(context.Background())
+		require.NoError(t, err)
+		require.NotNil(t, info1)
+
+		info2, err := cli.Info(context.Background())
+		require.NoError(t, err)
+		require.NotNil(t, info2)
+
+		require.Equal(t, info1, info2)
+	})
+
+	t.Run("client", func(t *testing.T) {
+		cli := client.DefaultClient
+		require.NotNil(t, cli)
+
+		require.NotNil(t, cli.Client())
+	})
+
+	t.Run("close", func(t *testing.T) {
+		cli := client.DefaultClient
+		require.NotNil(t, cli)
+
+		// multiple calls to Close() are idempotent
+		require.NoError(t, cli.Close())
+		require.NoError(t, cli.Close())
+	})
+
+	t.Run("docker-host/precedence", func(t *testing.T) {
+		t.Run("env-var-wins", func(t *testing.T) {
+			t.Setenv(dockercontext.EnvOverrideHost, "tcp://foobar:2375") // this URL is parseable, although not reachable
+			cli := client.DefaultClient
+			require.NotNil(t, cli)
+
+			info, err := cli.Info(context.Background())
+			require.Error(t, err)
+			require.NotNil(t, info)
+		})
+
+		t.Run("context-wins/found", func(t *testing.T) {
+			// current context is context1, which is not reachable
+			dockercontext.SetupTestDockerContexts(t, 1, 1)
+
+			t.Setenv(dockercontext.EnvOverrideContext, "context1")
+			cli := client.DefaultClient
+			require.NotNil(t, cli)
+
+			info, err := cli.Info(context.Background())
+			require.Error(t, err)
+			require.NotNil(t, info)
+		})
+
+		t.Run("context-wins/not-found", func(t *testing.T) {
+			t.Setenv(dockercontext.EnvOverrideContext, "foocontext") // this context does not exist
+			cli := client.DefaultClient
+			require.NotNil(t, cli)
+
+			info, err := cli.Info(context.Background())
+			require.Error(t, err)
+			require.NotNil(t, info)
+		})
+	})
+}
+
 func TestClientConcurrentAccess(t *testing.T) {
 	t.Run("concurrent-client-close", func(t *testing.T) {
 		client, err := client.New(context.Background())

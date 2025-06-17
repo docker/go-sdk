@@ -34,7 +34,7 @@ var (
 		return func(c *Client) error {
 			var pingErr error
 			for i := range 3 {
-				if _, pingErr = c.dockerClient.Ping(ctx); pingErr == nil {
+				if _, pingErr = c.Client().Ping(ctx); pingErr == nil {
 					return nil
 				}
 				select {
@@ -76,7 +76,7 @@ func New(ctx context.Context, options ...ClientOption) (*Client, error) {
 		}
 	}
 
-	if err := c.initOnce(ctx); err != nil {
+	if err := c.init(ctx); err != nil {
 		return nil, fmt.Errorf("load config: %w", err)
 	}
 
@@ -87,19 +87,21 @@ func New(ctx context.Context, options ...ClientOption) (*Client, error) {
 	return c, nil
 }
 
+// init initializes the client.
+// This method is safe for concurrent use by multiple goroutines.
+func (c *Client) init(ctx context.Context) error {
+	c.once.Do(func() {
+		c.initOnce(ctx)
+	})
+	return c.err
+}
+
 // initOnce initializes the client once.
 // This method is safe for concurrent use by multiple goroutines.
 func (c *Client) initOnce(_ context.Context) error {
-	c.mtx.RLock()
 	if c.dockerClient != nil || c.err != nil {
-		err := c.err
-		c.mtx.RUnlock()
-		return err
+		return c.err
 	}
-	c.mtx.RUnlock()
-
-	c.mtx.Lock()
-	defer c.mtx.Unlock()
 
 	// Set the default values for the client:
 	// - log
@@ -148,6 +150,7 @@ func (c *Client) initOnce(_ context.Context) error {
 		return c.err
 	}
 
+	c.err = nil
 	return nil
 }
 

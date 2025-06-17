@@ -43,7 +43,7 @@ func (c *Client) DaemonHost(ctx context.Context) (string, error) {
 }
 
 func (c *Client) getGatewayIP(ctx context.Context, defaultNetwork string) (string, error) {
-	nw, err := c.Client().NetworkInspect(ctx, defaultNetwork, network.InspectOptions{})
+	nw, err := c.NetworkInspect(ctx, defaultNetwork, network.InspectOptions{})
 	if err != nil {
 		return "", err
 	}
