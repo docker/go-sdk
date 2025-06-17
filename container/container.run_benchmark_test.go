@@ -10,8 +10,8 @@ import (
 	"github.com/docker/go-sdk/container"
 )
 
-// BenchmarkRunContainer measures container creation time
-func BenchmarkRunContainer(b *testing.B) {
+// BenchmarkRun measures container creation time
+func BenchmarkRun(b *testing.B) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
 	defer cancel()
 
@@ -92,19 +92,19 @@ func BenchmarkRunContainer(b *testing.B) {
 	})
 }
 
-// BenchmarkRunContainerCleanup measures container cleanup time
-func BenchmarkRunContainerCleanup(b *testing.B) {
+// BenchmarkRunCleanup measures container cleanup time
+func BenchmarkRunCleanup(b *testing.B) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
 	defer cancel()
 
 	b.Run("minimal", func(b *testing.B) {
-		benchmarkRunContainerCleanup(b, ctx, []container.ContainerCustomizer{
+		benchmarkRunCleanup(b, ctx, []container.ContainerCustomizer{
 			container.WithImage(nginxAlpineImage),
 		})
 	})
 
 	b.Run("with-env", func(b *testing.B) {
-		benchmarkRunContainerCleanup(b, ctx, []container.ContainerCustomizer{
+		benchmarkRunCleanup(b, ctx, []container.ContainerCustomizer{
 			container.WithImage(nginxAlpineImage),
 			container.WithEnv(map[string]string{
 				"ENV1": "value1",
@@ -114,7 +114,7 @@ func BenchmarkRunContainerCleanup(b *testing.B) {
 	})
 
 	b.Run("with-ports", func(b *testing.B) {
-		benchmarkRunContainerCleanup(b, ctx, []container.ContainerCustomizer{
+		benchmarkRunCleanup(b, ctx, []container.ContainerCustomizer{
 			container.WithImage(nginxAlpineImage),
 			container.WithExposedPorts("80/tcp", "443/tcp"),
 		})
@@ -133,8 +133,8 @@ func benchmarkContainerRun(b *testing.B, ctx context.Context, opts []container.C
 	}
 }
 
-// benchmarkRunContainerCleanup is a helper function to benchmark container cleanup
-func benchmarkRunContainerCleanup(b *testing.B, ctx context.Context, opts []container.ContainerCustomizer) {
+// benchmarkRunCleanup is a helper function to benchmark container cleanup
+func benchmarkRunCleanup(b *testing.B, ctx context.Context, opts []container.ContainerCustomizer) {
 	b.Helper()
 	b.ReportAllocs()
 
