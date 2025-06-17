@@ -8,7 +8,6 @@ import (
 
 	"github.com/docker/docker/api/types/system"
 	"github.com/docker/docker/client"
-	dockercontext "github.com/docker/go-sdk/context"
 )
 
 // packagePath is the package path for the docker-go-sdk package.
@@ -37,6 +36,12 @@ type Client struct {
 
 	// dockerOpts are options to be passed to the docker client.
 	dockerOpts []client.Opt
+
+	// currentContext is the current context of the docker daemon.
+	currentContext string
+
+	// dockerHost is the host of the docker daemon.
+	dockerHost string
 
 	// extraHeaders are additional headers to be sent to the docker client.
 	extraHeaders map[string]string
@@ -80,16 +85,6 @@ func (c *Client) Info(ctx context.Context) (system.Info, error) {
 		}
 	}
 
-	currentContext, err := dockercontext.Current()
-	if err != nil {
-		return c.dockerInfo, fmt.Errorf("current context: %w", err)
-	}
-
-	dockerHost, err := dockercontext.CurrentDockerHost()
-	if err != nil {
-		return c.dockerInfo, fmt.Errorf("current docker host: %w", err)
-	}
-
 	c.log.Info("Connected to docker",
 		"package", packagePath,
 		"server_version", c.dockerInfo.ServerVersion,
@@ -97,8 +92,8 @@ func (c *Client) Info(ctx context.Context) (system.Info, error) {
 		"operating_system", c.dockerInfo.OperatingSystem,
 		"mem_total", c.dockerInfo.MemTotal/1024/1024,
 		"labels", infoLabels,
-		"current_context", currentContext,
-		"docker_host", dockerHost,
+		"current_context", c.currentContext,
+		"docker_host", c.dockerHost,
 	)
 
 	return c.dockerInfo, nil

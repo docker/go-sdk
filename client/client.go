@@ -109,6 +109,13 @@ func (c *Client) initOnce(_ context.Context) error {
 	if err != nil {
 		return fmt.Errorf("current docker host: %w", err)
 	}
+	c.dockerHost = dockerHost
+
+	currentContext, err := dockercontext.Current()
+	if err != nil {
+		return fmt.Errorf("current context: %w", err)
+	}
+	c.currentContext = currentContext
 
 	if c.cfg, c.err = newConfig(dockerHost); c.err != nil {
 		return c.err
