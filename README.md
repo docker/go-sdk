@@ -78,16 +78,43 @@ container.Terminate(ctr)
 ### context
 
 ```go
+current, err := context.Current()
+if err != nil {
+    log.Fatalf("failed to get current docker context: %v", err)
+}
+
+fmt.Printf("current docker context: %s", current)
+
 dockerHost, err := context.CurrentDockerHost()
 if err != nil {
     log.Fatalf("failed to get current docker host: %v", err)
 }
+fmt.Printf("current docker host: %s", dockerHost)
 ```
 
 ### image
 
 ```go
-err := image.Pull(ctx, mockImageClient, "someTag", image.PullOptions{})
+import (
+	"context"
+
+    apiimage "github.com/docker/docker/api/types/image"
+	"github.com/docker/go-sdk/client"
+	"github.com/docker/go-sdk/image"
+)
+
+ctx := context.Background()
+dockerClient, err := client.New(ctx)
+if err != nil {
+    log.Fatalf("failed to create docker client: %v", err)
+}
+defer dockerClient.Close()
+
+err = image.Pull(ctx,
+    "nginx:alpine",
+    image.WithPullClient(dockerClient),
+    image.WithPullOptions(apiimage.PullOptions{}),
+)
 if err != nil {
     log.Fatalf("failed to pull image: %v", err)
 }
