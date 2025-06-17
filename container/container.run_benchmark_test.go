@@ -128,7 +128,7 @@ func benchmarkContainerRun(b *testing.B, ctx context.Context, opts []container.C
 
 	for range b.N {
 		ctr, err := container.Run(ctx, opts...)
-		container.CleanupContainer(b, ctr)
+		container.Cleanup(b, ctr)
 		require.NoError(b, err)
 	}
 }
@@ -144,7 +144,7 @@ func benchmarkRunContainerCleanup(b *testing.B, ctx context.Context, opts []cont
 		ctr, err := container.Run(ctx, opts...)
 		require.NoError(b, err)
 
-		err = container.TerminateContainer(ctr, container.TerminateTimeout(30*time.Second))
+		err = container.Terminate(ctr, container.TerminateTimeout(30*time.Second))
 		require.NoError(b, err)
 	}
 	b.StopTimer()

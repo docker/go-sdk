@@ -360,7 +360,7 @@ func TestLifecycleHooks_withDefaultLogger(t *testing.T) {
 		WithLifecycleHooks(DefaultLoggingHook(logger)),
 	)
 
-	CleanupContainer(t, c)
+	Cleanup(t, c)
 	require.NoError(t, err)
 	require.NotNil(t, c)
 
@@ -389,7 +389,7 @@ func TestLifecycleHooks_WithMultipleHooks(t *testing.T) {
 		WithImage(nginxAlpineImage),
 		WithLifecycleHooks(DefaultLoggingHook(logger), DefaultLoggingHook(logger)),
 	)
-	CleanupContainer(t, c)
+	Cleanup(t, c)
 	require.NoError(t, err)
 	require.NotNil(t, c)
 

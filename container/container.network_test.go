@@ -38,7 +38,7 @@ func TestContainer_ContainerIPs(t *testing.T) {
 		container.WithNetwork([]string{"ctr1"}, nw1),
 		container.WithNetwork([]string{"ctr2"}, nw2),
 	)
-	container.CleanupContainer(t, ctr)
+	container.Cleanup(t, ctr)
 	require.NoError(t, err)
 
 	t.Run("container-ips", func(t *testing.T) {
@@ -60,7 +60,7 @@ func TestContainer_ContainerIPs(t *testing.T) {
 			container.WithDockerClient(dockerClient),
 			container.WithNetwork([]string{"ctr3"}, nw1),
 		)
-		container.CleanupContainer(t, ctr3)
+		container.Cleanup(t, ctr3)
 		require.NoError(t, err)
 
 		ip, err := ctr3.ContainerIP(context.Background())
@@ -90,7 +90,7 @@ func TestContainer_Networks(t *testing.T) {
 		container.WithNetwork([]string{"ctr1-a", "ctr1-b", "ctr1-c"}, nw),
 	)
 	require.NoError(t, err)
-	container.CleanupContainer(t, ctr)
+	container.Cleanup(t, ctr)
 
 	networks, err := ctr.Networks(context.Background())
 	require.NoError(t, err)
@@ -118,7 +118,7 @@ func TestContainer_NetworkAliases(t *testing.T) {
 		container.WithNetwork([]string{"ctr1-a", "ctr1-b", "ctr1-c"}, nw),
 	)
 	require.NoError(t, err)
-	container.CleanupContainer(t, ctr)
+	container.Cleanup(t, ctr)
 
 	aliases, err := ctr.NetworkAliases(context.Background())
 	require.NoError(t, err)

@@ -22,7 +22,7 @@ import (
 	"github.com/docker/go-sdk/network"
 )
 
-func TestRunContainer(t *testing.T) {
+func TestRun(t *testing.T) {
 	t.Run("error", func(t *testing.T) {
 		t.Run("no-image", func(t *testing.T) {
 			ctr, err := container.Run(context.Background())
@@ -43,7 +43,7 @@ func TestRunContainer(t *testing.T) {
 				container.WithImage(nginxAlpineImage),
 				container.WithImagePlatform("invalid"),
 			)
-			container.CleanupContainer(t, ctr)
+			container.Cleanup(t, ctr)
 			require.Error(t, err)
 			require.Nil(t, ctr)
 		})
@@ -53,7 +53,7 @@ func TestRunContainer(t *testing.T) {
 		ctr, err := container.Run(context.Background(),
 			container.WithImage(nginxAlpineImage),
 		)
-		container.CleanupContainer(t, ctr)
+		container.Cleanup(t, ctr)
 		require.NoError(t, err)
 		require.NotNil(t, ctr)
 	})
@@ -72,7 +72,7 @@ func TestRunContainer(t *testing.T) {
 			container.WithImage(nginxAlpineImage),
 			container.WithExposedPorts("80/tcp"),
 		)
-		container.CleanupContainer(t, ctr)
+		container.Cleanup(t, ctr)
 		require.NoError(t, err)
 		require.NotNil(t, ctr)
 	})
@@ -92,7 +92,7 @@ echo "done"
 					Mode:          0o755,
 				}),
 			)
-			container.CleanupContainer(t, ctr)
+			container.Cleanup(t, ctr)
 			require.NoError(t, err)
 			require.NotNil(t, ctr)
 
@@ -126,7 +126,7 @@ echo "done"
 					Mode:          0o755,
 				}),
 			)
-			container.CleanupContainer(t, ctr)
+			container.Cleanup(t, ctr)
 			require.NoError(t, err)
 			require.NotNil(t, ctr)
 
@@ -160,7 +160,7 @@ echo "done"
 					Mode:          0o755,
 				}),
 			)
-			container.CleanupContainer(t, ctr)
+			container.Cleanup(t, ctr)
 			require.Error(t, err)
 		})
 	})
@@ -173,7 +173,7 @@ echo "done"
 				c.Hostname = "test-hostname"
 			}),
 		)
-		container.CleanupContainer(t, ctr)
+		container.Cleanup(t, ctr)
 		require.NoError(t, err)
 		require.NotNil(t, ctr)
 
@@ -193,7 +193,7 @@ echo "done"
 				hc.CapDrop = []string{"NET_ADMIN"}
 			}),
 		)
-		container.CleanupContainer(t, ctr)
+		container.Cleanup(t, ctr)
 		require.NoError(t, err)
 		require.NotNil(t, ctr)
 
@@ -216,7 +216,7 @@ echo "done"
 				}
 			}),
 		)
-		container.CleanupContainer(t, ctr)
+		container.Cleanup(t, ctr)
 		require.NoError(t, err)
 		require.NotNil(t, ctr)
 
@@ -238,7 +238,7 @@ echo "done"
 			container.WithWaitStrategy(wait.ForLog("port: 3306  MySQL Community Server - GPL").WithTimeout(10*time.Second)),
 			container.WithLogConsumers(lc),
 		)
-		container.CleanupContainer(t, c)
+		container.Cleanup(t, c)
 		// we expect an error because the MySQL environment variables are not set
 		// but this is expected because we just want to test the log consumer
 		require.Error(t, err)
@@ -253,7 +253,7 @@ echo "done"
 			container.WithEntrypoint("tail", "-f", "/dev/null"),
 			container.WithStartupCommand(exec.NewRawCommand([]string{"touch", "/tmp/.container-test"})),
 		)
-		container.CleanupContainer(t, c)
+		container.Cleanup(t, c)
 		require.NoError(t, err)
 		require.NotNil(t, c)
 
@@ -273,7 +273,7 @@ echo "done"
 			container.WithEntrypoint("tail", "-f", "/dev/null"),
 			container.WithAfterReadyCommand(exec.NewRawCommand([]string{"touch", "/tmp/.container-test"})),
 		)
-		container.CleanupContainer(t, c)
+		container.Cleanup(t, c)
 		require.NoError(t, err)
 		require.NotNil(t, c)
 
@@ -289,7 +289,7 @@ echo "done"
 		ctr, err := container.Run(context.Background(),
 			container.WithImage(nginxAlpineImage),
 		)
-		container.CleanupContainer(t, ctr)
+		container.Cleanup(t, ctr)
 		require.NoError(t, err)
 		require.NotNil(t, ctr)
 	})
@@ -300,7 +300,7 @@ echo "done"
 			container.WithImagePlatform("linux/amd64"),
 			container.WithAlwaysPull(),
 		)
-		container.CleanupContainer(t, ctr)
+		container.Cleanup(t, ctr)
 		require.NoError(t, err)
 		require.NotNil(t, ctr)
 
@@ -331,7 +331,7 @@ echo "done"
 				container.WithImagePlatform("linux/amd64"),
 				container.WithAlwaysPull(),
 			)
-			container.CleanupContainer(t, c)
+			container.Cleanup(t, c)
 			require.NoError(t, err)
 			require.NotNil(t, c)
 
@@ -359,7 +359,7 @@ echo "done"
 	})
 }
 
-func TestRunContainer_addSDKLabels(t *testing.T) {
+func TestRun_addSDKLabels(t *testing.T) {
 	dockerClient, err := client.New(context.Background())
 	require.NoError(t, err)
 	t.Cleanup(func() {
@@ -370,7 +370,7 @@ func TestRunContainer_addSDKLabels(t *testing.T) {
 		container.WithDockerClient(dockerClient),
 		container.WithImage(nginxAlpineImage),
 	)
-	container.CleanupContainer(t, ctr)
+	container.Cleanup(t, ctr)
 	require.NoError(t, err)
 	require.NotNil(t, ctr)
 
@@ -382,7 +382,7 @@ func TestRunContainer_addSDKLabels(t *testing.T) {
 	require.Contains(t, inspect.Config.Labels, client.LabelVersion)
 }
 
-func TestRunContainerWithLifecycleHooks(t *testing.T) {
+func TestRunWithLifecycleHooks(t *testing.T) {
 	testRun := func(t *testing.T, start bool) {
 		t.Helper()
 
@@ -463,8 +463,8 @@ func TestRunContainerWithLifecycleHooks(t *testing.T) {
 		}
 
 		ctr, err := container.Run(context.Background(), opts...)
-		// cleanup the container: even if it's nil, it is handled by the CleanupContainer function
-		container.CleanupContainer(t, ctr)
+		// cleanup the container: even if it's nil, it is handled by the Cleanup function
+		container.Cleanup(t, ctr)
 		require.NoError(t, err)
 		require.NotNil(t, ctr)
 
@@ -499,7 +499,7 @@ func TestRunContainerWithLifecycleHooks(t *testing.T) {
 	})
 }
 
-func TestRunContainerWithNetworks(t *testing.T) {
+func TestRunWithNetworks(t *testing.T) {
 	testRun := func(t *testing.T, dockerClient *client.Client, networkOptions []container.ContainerCustomizer) (*container.Container, error) {
 		t.Helper()
 
@@ -540,7 +540,7 @@ func TestRunContainerWithNetworks(t *testing.T) {
 		ctr, runErr := testRun(t, dockerClient, []container.ContainerCustomizer{
 			container.WithNetwork([]string{"ctr1"}, nw),
 		})
-		container.CleanupContainer(t, ctr)
+		container.Cleanup(t, ctr)
 		require.NoError(t, runErr)
 
 		inspect := testInspect(t, ctr)
@@ -565,7 +565,7 @@ func TestRunContainerWithNetworks(t *testing.T) {
 		ctr, runErr := testRun(t, dockerClient, []container.ContainerCustomizer{
 			container.WithBridgeNetwork(),
 		})
-		container.CleanupContainer(t, ctr)
+		container.Cleanup(t, ctr)
 		require.NoError(t, runErr)
 
 		inspect := testInspect(t, ctr)
@@ -597,7 +597,7 @@ func TestRunContainerWithNetworks(t *testing.T) {
 
 		// Evaluate the run error last, as we need to clean up the network
 		// before cleaning up the container
-		container.CleanupContainer(t, ctr)
+		container.Cleanup(t, ctr)
 		require.NoError(t, runErr)
 
 		require.NotNil(t, inspect)
@@ -622,7 +622,7 @@ func TestRunContainerWithNetworks(t *testing.T) {
 		ctr, err := testRun(t, dockerClient, []container.ContainerCustomizer{
 			container.WithNetworkName([]string{"ctr1"}, newNetwork.Name()),
 		})
-		container.CleanupContainer(t, ctr)
+		container.Cleanup(t, ctr)
 		require.NoError(t, err)
 		require.NotNil(t, ctr)
 
@@ -653,7 +653,7 @@ func TestRunContainerWithNetworks(t *testing.T) {
 			container.WithNetwork([]string{"ctr1"}, nw1),
 			container.WithNetwork([]string{"ctr2"}, nw2),
 		})
-		container.CleanupContainer(t, ctr)
+		container.Cleanup(t, ctr)
 		require.NoError(t, runErr)
 
 		inspect := testInspect(t, ctr)
@@ -663,7 +663,7 @@ func TestRunContainerWithNetworks(t *testing.T) {
 	})
 }
 
-func TestRunContainerWithWaitStrategy(t *testing.T) {
+func TestRunWithWaitStrategy(t *testing.T) {
 	testRun := func(t *testing.T, img string, strategy wait.Strategy, expectError bool) {
 		t.Helper()
 
@@ -688,7 +688,7 @@ func TestRunContainerWithWaitStrategy(t *testing.T) {
 		}
 
 		ctr, err := container.Run(context.Background(), opts...)
-		container.CleanupContainer(t, ctr)
+		container.Cleanup(t, ctr)
 		if expectError {
 			require.Error(t, err)
 		} else {

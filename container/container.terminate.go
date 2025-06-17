@@ -71,11 +71,11 @@ func RemoveVolumes(volumes ...string) TerminateOption {
 	}
 }
 
-// TerminateContainer calls [TerminableContainer.Terminate] on the container if it is not nil.
+// Terminate calls [TerminableContainer.Terminate] on the container if it is not nil.
 //
 // This should be called as a defer directly after [Create](...)
 // to ensure the container is terminated when the function ends.
-func TerminateContainer(ctr TerminableContainer, options ...TerminateOption) error {
+func Terminate(ctr TerminableContainer, options ...TerminateOption) error {
 	if isNil(ctr) {
 		return nil
 	}

@@ -72,7 +72,7 @@ if err != nil {
     log.Fatalf("failed to run container: %v", err)
 }
 
-container.TerminateContainer(ctr)
+container.Terminate(ctr)
 ```
 
 ### context

@@ -245,7 +245,7 @@ func TestLifecycleHooks(t *testing.T) {
 	}
 
 	c, err := Run(ctx, opts...)
-	CleanupContainer(t, c)
+	Cleanup(t, c)
 	require.NoError(t, err)
 	require.NotNil(t, c)
 

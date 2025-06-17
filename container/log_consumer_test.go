@@ -82,7 +82,7 @@ func TestRestartContainerWithLogConsumer(t *testing.T) {
 		}),
 		WithNoStart(),
 	)
-	CleanupContainer(t, ctr)
+	Cleanup(t, ctr)
 	require.NoError(t, err)
 
 	// Start and confirm that the log consumer receives the log message.

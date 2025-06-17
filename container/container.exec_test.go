@@ -25,7 +25,7 @@ func TestContainer_Exec(t *testing.T) {
 		)
 		require.NoError(t, err)
 
-		container.CleanupContainer(t, ctr)
+		container.Cleanup(t, ctr)
 
 		_, reader, err := ctr.Exec(context.Background(), []string{"ls", "-l"})
 		require.Error(t, err)
@@ -39,7 +39,7 @@ func TestContainer_Exec(t *testing.T) {
 		)
 		require.NoError(t, err)
 
-		container.CleanupContainer(t, ctr)
+		container.Cleanup(t, ctr)
 
 		t.Run("success", func(t *testing.T) {
 			code, reader, err := ctr.Exec(context.Background(), []string{"ls", "-l"})
