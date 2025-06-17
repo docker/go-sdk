@@ -173,9 +173,6 @@ func (c *Client) Close() error {
 }
 
 // Logger returns the logger for the client.
-// This method is safe for concurrent use by multiple goroutines.
 func (c *Client) Logger() *slog.Logger {
-	c.mtx.RLock()
-	defer c.mtx.RUnlock()
 	return c.log
 }
