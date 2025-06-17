@@ -12,7 +12,7 @@ import (
 	"github.com/docker/go-sdk/network"
 )
 
-func TestNew(t *testing.T) {
+func newNetworkSuite(t *testing.T, dockerClient *client.Client) {
 	t.Run("no-name", func(t *testing.T) {
 		ctx := context.Background()
 
@@ -22,6 +22,7 @@ func TestNew(t *testing.T) {
 		}
 
 		nw, err := network.New(ctx,
+			network.WithClient(dockerClient),
 			network.WithDriver(driver),
 		)
 		network.Cleanup(t, nw)
@@ -35,6 +36,7 @@ func TestNew(t *testing.T) {
 		ctx := context.Background()
 
 		nw, err := network.New(ctx,
+			network.WithClient(dockerClient),
 			network.WithName("test-network"),
 		)
 		network.Cleanup(t, nw)
@@ -47,6 +49,7 @@ func TestNew(t *testing.T) {
 		ctx := context.Background()
 
 		nw, err := network.New(ctx,
+			network.WithClient(dockerClient),
 			network.WithName(""),
 		)
 		network.Cleanup(t, nw)
@@ -70,6 +73,7 @@ func TestNew(t *testing.T) {
 			},
 		}
 		nw, err := network.New(ctx,
+			network.WithClient(dockerClient),
 			network.WithIPAM(&ipamConfig),
 		)
 		network.Cleanup(t, nw)
@@ -81,6 +85,7 @@ func TestNew(t *testing.T) {
 		ctx := context.Background()
 
 		nw, err := network.New(ctx,
+			network.WithClient(dockerClient),
 			network.WithAttachable(),
 		)
 		network.Cleanup(t, nw)
@@ -92,6 +97,7 @@ func TestNew(t *testing.T) {
 		ctx := context.Background()
 
 		nw, err := network.New(ctx,
+			network.WithClient(dockerClient),
 			network.WithInternal(),
 		)
 		network.Cleanup(t, nw)
@@ -103,6 +109,7 @@ func TestNew(t *testing.T) {
 		ctx := context.Background()
 
 		nw, err := network.New(ctx,
+			network.WithClient(dockerClient),
 			network.WithEnableIPv6(),
 		)
 		network.Cleanup(t, nw)
@@ -114,6 +121,7 @@ func TestNew(t *testing.T) {
 		ctx := context.Background()
 
 		nw, err := network.New(ctx,
+			network.WithClient(dockerClient),
 			network.WithLabels(map[string]string{"test": "test"}),
 		)
 		network.Cleanup(t, nw)
@@ -127,6 +135,20 @@ func TestNew(t *testing.T) {
 		require.Contains(t, inspect.Labels, client.LabelBase)
 		require.Contains(t, inspect.Labels, client.LabelLang)
 		require.Contains(t, inspect.Labels, client.LabelVersion)
+	})
+}
+
+func TestNew(t *testing.T) {
+	t.Run("new-client", func(t *testing.T) {
+		dockerClient, err := client.New(context.Background())
+		require.NoError(t, err)
+		defer dockerClient.Close()
+
+		newNetworkSuite(t, dockerClient)
+	})
+
+	t.Run("default-client", func(t *testing.T) {
+		newNetworkSuite(t, client.DefaultClient)
 	})
 }
 
