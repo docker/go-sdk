@@ -37,15 +37,10 @@ func Pull(ctx context.Context, imageName string, opts ...PullOption) error {
 	}
 
 	if pullOpts.pullClient == nil {
-		// create a new docker client if not set
-		cli, err := client.New(ctx)
-		if err != nil {
-			return fmt.Errorf("create docker client: %w", err)
-		}
-		pullOpts.pullClient = cli
+		pullOpts.pullClient = client.DefaultClient
 		// In case there is no pull client set, we use the default docker client
 		// to pull the image. We need to close it when done.
-		defer cli.Close()
+		defer pullOpts.pullClient.Close()
 	}
 
 	if imageName == "" {

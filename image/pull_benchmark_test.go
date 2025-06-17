@@ -18,6 +18,10 @@ type mockImagePullClient struct {
 	pullFunc func(ctx context.Context, image string, options image.PullOptions) (io.ReadCloser, error)
 }
 
+func (m *mockImagePullClient) Close() error {
+	return nil
+}
+
 func (m *mockImagePullClient) ImagePull(ctx context.Context, image string, options image.PullOptions) (io.ReadCloser, error) {
 	return m.pullFunc(ctx, image, options)
 }
