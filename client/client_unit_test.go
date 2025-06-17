@@ -1,7 +1,9 @@
 package client
 
 import (
+	"bytes"
 	"context"
+	"errors"
 	"io"
 	"log/slog"
 	"testing"
@@ -40,5 +42,35 @@ func TestNew_internal_state(t *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, client)
 		require.Equal(t, logger, client.log)
+	})
+
+	t.Run("with-healthcheck", func(t *testing.T) {
+		buf := bytes.NewBuffer(nil)
+		logger := slog.New(slog.NewTextHandler(buf, nil))
+
+		healthcheck := func(_ context.Context) func(*Client) error {
+			return func(c *Client) error {
+				c.Logger().Info("healthcheck")
+				return nil
+			}
+		}
+
+		client, err := New(context.Background(), WithHealthCheck(healthcheck), WithLogger(logger))
+		require.NoError(t, err)
+		require.NotNil(t, client)
+		require.Equal(t, logger, client.log)
+		require.Contains(t, buf.String(), "healthcheck")
+	})
+
+	t.Run("with-healthcheck-error", func(t *testing.T) {
+		healthcheck := func(_ context.Context) func(*Client) error {
+			return func(_ *Client) error {
+				return errors.New("healthcheck error")
+			}
+		}
+
+		client, err := New(context.Background(), WithHealthCheck(healthcheck))
+		require.ErrorContains(t, err, "healthcheck error")
+		require.Nil(t, client)
 	})
 }
