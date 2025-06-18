@@ -49,8 +49,10 @@ jobs:
 
       - name: Generate dynamic config from template
         id: generate-config
+        env:
+          PACKAGE: ${{ matrix.package }}
         run: |
-          folder="${{ matrix.package }}"
+          folder="${PACKAGE}"
           sed "s|{{FOLDER}}|$folder|g" .github/release-drafter-template.yml > .github/release-drafter-$folder.yml
           echo "config<<EOF" >> $GITHUB_OUTPUT
           cat .github/release-drafter-$folder.yml >> $GITHUB_OUTPUT
