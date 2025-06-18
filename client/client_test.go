@@ -153,9 +153,7 @@ func TestNew(t *testing.T) {
 }
 
 func TestDefaultClient(t *testing.T) {
-	// predefine the default client to use the noop health check
 	cli := client.DefaultClient
-	require.NoError(t, client.WithHealthCheck(noopHealthCheck).Apply(cli))
 
 	t.Run("success", func(t *testing.T) {
 		info, err := cli.Info(context.Background())

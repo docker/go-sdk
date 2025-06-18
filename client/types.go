@@ -15,7 +15,8 @@ const packagePath = "github.com/docker/go-sdk"
 
 // DefaultClient is the default client for interacting with containers.
 var DefaultClient = &Client{
-	log: defaultLogger,
+	log:         defaultLogger,
+	healthCheck: defaultHealthCheck,
 }
 
 // Client is a type that represents a client for interacting with containers.
