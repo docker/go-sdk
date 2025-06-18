@@ -20,6 +20,11 @@ github.com/containerd/typeurl/v2 v2.2.0/go.mod h1:8XOOxnyatxSWuG8OfsZXVnAF4iZfed
 github.com/cpuguy83/dockercfg v0.3.2/go.mod h1:sugsbF4//dDlL/i+S+rtpIWp+5h0BHJHfjj5/jFyUJc=
 github.com/creack/pty v1.1.18 h1:n56/Zwd5o6whRC5PMGretI4IdRLlmBXYNjScPaBgsbY=
 github.com/creack/pty v1.1.18/go.mod h1:MOBLtS5ELjhRRrroQr9kyvTxUAFNvYEK993ew/Vr4O4=
+github.com/docker/go-sdk/client v0.1.0-alpha001/go.mod h1:riIX1X9he2Oxx0Wra35V/3BOfoIZf/tMZ7B6Z7zQU48=
+github.com/docker/go-sdk/config v0.1.0-alpha001/go.mod h1:eygQMlGzqLYetN/Qkc+lkHZJ9KJOMMCLy73OXn1rvzc=
+github.com/docker/go-sdk/context v0.1.0-alpha001/go.mod h1:VY14aL5Z7Vk31IumcHtxGwam3+f6UrXlhP96w1ysEnk=
+github.com/docker/go-sdk/image v0.1.0-alpha001/go.mod h1:u2d+VLmIPRqj+B4JQSkYe965zSgYmRBDlNGecoN++zM=
+github.com/docker/go-sdk/network v0.1.0-alpha001/go.mod h1:16/jt6p3N5DIJfAD3/rm8UETFI3tHpQMUWnMdkUP+ng=
 github.com/envoyproxy/go-control-plane v0.13.4/go.mod h1:kDfuBlDVsSj2MjrLEtRWtHlsWIFcGyB2RMO44Dc5GZA=
 github.com/envoyproxy/go-control-plane/envoy v1.32.4/go.mod h1:Gzjc5k8JcJswLjAx1Zm+wSYE20UrLtt7JZMWiWQXQEw=
 github.com/envoyproxy/go-control-plane/ratelimit v0.1.0/go.mod h1:Wk+tMFAFbCXaJPzVVHnPgRKdUdwW/KdbRt94AzgRee4=
