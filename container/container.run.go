@@ -150,6 +150,10 @@ func Run(ctx context.Context, opts ...ContainerCustomizer) (*Container, error) {
 		lifecycleHooks: def.lifecycleHooks,
 	}
 
+	// Note: `ctr.dockerClient` is the same instance as `def.dockerClient`.
+	// The switch is intentional to emphasize that operations are now being performed
+	// on the container object (`ctr`) rather than the definition object (`def`).
+
 	// If there is more than one network specified in the request attach newly created container to them one by one
 	if len(def.networks) > 1 {
 		for _, n := range def.networks[1:] {
