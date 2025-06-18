@@ -1,0 +1,52 @@
+name-template: '{{FOLDER}} - v$RESOLVED_VERSION'
+tag-template: '{{FOLDER}}/v$RESOLVED_VERSION'
+tag-prefix: '{{FOLDER}}/v'
+include-paths:
+  - {{FOLDER}}
+categories:
+  - title: ⚠️ Breaking Changes
+    labels:
+      - 'breaking change'
+  - title: '🚀 New Features'
+    labels:
+      - 'enhancement'
+      - 'feature'
+  - title: '🐛 Bug Fixes'
+    labels:
+      - 'bug'
+  - title: '📚 Documentation'
+    labels:
+      - 'documentation'
+  - title: 🧹 Housekeeping
+    labels:
+      - 'chore'
+  - title: 📦 Dependency updates
+    label: 'dependencies'
+change-template: '- $TITLE (#$NUMBER)'
+change-title-escapes: '\<*_&' # You can add # and @ to disable mentions, and add ` to disable code blocks.
+exclude-contributors:
+  - dependabot
+  - dependabot[bot]
+version-resolver:
+  major:
+    labels:
+      - 'major'
+      - '❗ BreakingChange'
+  minor:
+    labels:
+      - 'minor'
+      - '✏️ Feature'
+  patch:
+    labels:
+      - 'patch'
+      - '📒 Documentation'
+      - '🐞 Bug'
+      - '🤖 Dependencies'
+      - '🔧 Updates'
+  default: patch
+template: |
+  $CHANGES
+
+  **Full Changelog**: https://github.com/$OWNER/$REPOSITORY/compare/$PREVIOUS_TAG...{{FOLDER}}/v$RESOLVED_VERSION
+
+  Thank you $CONTRIBUTORS for making this update possible.
