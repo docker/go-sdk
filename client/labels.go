@@ -1,5 +1,7 @@
 package client
 
+import "maps"
+
 const (
 	// LabelBase is the base label for all Docker labels.
 	LabelBase = "com.docker.sdk"
@@ -21,7 +23,5 @@ var SDKLabels = map[string]string{
 
 // AddSDKLabels adds the SDK labels to target.
 func AddSDKLabels(target map[string]string) {
-	for k, v := range SDKLabels {
-		target[k] = v
-	}
+	maps.Copy(target, SDKLabels)
 }

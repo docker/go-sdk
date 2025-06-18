@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"log/slog"
+	"maps"
 	"path/filepath"
 	"time"
 
@@ -139,9 +140,7 @@ func (c *Client) initOnce(_ context.Context) error {
 	}
 
 	httpHeaders := make(map[string]string)
-	for k, v := range c.extraHeaders {
-		httpHeaders[k] = v
-	}
+	maps.Copy(httpHeaders, c.extraHeaders)
 
 	// Append the SDK headers last.
 	httpHeaders[headerUserAgent] = defaultUserAgent
