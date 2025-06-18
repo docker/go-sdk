@@ -34,7 +34,7 @@ func ExampleFilepath() {
 func ExampleLoad() {
 	cfg, err := config.Load()
 	fmt.Println(err)
-	fmt.Println(cfg.CurrentContext != "")
+	fmt.Println(len(cfg.AuthConfigs) > 0)
 
 	// Output:
 	// <nil>
