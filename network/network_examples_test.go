@@ -3,7 +3,6 @@ package network_test
 import (
 	"context"
 	"fmt"
-	"log"
 	"runtime"
 
 	apinetwork "github.com/docker/docker/api/types/network"
@@ -13,32 +12,34 @@ import (
 
 func ExampleNew() {
 	nw, err := network.New(context.Background())
-	defer nw.Terminate(context.Background())
-
 	fmt.Println(err)
 	fmt.Println(nw.Name() != "")
+
+	err = nw.Terminate(context.Background())
+	fmt.Println(err)
 
 	// Output:
 	// <nil>
 	// true
+	// <nil>
 }
 
 func ExampleNew_withClient() {
 	dockerClient, err := client.New(context.Background())
-	if err != nil {
-		log.Printf("error creating client: %s", err)
-		return
-	}
+	fmt.Println(err)
 
 	nw, err := network.New(context.Background(), network.WithClient(dockerClient))
-	defer nw.Terminate(context.Background())
-
 	fmt.Println(err)
 	fmt.Println(nw.Name() != "")
 
+	err = nw.Terminate(context.Background())
+	fmt.Println(err)
+
 	// Output:
 	// <nil>
+	// <nil>
 	// true
+	// <nil>
 }
 
 func ExampleNew_withOptions() {
@@ -56,40 +57,43 @@ func ExampleNew_withOptions() {
 		network.WithLabels(map[string]string{"test": "test"}),
 		network.WithAttachable(),
 	)
-	defer nw.Terminate(context.Background())
-
 	fmt.Println(err)
+
 	fmt.Println(nw.Name())
 	fmt.Println(nw.Driver() != "")
+
+	err = nw.Terminate(context.Background())
+	fmt.Println(err)
 
 	// Output:
 	// <nil>
 	// test-network
 	// true
+	// <nil>
 }
 
 func ExampleNetwork_Inspect() {
 	name := "test-network-inspect"
 	nw, err := network.New(context.Background(), network.WithName(name))
-	defer nw.Terminate(context.Background())
-
 	fmt.Println(err)
 
 	inspect, err := nw.Inspect(context.Background())
 	fmt.Println(err)
 	fmt.Println(inspect.Name)
 
+	err = nw.Terminate(context.Background())
+	fmt.Println(err)
+
 	// Output:
 	// <nil>
 	// <nil>
 	// test-network-inspect
+	// <nil>
 }
 
 func ExampleNetwork_Inspect_withOptions() {
 	name := "test-network-inspect-options"
 	nw, err := network.New(context.Background(), network.WithName(name))
-	defer nw.Terminate(context.Background())
-
 	fmt.Println(err)
 
 	inspect, err := nw.Inspect(
@@ -103,17 +107,21 @@ func ExampleNetwork_Inspect_withOptions() {
 	fmt.Println(err)
 	fmt.Println(inspect.Name)
 
+	err = nw.Terminate(context.Background())
+	fmt.Println(err)
+
 	// Output:
 	// <nil>
 	// <nil>
 	// test-network-inspect-options
+	// <nil>
 }
 
 func ExampleNetwork_Terminate() {
 	nw, err := network.New(context.Background())
 	fmt.Println(err)
 
-	nw.Terminate(context.Background())
+	err = nw.Terminate(context.Background())
 	fmt.Println(err)
 
 	// Output:

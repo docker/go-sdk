@@ -13,14 +13,16 @@ import (
 
 func ExampleRun() {
 	ctr, err := container.Run(context.Background(), container.WithImage("alpine:latest"))
-	defer ctr.Terminate(context.Background())
-
 	fmt.Println(err)
 	fmt.Println(ctr.ID() != "")
+
+	err = ctr.Terminate(context.Background())
+	fmt.Println(err)
 
 	// Output:
 	// <nil>
 	// true
+	// <nil>
 }
 
 func ExampleContainer_Terminate() {
@@ -66,42 +68,47 @@ func ExampleContainer_lifecycle() {
 
 func ExampleContainer_Inspect() {
 	ctr, err := container.Run(context.Background(), container.WithImage("alpine:latest"))
-	defer ctr.Terminate(context.Background())
 	fmt.Println(err)
 
 	inspect, err := ctr.Inspect(context.Background())
 	fmt.Println(err)
 	fmt.Println(inspect.ID != "")
 
+	err = ctr.Terminate(context.Background())
+	fmt.Println(err)
+
 	// Output:
 	// <nil>
 	// <nil>
 	// true
+	// <nil>
 }
 
 func ExampleContainer_Logs() {
 	ctr, err := container.Run(context.Background(), container.WithImage("hello-world:latest"))
-	defer ctr.Terminate(context.Background())
-
 	fmt.Println(err)
 
 	logs, err := ctr.Logs(context.Background())
 	fmt.Println(err)
 
 	buf := new(bytes.Buffer)
-	io.Copy(buf, logs)
+	_, err = io.Copy(buf, logs)
+	fmt.Println(err)
 	fmt.Println(strings.Contains(buf.String(), "Hello from Docker!"))
+
+	err = ctr.Terminate(context.Background())
+	fmt.Println(err)
 
 	// Output:
 	// <nil>
 	// <nil>
+	// <nil>
 	// true
+	// <nil>
 }
 
 func ExampleContainer_copy() {
 	ctr, err := container.Run(context.Background(), container.WithImage("alpine:latest"))
-	defer ctr.Terminate(context.Background())
-
 	fmt.Println(err)
 
 	content := []byte("Hello, World!")
@@ -113,20 +120,24 @@ func ExampleContainer_copy() {
 	fmt.Println(err)
 
 	buf := new(bytes.Buffer)
-	io.Copy(buf, rc)
+	_, err = io.Copy(buf, rc)
+	fmt.Println(err)
 	fmt.Println(buf.String())
+
+	err = ctr.Terminate(context.Background())
+	fmt.Println(err)
 
 	// Output:
 	// <nil>
 	// <nil>
 	// <nil>
+	// <nil>
 	// Hello, World!
+	// <nil>
 }
 
 func ExampleContainer_Exec() {
 	ctr, err := container.Run(context.Background(), container.WithImage("nginx:alpine"))
-	defer ctr.Terminate(context.Background())
-
 	fmt.Println(err)
 
 	code, rc, err := ctr.Exec(
@@ -139,12 +150,18 @@ func ExampleContainer_Exec() {
 	fmt.Println(code)
 
 	buf := new(bytes.Buffer)
-	io.Copy(buf, rc)
-	fmt.Println(buf.String())
+	_, err = io.Copy(buf, rc)
+	fmt.Println(err)
+	fmt.Print(buf.String()) // not adding a newline to the output
+
+	err = ctr.Terminate(context.Background())
+	fmt.Println(err)
 
 	// Output:
 	// <nil>
 	// <nil>
 	// 0
+	// <nil>
 	// /usr/share/nginx/html
+	// <nil>
 }
