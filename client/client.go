@@ -33,9 +33,13 @@ var (
 
 	defaultHealthCheck = func(ctx context.Context) func(c *Client) error {
 		return func(c *Client) error {
+			dockerClient, err := c.Client()
+			if err != nil {
+				return fmt.Errorf("docker client: %w", err)
+			}
 			var pingErr error
 			for i := range 3 {
-				if _, pingErr = c.Client().Ping(ctx); pingErr == nil {
+				if _, pingErr = dockerClient.Ping(ctx); pingErr == nil {
 					return nil
 				}
 				select {
@@ -152,6 +156,7 @@ func (c *Client) initOnce(_ context.Context) error {
 		return c.err
 	}
 
+	// Because each encountered error is immediately returned, it's safe to set the error to nil.
 	c.err = nil
 	return nil
 }

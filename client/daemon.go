@@ -3,6 +3,7 @@ package client
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net/url"
 	"os"
 
@@ -14,8 +15,13 @@ import (
 var dockerEnvFile = "/.dockerenv"
 
 func (c *Client) DaemonHost(ctx context.Context) (string, error) {
+	dockerClient, err := c.Client()
+	if err != nil {
+		return "", fmt.Errorf("docker client: %w", err)
+	}
+
 	// infer from Docker host
-	daemonURL, err := url.Parse(c.Client().DaemonHost())
+	daemonURL, err := url.Parse(dockerClient.DaemonHost())
 	if err != nil {
 		return "", err
 	}

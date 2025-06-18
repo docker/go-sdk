@@ -52,7 +52,9 @@ func TestNew(t *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, cli)
 
-		require.NotNil(t, cli.Client())
+		dockerClient, err := cli.Client()
+		require.NoError(t, err)
+		require.NotNil(t, dockerClient)
 	})
 
 	t.Run("close", func(t *testing.T) {
@@ -174,7 +176,9 @@ func TestDefaultClient(t *testing.T) {
 	})
 
 	t.Run("client", func(t *testing.T) {
-		require.NotNil(t, cli.Client())
+		dockerClient, err := cli.Client()
+		require.NoError(t, err)
+		require.NotNil(t, dockerClient)
 	})
 
 	t.Run("close", func(t *testing.T) {
@@ -186,9 +190,9 @@ func TestDefaultClient(t *testing.T) {
 
 func TestClientConcurrentAccess(t *testing.T) {
 	t.Run("concurrent-client-close", func(t *testing.T) {
-		client, err := client.New(context.Background())
+		cli, err := client.New(context.Background())
 		require.NoError(t, err)
-		require.NotNil(t, client)
+		require.NotNil(t, cli)
 
 		const goroutines = 100
 		wg := sync.WaitGroup{}
@@ -205,15 +209,17 @@ func TestClientConcurrentAccess(t *testing.T) {
 
 				if id%2 == 0 {
 					// Even IDs call Client()
-					c := client.Client()
+					dockerClient, err := cli.Client()
+					require.NoError(t, err)
+					require.NotNil(t, dockerClient)
 					// Client() might return nil if the client was closed by another goroutine
 					// This is expected behavior
-					if c != nil {
-						require.NotNil(t, c)
+					if dockerClient != nil {
+						require.NotNil(t, dockerClient)
 					}
 				} else {
 					// Odd IDs call Close()
-					err := client.Close()
+					err := cli.Close()
 					// Close() is idempotent, so it's okay to call it multiple times
 					require.NoError(t, err)
 				}

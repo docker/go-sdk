@@ -87,7 +87,8 @@ func BenchmarkClientConcurrentCreation(b *testing.B) {
 		b.RunParallel(func(pb *testing.PB) {
 			for pb.Next() {
 				// Just access the client to test concurrent access
-				_ = cli.Client()
+				_, err := cli.Client()
+				require.NoError(b, err)
 			}
 		})
 	})
@@ -100,7 +101,8 @@ func BenchmarkClientConcurrentCreation(b *testing.B) {
 		b.RunParallel(func(pb *testing.PB) {
 			for pb.Next() {
 				// Just access the client to test concurrent access
-				_ = cli.Client()
+				_, err := cli.Client()
+				require.NoError(b, err)
 			}
 		})
 	})

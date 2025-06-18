@@ -63,15 +63,14 @@ type Client struct {
 // Client returns the underlying docker client.
 // It verifies that the client is initialized.
 // It is safe to call this method concurrently.
-func (c *Client) Client() *client.Client {
+func (c *Client) Client() (*client.Client, error) {
 	ctx := context.Background()
 
 	if err := c.init(ctx); err != nil {
-		c.err = fmt.Errorf("load config: %w", err)
-		return c.dockerClient
+		return nil, fmt.Errorf("init client: %w", err)
 	}
 
-	return c.dockerClient
+	return c.dockerClient, nil
 }
 
 // Logger returns the logger for the client.
@@ -90,9 +89,14 @@ func (c *Client) Info(ctx context.Context) (system.Info, error) {
 	}
 	c.mtx.Unlock()
 
-	cli := c.Client()
+	var info system.Info
 
-	info, err := cli.Info(ctx)
+	cli, err := c.Client()
+	if err != nil {
+		return info, fmt.Errorf("docker client: %w", err)
+	}
+
+	info, err = cli.Info(ctx)
 	if err != nil {
 		return info, fmt.Errorf("docker info: %w", err)
 	}
