@@ -12,8 +12,8 @@ require (
 	github.com/cenkalti/backoff/v4 v4.2.1
 	github.com/containerd/errdefs v1.0.0
 	github.com/docker/docker v28.2.2+incompatible
-	github.com/docker/go-sdk/client v0.1.0-alpha001
-	github.com/docker/go-sdk/config v0.1.0-alpha001
+	github.com/docker/go-sdk/client v0.1.0-alpha003
+	github.com/docker/go-sdk/config v0.1.0-alpha003
 	github.com/stretchr/testify v1.10.0
 )
 
@@ -26,7 +26,7 @@ require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/distribution/reference v0.6.0 // indirect
 	github.com/docker/go-connections v0.5.0 // indirect
-	github.com/docker/go-sdk/context v0.1.0-alpha001 // indirect
+	github.com/docker/go-sdk/context v0.1.0-alpha003 // indirect
 	github.com/docker/go-units v0.5.0 // indirect
 	github.com/felixge/httpsnoop v1.0.4 // indirect
 	github.com/go-logr/logr v1.4.2 // indirect
