@@ -27,7 +27,12 @@ This project is designed to be:
 ## Installation
 
 ```bash
-go get github.com/docker/go-sdk
+go get github.com/docker/go-sdk/client
+go get github.com/docker/go-sdk/config
+go get github.com/docker/go-sdk/container
+go get github.com/docker/go-sdk/context
+go get github.com/docker/go-sdk/image
+go get github.com/docker/go-sdk/network
 ```
 
 ## Usage
