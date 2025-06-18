@@ -11,7 +11,7 @@ require (
 	github.com/caarlos0/env/v11 v11.3.1
 	github.com/containerd/errdefs v1.0.0
 	github.com/docker/docker v28.2.2+incompatible
-	github.com/docker/go-sdk/context v0.1.0
+	github.com/docker/go-sdk/context v0.1.0-alpha001
 	github.com/opencontainers/image-spec v1.1.1
 	github.com/stretchr/testify v1.10.0
 )

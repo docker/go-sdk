@@ -11,7 +11,7 @@ replace (
 require (
 	github.com/containerd/errdefs v1.0.0
 	github.com/docker/docker v28.2.2+incompatible
-	github.com/docker/go-sdk/client v0.1.0
+	github.com/docker/go-sdk/client v0.1.0-alpha001
 	github.com/google/uuid v1.6.0
 	github.com/stretchr/testify v1.10.0
 )
