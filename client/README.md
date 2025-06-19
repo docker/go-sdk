@@ -2,6 +2,12 @@
 
 This package provides a client for the Docker API.
 
+## Installation
+
+```bash
+go get github.com/docker/go-sdk/client
+```
+
 ## Usage
 
 The library provides a default client that is initialised with the current docker context. It uses a default logger that is configured to print to the standard output using the `slog` package.
