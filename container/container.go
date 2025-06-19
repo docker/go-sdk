@@ -3,8 +3,6 @@ package container
 import (
 	"context"
 	"log/slog"
-	"sync"
-	"time"
 
 	"github.com/docker/go-sdk/client"
 	"github.com/docker/go-sdk/container/wait"
@@ -23,16 +21,6 @@ type Container struct {
 	// WaitingFor the waiting strategy to use for the container.
 	waitingFor wait.Strategy
 
-	// TODO: Remove locking and wait group once the deprecated StartLogProducer and
-	// StopLogProducer have been removed and hence logging can only be started and
-	// stopped once.
-
-	// logProductionCancel is used to signal the log production to stop.
-	logProductionCancel context.CancelCauseFunc
-	logProductionCtx    context.Context
-
-	logProductionTimeout *time.Duration
-
 	// image the image to use for the container.
 	image string
 
@@ -44,11 +32,6 @@ type Container struct {
 
 	// lifecycleHooks the lifecycle hooks to use for the container.
 	lifecycleHooks []LifecycleHooks
-
-	consumersMtx sync.Mutex // protects consumers
-
-	// consumers the log consumers to use for the container.
-	consumers []LogConsumer
 
 	// isRunning the flag to check if the container is running.
 	isRunning bool

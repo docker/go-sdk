@@ -64,36 +64,6 @@ var defaultCopyFileToContainerHook = func(files []File) LifecycleHooks {
 	}
 }
 
-// defaultLogConsumersHook is a hook that will start log consumers after the container is started
-var defaultLogConsumersHook = func(cfg *LogConsumerConfig) LifecycleHooks {
-	return LifecycleHooks{
-		PostStarts: []ContainerHook{
-			// Produce logs sending details to the log consumers.
-			// See combineContainerHooks for the order of execution.
-			func(ctx context.Context, c *Container) error {
-				if cfg == nil || len(cfg.Consumers) == 0 {
-					return nil
-				}
-
-				c.resetConsumers(cfg.Consumers)
-
-				return c.startLogProduction(ctx, cfg.Opts...)
-			},
-		},
-		PostStops: []ContainerHook{
-			// Stop the log production.
-			// See combineContainerHooks for the order of execution.
-			func(_ context.Context, c *Container) error {
-				if cfg == nil || len(cfg.Consumers) == 0 {
-					return nil
-				}
-
-				return c.stopLogProduction()
-			},
-		},
-	}
-}
-
 // defaultReadinessHook is a hook that will wait for the container to be ready
 var defaultReadinessHook = func() LifecycleHooks {
 	return LifecycleHooks{

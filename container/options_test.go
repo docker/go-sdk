@@ -11,67 +11,6 @@ import (
 	"github.com/docker/go-sdk/container/wait"
 )
 
-// TestStringsLogConsumer is a log consumer that collects logs in a slice.
-// It can be used for simple tests where we want to assert the logs.
-type TestStringsLogConsumer struct {
-	msgs []string
-}
-
-// Messages returns the collected logs.
-func (lc *TestStringsLogConsumer) Messages() []string {
-	return lc.msgs
-}
-
-// Accept prints the log to stdout
-func (lc *TestStringsLogConsumer) Accept(l Log) {
-	lc.msgs = append(lc.msgs, string(l.Content))
-}
-
-func TestWithLogConsumers(t *testing.T) {
-	lc := &TestStringsLogConsumer{}
-	def := Definition{
-		image:      "mysql:8.0.36",
-		waitingFor: wait.ForLog("port: 3306  MySQL Community Server - GPL"),
-		started:    true,
-	}
-
-	err := WithLogConsumers(lc)(&def)
-	require.NoError(t, err)
-}
-
-func TestWithLogConsumerConfig(t *testing.T) {
-	lc := &TestStringsLogConsumer{}
-
-	t.Run("add-to-nil", func(t *testing.T) {
-		def := Definition{
-			image: "alpine",
-		}
-
-		err := WithLogConsumerConfig(&LogConsumerConfig{
-			Consumers: []LogConsumer{lc},
-		})(&def)
-		require.NoError(t, err)
-
-		require.Equal(t, []LogConsumer{lc}, def.logConsumerCfg.Consumers)
-	})
-
-	t.Run("replace-existing", func(t *testing.T) {
-		def := Definition{
-			image: "alpine",
-			logConsumerCfg: &LogConsumerConfig{
-				Consumers: []LogConsumer{NewFooLogConsumer(t)},
-			},
-		}
-
-		err := WithLogConsumerConfig(&LogConsumerConfig{
-			Consumers: []LogConsumer{lc},
-		})(&def)
-		require.NoError(t, err)
-
-		require.Equal(t, []LogConsumer{lc}, def.logConsumerCfg.Consumers)
-	})
-}
-
 func TestWithStartupCommand(t *testing.T) {
 	def := Definition{
 		image:      "alpine",

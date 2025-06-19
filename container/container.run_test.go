@@ -229,22 +229,6 @@ echo "done"
 		require.Contains(t, inspect.NetworkSettings.Networks[name].Aliases, "alias2")
 	})
 
-	t.Run("with-log-consumer", func(t *testing.T) {
-		lc := &container.TestStringsLogConsumer{}
-		ctx := context.Background()
-
-		c, err := container.Run(ctx,
-			container.WithImage("mysql:8.0.36"),
-			container.WithWaitStrategy(wait.ForLog("port: 3306  MySQL Community Server - GPL").WithTimeout(10*time.Second)),
-			container.WithLogConsumers(lc),
-		)
-		container.Cleanup(t, c)
-		// we expect an error because the MySQL environment variables are not set
-		// but this is expected because we just want to test the log consumer
-		require.Error(t, err)
-		require.NotEmpty(t, lc.Messages())
-	})
-
 	t.Run("with-startup-command", func(t *testing.T) {
 		ctx := context.Background()
 

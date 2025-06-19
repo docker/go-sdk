@@ -120,29 +120,6 @@ func WithImageSubstitutors(fn ...ImageSubstitutor) CustomizeDefinitionOption {
 	}
 }
 
-// WithLogConsumers sets the log consumers for a container
-func WithLogConsumers(consumer ...LogConsumer) CustomizeDefinitionOption {
-	return func(def *Definition) error {
-		if def.logConsumerCfg == nil {
-			def.logConsumerCfg = &LogConsumerConfig{}
-		}
-
-		def.logConsumerCfg.Consumers = consumer
-		return nil
-	}
-}
-
-// WithLogConsumerConfig sets the log consumer config for a container.
-// Beware that this option completely replaces the existing log consumer config,
-// including the log consumers and the log production options,
-// so it should be used with care.
-func WithLogConsumerConfig(config *LogConsumerConfig) CustomizeDefinitionOption {
-	return func(def *Definition) error {
-		def.logConsumerCfg = config
-		return nil
-	}
-}
-
 // WithNetwork reuses an already existing network, attaching the container to it.
 // Finally it sets the network alias on that network to the given alias.
 func WithNetwork(aliases []string, nw *network.Network) CustomizeDefinitionOption {
