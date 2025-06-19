@@ -98,8 +98,6 @@ The following options are available to customize the container definition:
 - `WithImageSubstitutors(fn ...ImageSubstitutor) CustomizeDefinitionOption`
 - `WithLabels(labels map[string]string) CustomizeDefinitionOption`
 - `WithLifecycleHooks(hooks ...LifecycleHooks) CustomizeDefinitionOption`
-- `WithLogConsumerConfig(config *LogConsumerConfig) CustomizeDefinitionOption`
-- `WithLogConsumers(consumer ...LogConsumer) CustomizeDefinitionOption`
 - `WithName(containerName string) CustomizeDefinitionOption`
 - `WithNetwork(aliases []string, nw *network.Network) CustomizeDefinitionOption`
 - `WithNetworkName(aliases []string, networkName string) CustomizeDefinitionOption`
@@ -160,4 +158,3 @@ The following methods are available on the `Container` type:
 
 - `Logger() *slog.Logger` - Returns the container's logger, which is a `slog.Logger` instance, set at the Docker client level
 - `Logs(ctx context.Context) (io.ReadCloser, error)` - Gets container logs
-- `GetLogProductionErrorChannel() <-chan error` - Gets the log production error channel

@@ -44,9 +44,6 @@ type Definition struct {
 	// lifecycleHooks the hooks to be executed during container lifecycle
 	lifecycleHooks []LifecycleHooks
 
-	// logConsumerCfg the configuration for the log producer and its log consumers to follow the logs
-	logConsumerCfg *LogConsumerConfig
-
 	// networkAliases the network aliases to use for the container.
 	networkAliases map[string][]string
 

@@ -118,7 +118,6 @@ func Run(ctx context.Context, opts ...ContainerCustomizer) (*Container, error) {
 	defaultHooks = append(defaultHooks,
 		defaultPreCreateHook(def.dockerClient, dockerInput, hostConfig, networkingConfig),
 		defaultCopyFileToContainerHook(def.files),
-		defaultLogConsumersHook(def.logConsumerCfg),
 		defaultReadinessHook(),
 	)
 
