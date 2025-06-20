@@ -28,3 +28,13 @@ func (c *Client) ImagePull(ctx context.Context, image string, options image.Pull
 
 	return dockerClient.ImagePull(ctx, image, options)
 }
+
+// ImageSave saves an image to a file.
+func (c *Client) ImageSave(ctx context.Context, images []string, saveOptions ...client.ImageSaveOption) (io.ReadCloser, error) {
+	dockerClient, err := c.Client()
+	if err != nil {
+		return nil, fmt.Errorf("docker client: %w", err)
+	}
+
+	return dockerClient.ImageSave(ctx, images, saveOptions...)
+}
