@@ -46,3 +46,13 @@ func (c *Client) NetworkRemove(ctx context.Context, name string) error {
 
 	return dockerClient.NetworkRemove(ctx, name)
 }
+
+// NetworkList lists networks
+func (c *Client) NetworkList(ctx context.Context, options network.ListOptions) ([]network.Summary, error) {
+	dockerClient, err := c.Client()
+	if err != nil {
+		return nil, fmt.Errorf("docker client: %w", err)
+	}
+
+	return dockerClient.NetworkList(ctx, options)
+}

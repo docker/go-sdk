@@ -23,6 +23,26 @@ if err != nil {
 
 fmt.Printf("network: %+v", resp)
 
+inspect, err := network.GetByID(ctx, nw.ID())
+if err != nil {
+    log.Fatalf("failed to get network by id: %v", err)
+}
+
+inspect, err = network.GetByName(ctx, nw.Name())
+if err != nil {
+    log.Fatalf("failed to get network by name: %v", err)
+}
+
+_, err = network.List(ctx)
+if err != nil {
+    log.Fatalf("failed to list networks: %v", err)
+}
+
+_, err = network.List(ctx, network.WithFilters(filters.NewArgs(filters.Arg("driver", "bridge"))))
+if err != nil {
+    log.Fatalf("failed to list networks with filters: %v", err)
+}
+
 err = nw.Terminate(ctx)
 if err != nil {
     log.Fatalf("failed to terminate network: %v", err)
