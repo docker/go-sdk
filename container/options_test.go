@@ -284,7 +284,7 @@ func TestWithLabels(t *testing.T) {
 }
 
 func TestWithLifecycleHooks(t *testing.T) {
-	testHook := DefaultLoggingHook(nil)
+	testHook := DefaultLoggingHook
 
 	testLifecycleHooks := func(t *testing.T, replace bool, initial []LifecycleHooks, add []LifecycleHooks, expected []LifecycleHooks) {
 		t.Helper()

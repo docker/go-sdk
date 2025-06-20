@@ -354,40 +354,15 @@ func TestLifecycleHooks_withDefaultLogger(t *testing.T) {
 	buff := bytes.NewBuffer(nil)
 	logger := slog.New(slog.NewTextHandler(buff, nil))
 
-	c, err := Run(ctx,
-		WithImage(nginxAlpineImage),
-		WithLifecycleHooks(DefaultLoggingHook(logger)),
-	)
-
-	Cleanup(t, c)
+	cli, err := client.New(ctx, client.WithLogger(logger))
 	require.NoError(t, err)
-	require.NotNil(t, c)
-
-	err = c.Stop(ctx, StopTimeout(1*time.Second))
-	require.NoError(t, err)
-
-	err = c.Start(ctx)
-	require.NoError(t, err)
-
-	err = c.Terminate(ctx)
-	require.NoError(t, err)
-
-	// Includes four additional entries for stop (twice) when terminate is called.
-	log := buff.String()
-	require.Len(t, regexp.MustCompile("Starting container").FindAllString(log, -1), 2)
-	require.Len(t, regexp.MustCompile("Stopping container").FindAllString(log, -1), 2)
-}
-
-func TestLifecycleHooks_WithMultipleHooks(t *testing.T) {
-	ctx := context.Background()
-
-	buff := bytes.NewBuffer(nil)
-	logger := slog.New(slog.NewTextHandler(buff, nil))
 
 	c, err := Run(ctx,
+		WithDockerClient(cli),
 		WithImage(nginxAlpineImage),
-		WithLifecycleHooks(DefaultLoggingHook(logger), DefaultLoggingHook(logger)),
+		WithLifecycleHooks(DefaultLoggingHook),
 	)
+
 	Cleanup(t, c)
 	require.NoError(t, err)
 	require.NotNil(t, c)
@@ -405,6 +380,40 @@ func TestLifecycleHooks_WithMultipleHooks(t *testing.T) {
 	log := buff.String()
 	require.Len(t, regexp.MustCompile("Starting container").FindAllString(log, -1), 4)
 	require.Len(t, regexp.MustCompile("Stopping container").FindAllString(log, -1), 4)
+}
+
+func TestLifecycleHooks_WithMultipleHooks(t *testing.T) {
+	ctx := context.Background()
+
+	buff := bytes.NewBuffer(nil)
+	logger := slog.New(slog.NewTextHandler(buff, nil))
+
+	cli, err := client.New(ctx, client.WithLogger(logger))
+	require.NoError(t, err)
+
+	c, err := Run(ctx,
+		WithDockerClient(cli),
+		WithImage(nginxAlpineImage),
+		WithLifecycleHooks(DefaultLoggingHook, DefaultLoggingHook),
+	)
+	Cleanup(t, c)
+	require.NoError(t, err)
+	require.NotNil(t, c)
+
+	err = c.Stop(ctx, StopTimeout(1*time.Second))
+	require.NoError(t, err)
+
+	err = c.Start(ctx)
+	require.NoError(t, err)
+
+	err = c.Terminate(ctx)
+	require.NoError(t, err)
+
+	// Includes six additional entries for stop (three times) when terminate is called:
+	// - three default logging hooks times two for start and stop
+	log := buff.String()
+	require.Len(t, regexp.MustCompile("Starting container").FindAllString(log, -1), 6)
+	require.Len(t, regexp.MustCompile("Stopping container").FindAllString(log, -1), 6)
 }
 
 func testCreateNetwork(t *testing.T, networkName string) network.CreateResponse {

@@ -3,7 +3,6 @@ package container
 import (
 	"context"
 	"errors"
-	"log/slog"
 	"reflect"
 	"strings"
 	"time"
@@ -44,63 +43,61 @@ type DefinitionHook func(ctx context.Context, def *Definition) error
 type ContainerHook func(ctx context.Context, ctr *Container) error
 
 // DefaultLoggingHook is a hook that will log the container lifecycle events
-var DefaultLoggingHook = func(logger *slog.Logger) LifecycleHooks {
-	return LifecycleHooks{
-		PreCreates: []DefinitionHook{
-			func(_ context.Context, def *Definition) error {
-				logger.Info("Creating container", "image", def.image)
-				return nil
-			},
+var DefaultLoggingHook = LifecycleHooks{
+	PreCreates: []DefinitionHook{
+		func(_ context.Context, def *Definition) error {
+			def.dockerClient.Logger().Info("Creating container", "image", def.image)
+			return nil
 		},
-		PostCreates: []ContainerHook{
-			func(_ context.Context, c *Container) error {
-				logger.Info("Container created", "containerID", c.shortID)
-				return nil
-			},
+	},
+	PostCreates: []ContainerHook{
+		func(_ context.Context, c *Container) error {
+			c.logger.Info("Container created", "containerID", c.shortID)
+			return nil
 		},
-		PreStarts: []ContainerHook{
-			func(_ context.Context, c *Container) error {
-				logger.Info("Starting container", "containerID", c.shortID)
-				return nil
-			},
+	},
+	PreStarts: []ContainerHook{
+		func(_ context.Context, c *Container) error {
+			c.logger.Info("Starting container", "containerID", c.shortID)
+			return nil
 		},
-		PostStarts: []ContainerHook{
-			func(_ context.Context, c *Container) error {
-				logger.Info("Container started", "containerID", c.shortID)
-				return nil
-			},
+	},
+	PostStarts: []ContainerHook{
+		func(_ context.Context, c *Container) error {
+			c.logger.Info("Container started", "containerID", c.shortID)
+			return nil
 		},
-		PostReadies: []ContainerHook{
-			func(_ context.Context, c *Container) error {
-				logger.Info("Container is ready", "containerID", c.shortID)
-				return nil
-			},
+	},
+	PostReadies: []ContainerHook{
+		func(_ context.Context, c *Container) error {
+			c.logger.Info("Container is ready", "containerID", c.shortID)
+			return nil
 		},
-		PreStops: []ContainerHook{
-			func(_ context.Context, c *Container) error {
-				logger.Info("Stopping container", "containerID", c.shortID)
-				return nil
-			},
+	},
+	PreStops: []ContainerHook{
+		func(_ context.Context, c *Container) error {
+			c.logger.Info("Stopping container", "containerID", c.shortID)
+			return nil
 		},
-		PostStops: []ContainerHook{
-			func(_ context.Context, c *Container) error {
-				logger.Info("Container stopped", "containerID", c.shortID)
-				return nil
-			},
+	},
+	PostStops: []ContainerHook{
+		func(_ context.Context, c *Container) error {
+			c.logger.Info("Container stopped", "containerID", c.shortID)
+			return nil
 		},
-		PreTerminates: []ContainerHook{
-			func(_ context.Context, c *Container) error {
-				logger.Info("Terminating container", "containerID", c.shortID)
-				return nil
-			},
+	},
+	PreTerminates: []ContainerHook{
+		func(_ context.Context, c *Container) error {
+			c.logger.Info("Terminating container", "containerID", c.shortID)
+			return nil
 		},
-		PostTerminates: []ContainerHook{
-			func(_ context.Context, c *Container) error {
-				logger.Info("Container terminated", "containerID", c.shortID)
-				return nil
-			},
+	},
+	PostTerminates: []ContainerHook{
+		func(_ context.Context, c *Container) error {
+			c.logger.Info("Container terminated", "containerID", c.shortID)
+			return nil
 		},
-	}
+	},
 }
 
 // combineContainerHooks returns a [LifecycleHook] as the result

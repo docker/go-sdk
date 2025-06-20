@@ -48,7 +48,7 @@ func Run(ctx context.Context, opts ...ContainerCustomizer) (*Container, error) {
 	}
 
 	defaultHooks := []LifecycleHooks{
-		DefaultLoggingHook(def.dockerClient.Logger()),
+		DefaultLoggingHook,
 	}
 
 	for _, is := range def.imageSubstitutors {
