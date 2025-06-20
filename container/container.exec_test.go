@@ -15,6 +15,7 @@ import (
 const (
 	alpineLatest     = "alpine:latest"
 	nginxAlpineImage = "nginx:alpine"
+	bashImage        = "bash:5.2.26"
 )
 
 func TestContainer_Exec(t *testing.T) {

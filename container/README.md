@@ -48,6 +48,8 @@ It's possible to copy files to the container, and this can happen in different s
 - After the container is created but before it's started: using the `WithFiles` option, you can add files to the container.
 - After the container is started: using the container's `CopyToContainer` method, you can copy files to the container.
 
+If you need to copy a directory, you can use the `CopyDirToContainer` method, which uses the parent directory of the container path as the target directory.
+
 It's also possible to copy files from the container to the host, using the container's `CopyFromContainer` method.
 
 ## Defining the readiness state for the container

@@ -3,10 +3,13 @@ package container_test
 import (
 	"bytes"
 	"context"
+	_ "embed"
 	"io"
 	"log/slog"
 	"net/http"
+	"os"
 	"path"
+	"path/filepath"
 	"strings"
 	"testing"
 	"time"
@@ -363,6 +366,121 @@ func TestRun_addSDKLabels(t *testing.T) {
 	require.Contains(t, inspect.Config.Labels, client.LabelBase)
 	require.Contains(t, inspect.Config.Labels, client.LabelLang)
 	require.Contains(t, inspect.Config.Labels, client.LabelVersion)
+}
+
+//go:embed testdata/hello.sh
+var helloBytes []byte
+
+func TestRun_withFiles(t *testing.T) {
+	t.Run("created-container/file", func(t *testing.T) {
+		ctx, cnl := context.WithTimeout(context.Background(), 30*time.Second)
+		defer cnl()
+
+		// copyFileOnCreate {
+		absPath, err := filepath.Abs(filepath.Join(".", "testdata", "hello.sh"))
+		require.NoError(t, err)
+
+		r, err := os.Open(absPath)
+		require.NoError(t, err)
+
+		ctr, err := container.Run(ctx,
+			container.WithImage(bashImage),
+			container.WithFiles(container.File{
+				Reader:        r,
+				HostPath:      absPath, // will be discarded internally because a reader is provided
+				ContainerPath: "/hello.sh",
+				Mode:          0o700,
+			}),
+			container.WithCmd("bash", "/hello.sh"),
+			container.WithWaitStrategy(wait.ForLog("done")),
+		)
+		container.Cleanup(t, ctr)
+		require.NoError(t, err)
+	})
+
+	t.Run("created-container/directory", func(t *testing.T) {
+		ctx, cnl := context.WithTimeout(context.Background(), 30*time.Second)
+		defer cnl()
+
+		// Not using the assertations here to avoid leaking the library into the example
+		// copyDirectoryToContainer {
+		dataDirectory, err := filepath.Abs(filepath.Join(".", "testdata"))
+		require.NoError(t, err)
+
+		ctr, err := container.Run(ctx,
+			container.WithImage(bashImage),
+			container.WithFiles(container.File{
+				HostPath: dataDirectory,
+				// ContainerFile cannot create the parent directory, so we copy the scripts
+				// to the root of the container instead. Make sure to create the container directory
+				// before you copy a host directory on create.
+				ContainerPath: "/",
+				Mode:          0o700,
+			}),
+			container.WithCmd("bash", "/testdata/hello.sh"),
+			container.WithWaitStrategy(wait.ForLog("done")),
+		)
+		container.Cleanup(t, ctr)
+		require.NoError(t, err)
+	})
+
+	t.Run("running-container/file", func(t *testing.T) {
+		ctx, cnl := context.WithTimeout(context.Background(), 30*time.Second)
+		defer cnl()
+
+		waitForPath, err := filepath.Abs(filepath.Join(".", "testdata", "waitForHello.sh"))
+		require.NoError(t, err)
+
+		ctr, err := container.Run(ctx,
+			container.WithImage(bashImage),
+			container.WithFiles(container.File{
+				HostPath:      waitForPath,
+				ContainerPath: "/waitForHello.sh",
+				Mode:          0o700,
+			}),
+			container.WithCmd("bash", "/waitForHello.sh"),
+		)
+		container.Cleanup(t, ctr)
+		require.NoError(t, err)
+
+		err = ctr.CopyToContainer(ctx, helloBytes, "/scripts/hello.sh", 0o700)
+		require.NoError(t, err)
+
+		// Give some time to the wait script to catch the hello script being created
+		err = wait.ForLog("done").WithTimeout(2*time.Second).WaitUntilReady(ctx, ctr)
+		require.NoError(t, err)
+	})
+
+	t.Run("running-container/directory", func(t *testing.T) {
+		ctx, cnl := context.WithTimeout(context.Background(), 30*time.Second)
+		defer cnl()
+
+		// Not using the assertations here to avoid leaking the library into the example
+		// copyDirectoryToRunningContainerAsDir {
+		waitForPath, err := filepath.Abs(filepath.Join(".", "testdata", "waitForHello.sh"))
+		require.NoError(t, err)
+		dataDirectory, err := filepath.Abs(filepath.Join(".", "testdata"))
+		require.NoError(t, err)
+
+		ctr, err := container.Run(ctx,
+			container.WithImage(bashImage),
+			container.WithFiles(container.File{
+				HostPath:      waitForPath,
+				ContainerPath: "/waitForHello.sh",
+				Mode:          0o700,
+			}),
+			container.WithCmd("bash", "/waitForHello.sh"),
+		)
+		container.Cleanup(t, ctr)
+		require.NoError(t, err)
+
+		// as the container is started, we can create the directory first
+		_, _, err = ctr.Exec(ctx, []string{"mkdir", "-p", "/scripts"})
+		require.NoError(t, err)
+
+		err = ctr.CopyDirToContainer(ctx, dataDirectory, "/scripts/", 0o700)
+		require.NoError(t, err)
+	})
 }
 
 func TestRunWithLifecycleHooks(t *testing.T) {

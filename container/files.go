@@ -88,6 +88,35 @@ func (c *Container) CopyFromContainer(ctx context.Context, containerFilePath str
 	return ret, nil
 }
 
+// CopyDirToContainer copies a directory to a container, using the parent directory
+// of the container path as the target directory.
+func (c *Container) CopyDirToContainer(ctx context.Context, hostDirPath string, containerFilePath string, fileMode int64) error {
+	dir, err := isDir(hostDirPath)
+	if err != nil {
+		return fmt.Errorf("is dir: %w", err)
+	}
+
+	if !dir {
+		// it's not a dir: let the consumer handle the error
+		return fmt.Errorf("path %s is not a directory", hostDirPath)
+	}
+
+	buffer, err := tarDir(c.logger, hostDirPath, fileMode)
+	if err != nil {
+		return fmt.Errorf("tar dir: %w", err)
+	}
+
+	// create the directory under its parent
+	parent := filepath.Dir(containerFilePath)
+
+	err = c.dockerClient.CopyToContainer(ctx, c.ID(), parent, buffer, container.CopyToContainerOptions{})
+	if err != nil {
+		return fmt.Errorf("copy to container: %w", err)
+	}
+
+	return nil
+}
+
 // CopyToContainer copies fileContent data to a file in container
 func (c *Container) CopyToContainer(ctx context.Context, fileContent []byte, containerFilePath string, fileMode int64) error {
 	contentFn := func(tw io.Writer) error {

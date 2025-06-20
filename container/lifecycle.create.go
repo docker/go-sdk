@@ -45,7 +45,20 @@ var defaultCopyFileToContainerHook = func(files []File) LifecycleHooks {
 							return fmt.Errorf("read all: %w", err)
 						}
 					} else {
-						// no reader, read from host path
+						// no reader, read from host path, checking if it's a directory first
+						ok, err := isDir(f.HostPath)
+						if err != nil {
+							return err
+						}
+
+						if ok {
+							err := c.CopyDirToContainer(ctx, f.HostPath, f.ContainerPath, f.Mode)
+							if err != nil {
+								return fmt.Errorf("copy dir to container: %w", err)
+							}
+							continue
+						}
+
 						bs, err = os.ReadFile(f.HostPath)
 						if err != nil {
 							return fmt.Errorf("read file: %w", err)
