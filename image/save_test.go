@@ -8,15 +8,13 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/docker/go-sdk/container"
 	"github.com/docker/go-sdk/image"
 )
 
 func TestSave(t *testing.T) {
 	img := "redis:alpine"
 
-	ctr, err := container.Run(context.Background(), container.WithImage(img))
-	container.Cleanup(t, ctr)
+	err := image.Pull(context.Background(), img)
 	require.NoError(t, err)
 
 	t.Run("success", func(t *testing.T) {

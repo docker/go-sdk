@@ -11,10 +11,18 @@ import (
 )
 
 func ExampleSave() {
+	img := "redis:alpine"
+
+	err := image.Pull(context.Background(), img)
+	if err != nil {
+		log.Println("error pulling image", err)
+		return
+	}
+
 	tmpDir := os.TempDir()
 
 	output := filepath.Join(tmpDir, "images.tar")
-	err := image.Save(context.Background(), output, "redis:alpine")
+	err = image.Save(context.Background(), output, img)
 	if err != nil {
 		log.Println("error saving image", err)
 		return
