@@ -40,7 +40,7 @@ func TestExtractImagesFromDockerfile(t *testing.T) {
 		extractImages(t, filepath.Join("testdata", "Dockerfile.multistage"), nil, []string{"nginx:a", "nginx:b", "nginx:c", "scratch"}, false)
 	})
 
-	t.Run("multiple-images-with-on-build-arg", func(t *testing.T) {
+	t.Run("multiple-images-with-one-build-arg", func(t *testing.T) {
 		extractImages(t, filepath.Join("testdata", "Dockerfile.multistage.singleBuildArgs"), map[string]*string{"BASE_IMAGE": &baseImage}, []string{"nginx:a", "nginx:b", "nginx:c", "scratch"}, false)
 	})
 
