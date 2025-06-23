@@ -41,7 +41,7 @@ func Save(ctx context.Context, output string, img string, opts ...SaveOption) er
 
 	outputFile, err := os.Create(output)
 	if err != nil {
-		return fmt.Errorf("opening output file %w", err)
+		return fmt.Errorf("open output file %w", err)
 	}
 	defer func() {
 		_ = outputFile.Close()
@@ -49,7 +49,7 @@ func Save(ctx context.Context, output string, img string, opts ...SaveOption) er
 
 	imageReader, err := saveOpts.saveClient.ImageSave(ctx, []string{img}, saveOpts.saveOptions...)
 	if err != nil {
-		return fmt.Errorf("saving images %w", err)
+		return fmt.Errorf("save images %w", err)
 	}
 	defer func() {
 		_ = imageReader.Close()
@@ -58,7 +58,7 @@ func Save(ctx context.Context, output string, img string, opts ...SaveOption) er
 	// Attempt optimized readFrom, implemented in linux
 	_, err = outputFile.ReadFrom(imageReader)
 	if err != nil {
-		return fmt.Errorf("writing images to output %w", err)
+		return fmt.Errorf("write images to output %w", err)
 	}
 
 	return nil
