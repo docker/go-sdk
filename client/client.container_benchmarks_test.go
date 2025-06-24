@@ -19,6 +19,8 @@ func BenchmarkContainerList(b *testing.B) {
 	require.NoError(b, err)
 	require.NotNil(b, dockerClient)
 
+	pullImage(b, dockerClient, "nginx:alpine")
+
 	max := 5
 
 	wg := sync.WaitGroup{}

@@ -10,6 +10,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/docker/docker/api/types/container"
+	"github.com/docker/docker/api/types/image"
 	"github.com/docker/go-connections/nat"
 	"github.com/docker/go-sdk/client"
 )
@@ -18,6 +19,8 @@ func TestContainerList(t *testing.T) {
 	dockerClient, err := client.New(context.Background())
 	require.NoError(t, err)
 	require.NotNil(t, dockerClient)
+
+	pullImage(t, dockerClient, "nginx:alpine")
 
 	max := 5
 
@@ -92,4 +95,11 @@ func TestFindContainerByName(t *testing.T) {
 		require.ErrorIs(t, err, errdefs.ErrInvalidArgument)
 		require.Nil(t, found)
 	})
+}
+
+func pullImage(tb testing.TB, client *client.Client, img string) {
+	tb.Helper()
+
+	_, err := client.ImagePull(context.Background(), img, image.PullOptions{})
+	require.NoError(tb, err)
 }
