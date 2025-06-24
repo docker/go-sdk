@@ -32,8 +32,8 @@ func NewExitStrategy() *ExitStrategy {
 // since go has neither covariance nor generics, the return type must be the type of the concrete implementation
 // this is true for all properties, even the "shared" ones
 
-// WithExitTimeout can be used to change the default exit timeout
-func (ws *ExitStrategy) WithExitTimeout(exitTimeout time.Duration) *ExitStrategy {
+// WithTimeout can be used to change the default exit timeout
+func (ws *ExitStrategy) WithTimeout(exitTimeout time.Duration) *ExitStrategy {
 	ws.timeout = &exitTimeout
 	return ws
 }

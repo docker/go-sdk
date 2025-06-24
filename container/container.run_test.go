@@ -803,11 +803,11 @@ func TestRunWithWaitStrategy(t *testing.T) {
 	})
 
 	t.Run("for-exit/success", func(t *testing.T) {
-		testRun(t, alpineLatest, wait.ForExit().WithExitTimeout(3*time.Second), false)
+		testRun(t, alpineLatest, wait.ForExit().WithTimeout(3*time.Second), false)
 	})
 
 	t.Run("for-exit/error", func(t *testing.T) {
-		testRun(t, nginxAlpineImage, wait.ForExit().WithExitTimeout(3*time.Second), true)
+		testRun(t, nginxAlpineImage, wait.ForExit().WithTimeout(3*time.Second), true)
 	})
 
 	t.Run("for-http", func(t *testing.T) {
