@@ -34,4 +34,24 @@ func TestValidateMounts(t *testing.T) {
 		err := d.validateMounts()
 		require.ErrorIs(t, err, ErrDuplicateMountTarget)
 	})
+
+	t.Run("same-source-multiple-targets", func(t *testing.T) {
+		d := &Definition{
+			hostConfigModifier: func(hc *container.HostConfig) {
+				hc.Binds = []string{"/data:/srv", "/data:/data"}
+			},
+		}
+		err := d.validateMounts()
+		require.NoError(t, err)
+	})
+
+	t.Run("bind-options/provided", func(t *testing.T) {
+		d := &Definition{
+			hostConfigModifier: func(hc *container.HostConfig) {
+				hc.Binds = []string{"/a:/a:nocopy", "/b:/b:ro", "/c:/c:rw", "/d:/d:z", "/e:/e:Z", "/f:/f:shared", "/g:/g:rshared", "/h:/h:slave", "/i:/i:rslave", "/j:/j:private", "/k:/k:rprivate", "/l:/l:ro,z,shared"}
+			},
+		}
+		err := d.validateMounts()
+		require.NoError(t, err)
+	})
 }
