@@ -14,7 +14,16 @@ import (
 // It's a variable to allow testing.
 var dockerEnvFile = "/.dockerenv"
 
+// DaemonHost gets the host or ip of the Docker daemon where ports are exposed on
+// Warning: this is based on your Docker host setting. Will fail if using an SSH tunnel
 func (c *Client) DaemonHost(ctx context.Context) (string, error) {
+	c.mtx.Lock()
+	defer c.mtx.Unlock()
+
+	return c.daemonHostLocked(ctx)
+}
+
+func (c *Client) daemonHostLocked(ctx context.Context) (string, error) {
 	dockerClient, err := c.Client()
 	if err != nil {
 		return "", fmt.Errorf("docker client: %w", err)
