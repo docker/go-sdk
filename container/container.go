@@ -37,6 +37,11 @@ type Container struct {
 	isRunning bool
 }
 
+// DockerClient returns the docker client used by the container.
+func (c *Container) DockerClient() *client.Client {
+	return c.dockerClient
+}
+
 // ID returns the container ID
 func (c *Container) ID() string {
 	return c.containerID
