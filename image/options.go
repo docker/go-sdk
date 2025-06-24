@@ -30,7 +30,7 @@ func WithPullOptions(imagePullOptions image.PullOptions) PullOption {
 	}
 }
 
-// SaveOption is a function that configures the save options.
+// RemoveOption is a function that configures the remove options.
 type RemoveOption func(*removeOptions) error
 
 type removeOptions struct {
