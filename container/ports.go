@@ -11,7 +11,7 @@ import (
 )
 
 // Endpoint gets proto://host:port string for the lowest numbered exposed port
-// Will returns just host:port if proto is ""
+// Will return just host:port if proto is empty
 func (c *Container) Endpoint(ctx context.Context, proto string) (string, error) {
 	inspect, err := c.Inspect(ctx)
 	if err != nil {
