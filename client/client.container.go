@@ -5,10 +5,12 @@ import (
 	"fmt"
 	"io"
 
+	"github.com/containerd/errdefs"
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
+	"github.com/docker/docker/api/types/filters"
 	"github.com/docker/docker/api/types/network"
 )
 
@@ -60,6 +62,21 @@ func (c *Client) ContainerInspect(ctx context.Context, containerID string) (cont
 	}
 
 	return dockerClient.ContainerInspect(ctx, containerID)
+}
+
+// ContainerList lists all containers.
+func (c *Client) ContainerList(ctx context.Context, options container.ListOptions) ([]container.Summary, error) {
+	dockerClient, err := c.Client()
+	if err != nil {
+		return nil, fmt.Errorf("docker client: %w", err)
+	}
+
+	containers, err := dockerClient.ContainerList(ctx, options)
+	if err != nil {
+		return nil, fmt.Errorf("container list: %w", err)
+	}
+
+	return containers, nil
 }
 
 // ContainerLogs returns the logs of a container.
@@ -120,4 +137,24 @@ func (c *Client) CopyToContainer(ctx context.Context, containerID, dstPath strin
 	}
 
 	return dockerClient.CopyToContainer(ctx, containerID, dstPath, content, options)
+}
+
+// FindContainerByName finds a container by name. The name filter uses a regex to find the containers.
+func (c *Client) FindContainerByName(ctx context.Context, name string) (*container.Summary, error) {
+	if name == "" {
+		return nil, errdefs.ErrInvalidArgument.WithMessage("name is empty")
+	}
+
+	// Note that, 'name' filter will use regex to find the containers
+	filter := filters.NewArgs(filters.Arg("name", fmt.Sprintf("^%s$", name)))
+	containers, err := c.ContainerList(ctx, container.ListOptions{All: true, Filters: filter})
+	if err != nil {
+		return nil, fmt.Errorf("container list: %w", err)
+	}
+
+	if len(containers) > 0 {
+		return &containers[0], nil
+	}
+
+	return nil, errdefs.ErrNotFound.WithMessage(fmt.Sprintf("container %s not found", name))
 }
