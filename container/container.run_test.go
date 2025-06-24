@@ -306,10 +306,24 @@ echo "done"
 			require.Equal(t, ctr.Image(), inspect.Config.Image)
 		})
 
-		t.Run("mapped-ports", func(t *testing.T) {
-			port1, err := ctr.MappedPort(context.Background(), "80/tcp")
+		t.Run("endpoint", func(t *testing.T) {
+			endpoint, err := ctr.Endpoint(context.Background(), "http")
 			require.NoError(t, err)
-			require.NotNil(t, port1)
+			require.True(t, strings.HasPrefix(endpoint, "http://"))
+			require.False(t, strings.HasSuffix(endpoint, ":80"))
+		})
+
+		t.Run("port-endpoint", func(t *testing.T) {
+			portEndpoint, err := ctr.PortEndpoint(context.Background(), "80/tcp", "tcp")
+			require.NoError(t, err)
+			require.True(t, strings.HasPrefix(portEndpoint, "tcp://"))
+		})
+
+		t.Run("mapped-port", func(t *testing.T) {
+			mappedPort, err := ctr.MappedPort(context.Background(), "80/tcp")
+			require.NoError(t, err)
+			require.NotNil(t, mappedPort)
+			require.NotEqual(t, "80", mappedPort.Port())
 		})
 
 		t.Run("state", func(t *testing.T) {
