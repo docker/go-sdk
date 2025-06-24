@@ -105,6 +105,11 @@ func (d *Definition) Image() string {
 	return d.image
 }
 
+// Name returns the name of the container.
+func (d *Definition) Name() string {
+	return d.name
+}
+
 // validateMounts ensures that the mounts do not have duplicate targets.
 // It will check the HostConfigModifier.Binds field.
 func (d *Definition) validateMounts() error {
