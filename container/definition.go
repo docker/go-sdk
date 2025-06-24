@@ -2,11 +2,18 @@ package container
 
 import (
 	"errors"
+	"fmt"
+	"strings"
 
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/network"
 	"github.com/docker/go-sdk/client"
 	"github.com/docker/go-sdk/container/wait"
+)
+
+var (
+	ErrDuplicateMountTarget = errors.New("duplicate mount target detected")
+	ErrInvalidBindMount     = errors.New("invalid bind mount")
 )
 
 // Definition is the Definition of a container.
@@ -78,6 +85,10 @@ func (d *Definition) validate() error {
 		return errors.New("image is required")
 	}
 
+	if err := d.validateMounts(); err != nil {
+		return fmt.Errorf("validate mounts: %w", err)
+	}
+
 	return nil
 }
 
@@ -89,4 +100,34 @@ func (d *Definition) DockerClient() *client.Client {
 // Image returns the image used by the definition.
 func (d *Definition) Image() string {
 	return d.image
+}
+
+// validateMounts ensures that the mounts do not have duplicate targets.
+// It will check the HostConfigModifier.Binds field.
+func (d *Definition) validateMounts() error {
+	targets := make(map[string]bool, 0)
+
+	if d.hostConfigModifier == nil {
+		return nil
+	}
+
+	hostConfig := container.HostConfig{}
+
+	d.hostConfigModifier(&hostConfig)
+
+	if len(hostConfig.Binds) > 0 {
+		for _, bind := range hostConfig.Binds {
+			parts := strings.Split(bind, ":")
+			if len(parts) != 2 && len(parts) != 3 {
+				return fmt.Errorf("%w: %s", ErrInvalidBindMount, bind)
+			}
+			targetPath := parts[1]
+			if targets[targetPath] {
+				return fmt.Errorf("%w: %s", ErrDuplicateMountTarget, targetPath)
+			}
+			targets[targetPath] = true
+		}
+	}
+
+	return nil
 }
