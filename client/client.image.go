@@ -29,6 +29,16 @@ func (c *Client) ImagePull(ctx context.Context, image string, options image.Pull
 	return dockerClient.ImagePull(ctx, image, options)
 }
 
+// ImageRemove removes an image from the local repository.
+func (c *Client) ImageRemove(ctx context.Context, image string, options image.RemoveOptions) ([]image.DeleteResponse, error) {
+	dockerClient, err := c.Client()
+	if err != nil {
+		return nil, fmt.Errorf("docker client: %w", err)
+	}
+
+	return dockerClient.ImageRemove(ctx, image, options)
+}
+
 // ImageSave saves an image to a file.
 func (c *Client) ImageSave(ctx context.Context, images []string, saveOptions ...client.ImageSaveOption) (io.ReadCloser, error) {
 	dockerClient, err := c.Client()

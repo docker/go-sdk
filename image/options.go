@@ -31,6 +31,30 @@ func WithPullOptions(imagePullOptions image.PullOptions) PullOption {
 }
 
 // SaveOption is a function that configures the save options.
+type RemoveOption func(*removeOptions) error
+
+type removeOptions struct {
+	removeClient  ImageRemoveClient
+	removeOptions image.RemoveOptions
+}
+
+// WithRemoveClient sets the remove client used to remove the image.
+func WithRemoveClient(removeClient ImageRemoveClient) RemoveOption {
+	return func(opts *removeOptions) error {
+		opts.removeClient = removeClient
+		return nil
+	}
+}
+
+// WithRemoveOptions sets the remove options used to remove the image.
+func WithRemoveOptions(options image.RemoveOptions) RemoveOption {
+	return func(opts *removeOptions) error {
+		opts.removeOptions = options
+		return nil
+	}
+}
+
+// SaveOption is a function that configures the save options.
 type SaveOption func(*saveOptions) error
 
 type saveOptions struct {

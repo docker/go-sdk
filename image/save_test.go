@@ -16,12 +16,11 @@ import (
 func TestSave(t *testing.T) {
 	img := "redis:alpine"
 
-	err := image.Pull(context.Background(), img)
-	require.NoError(t, err)
+	pullImage(t, img)
 
 	t.Run("success", func(t *testing.T) {
 		output := filepath.Join(t.TempDir(), "images.tar")
-		err = image.Save(context.Background(), output, img)
+		err := image.Save(context.Background(), output, img)
 		require.NoError(t, err)
 
 		info, err := os.Stat(output)
@@ -42,7 +41,7 @@ func TestSave(t *testing.T) {
 
 	t.Run("success/with-platforms", func(t *testing.T) {
 		output := filepath.Join(t.TempDir(), "images.tar")
-		err = image.Save(context.Background(), output, img, image.WithPlatforms(ocispec.Platform{
+		err := image.Save(context.Background(), output, img, image.WithPlatforms(ocispec.Platform{
 			OS:           "linux",
 			Architecture: "amd64",
 		}))
@@ -50,12 +49,12 @@ func TestSave(t *testing.T) {
 	})
 
 	t.Run("error/no-output", func(t *testing.T) {
-		err = image.Save(context.Background(), "", img)
+		err := image.Save(context.Background(), "", img)
 		require.Error(t, err)
 	})
 
 	t.Run("error/no-image", func(t *testing.T) {
-		err = image.Save(context.Background(), filepath.Join(t.TempDir(), "images.tar"), "")
+		err := image.Save(context.Background(), filepath.Join(t.TempDir(), "images.tar"), "")
 		require.Error(t, err)
 	})
 }
