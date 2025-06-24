@@ -14,6 +14,7 @@ require (
 	github.com/docker/docker v28.2.2+incompatible
 	github.com/docker/go-sdk/client v0.1.0-alpha005
 	github.com/docker/go-sdk/config v0.1.0-alpha005
+	github.com/opencontainers/image-spec v1.1.1
 	github.com/stretchr/testify v1.10.0
 )
 
@@ -36,7 +37,6 @@ require (
 	github.com/moby/docker-image-spec v1.3.1 // indirect
 	github.com/moby/sys/sequential v0.6.0 // indirect
 	github.com/opencontainers/go-digest v1.0.0 // indirect
-	github.com/opencontainers/image-spec v1.1.1 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	go.opentelemetry.io/auto/sdk v1.1.0 // indirect
