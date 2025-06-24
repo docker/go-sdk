@@ -1,8 +1,9 @@
 package image
 
 import (
+	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
+
 	"github.com/docker/docker/api/types/image"
-	"github.com/docker/docker/client"
 )
 
 // PullOption is a function that configures the pull options.
@@ -33,8 +34,8 @@ func WithPullOptions(imagePullOptions image.PullOptions) PullOption {
 type SaveOption func(*saveOptions) error
 
 type saveOptions struct {
-	saveClient  ImageSaveClient
-	saveOptions []client.ImageSaveOption
+	saveClient ImageSaveClient
+	platforms  []ocispec.Platform
 }
 
 // WithSaveClient sets the save client used to save the image.
@@ -45,10 +46,10 @@ func WithSaveClient(saveClient ImageSaveClient) SaveOption {
 	}
 }
 
-// WithSaveOptions sets the save options used to save the image.
-func WithSaveOptions(options ...client.ImageSaveOption) SaveOption {
+// WithPlatforms sets the platforms to save the image from.
+func WithPlatforms(platforms ...ocispec.Platform) SaveOption {
 	return func(opts *saveOptions) error {
-		opts.saveOptions = options
+		opts.platforms = platforms
 		return nil
 	}
 }
