@@ -218,3 +218,8 @@ func (c *Client) Close() error {
 
 	return err
 }
+
+// ClientVersion returns the API version used by this client.
+func (c *Client) ClientVersion() string {
+	return c.dockerClient.ClientVersion()
+}
