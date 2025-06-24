@@ -12,11 +12,14 @@ import (
 )
 
 var (
+	// ErrDuplicateMountTarget is returned when a duplicate mount target is detected.
 	ErrDuplicateMountTarget = errors.New("duplicate mount target detected")
-	ErrInvalidBindMount     = errors.New("invalid bind mount")
+
+	// ErrInvalidBindMount is returned when an invalid bind mount is detected.
+	ErrInvalidBindMount = errors.New("invalid bind mount")
 )
 
-// Definition is the Definition of a container.
+// Definition is the definition of a container.
 type Definition struct {
 	// dockerClient the docker client to use for the container.
 	dockerClient *client.Client
