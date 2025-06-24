@@ -89,6 +89,34 @@ func (c *Client) ContainerLogs(ctx context.Context, containerID string, options 
 	return dockerClient.ContainerLogs(ctx, containerID, options)
 }
 
+// ContainerPause pauses a container.
+func (c *Client) ContainerPause(ctx context.Context, containerID string) error {
+	dockerClient, err := c.Client()
+	if err != nil {
+		return fmt.Errorf("docker client: %w", err)
+	}
+
+	if containerID == "" {
+		return errdefs.ErrInvalidArgument.WithMessage("containerID is empty")
+	}
+
+	return dockerClient.ContainerPause(ctx, containerID)
+}
+
+// ContainerUnpause unpauses a container.
+func (c *Client) ContainerUnpause(ctx context.Context, containerID string) error {
+	dockerClient, err := c.Client()
+	if err != nil {
+		return fmt.Errorf("docker client: %w", err)
+	}
+
+	if containerID == "" {
+		return errdefs.ErrInvalidArgument.WithMessage("containerID is empty")
+	}
+
+	return dockerClient.ContainerUnpause(ctx, containerID)
+}
+
 // ContainerRemove removes a container.
 func (c *Client) ContainerRemove(ctx context.Context, containerID string, options container.RemoveOptions) error {
 	dockerClient, err := c.Client()

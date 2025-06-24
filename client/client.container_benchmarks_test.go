@@ -10,7 +10,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/docker/docker/api/types/container"
-	"github.com/docker/go-connections/nat"
 	"github.com/docker/go-sdk/client"
 )
 
@@ -32,20 +31,7 @@ func BenchmarkContainerList(b *testing.B) {
 		go func(i int) {
 			defer wg.Done()
 
-			resp, err := dockerClient.ContainerCreate(context.Background(), &container.Config{
-				Image: img,
-				ExposedPorts: nat.PortSet{
-					"80/tcp": {},
-				},
-			}, nil, nil, nil, fmt.Sprintf("nginx-test-name-%d", i))
-			require.NoError(b, err)
-			require.NotNil(b, resp)
-			require.NotEmpty(b, resp.ID)
-
-			b.Cleanup(func() {
-				err := dockerClient.ContainerRemove(context.Background(), resp.ID, container.RemoveOptions{})
-				require.NoError(b, err)
-			})
+			createContainer(b, dockerClient, img, fmt.Sprintf("nginx-test-name-%d", i))
 		}(i)
 	}
 
@@ -72,4 +58,33 @@ func BenchmarkContainerList(b *testing.B) {
 			}
 		})
 	})
+}
+
+func BenchmarkContainerPause(b *testing.B) {
+	dockerClient, err := client.New(context.Background())
+	require.NoError(b, err)
+	require.NotNil(b, dockerClient)
+
+	img := "nginx:alpine"
+
+	containerName := "nginx-test-pause"
+
+	pullImage(b, dockerClient, img)
+	createContainer(b, dockerClient, img, containerName)
+
+	b.Run("container-pause-unpause", func(b *testing.B) {
+		err = dockerClient.ContainerStart(context.Background(), containerName, container.StartOptions{})
+		require.NoError(b, err)
+
+		b.ResetTimer()
+		b.ReportAllocs()
+		for i := 0; i < b.N; i++ {
+			err := dockerClient.ContainerPause(context.Background(), containerName)
+			require.NoError(b, err)
+
+			err = dockerClient.ContainerUnpause(context.Background(), containerName)
+			require.NoError(b, err)
+		}
+	})
+
 }

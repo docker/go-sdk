@@ -34,20 +34,7 @@ func TestContainerList(t *testing.T) {
 		go func(i int) {
 			defer wg.Done()
 
-			resp, err := dockerClient.ContainerCreate(context.Background(), &container.Config{
-				Image: img,
-				ExposedPorts: nat.PortSet{
-					"80/tcp": {},
-				},
-			}, nil, nil, nil, fmt.Sprintf("nginx-test-name-%d", i))
-			require.NoError(t, err)
-			require.NotNil(t, resp)
-			require.NotEmpty(t, resp.ID)
-
-			t.Cleanup(func() {
-				err := dockerClient.ContainerRemove(context.Background(), resp.ID, container.RemoveOptions{})
-				require.NoError(t, err)
-			})
+			createContainer(t, dockerClient, img, fmt.Sprintf("nginx-test-name-%d", i))
 		}(i)
 	}
 
@@ -64,20 +51,7 @@ func TestFindContainerByName(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, dockerClient)
 
-	resp, err := dockerClient.ContainerCreate(context.Background(), &container.Config{
-		Image: "nginx:alpine",
-		ExposedPorts: nat.PortSet{
-			"80/tcp": {},
-		},
-	}, nil, nil, nil, "nginx-test-name")
-	require.NoError(t, err)
-	require.NotNil(t, resp)
-	require.NotEmpty(t, resp.ID)
-
-	t.Cleanup(func() {
-		err := dockerClient.ContainerRemove(context.Background(), resp.ID, container.RemoveOptions{})
-		require.NoError(t, err)
-	})
+	createContainer(t, dockerClient, "nginx:alpine", "nginx-test-name")
 
 	t.Run("found", func(t *testing.T) {
 		found, err := dockerClient.FindContainerByName(context.Background(), "nginx-test-name")
@@ -97,6 +71,45 @@ func TestFindContainerByName(t *testing.T) {
 		found, err := dockerClient.FindContainerByName(context.Background(), "")
 		require.ErrorIs(t, err, errdefs.ErrInvalidArgument)
 		require.Nil(t, found)
+	})
+}
+
+func TestContainerPause(t *testing.T) {
+	dockerClient, err := client.New(context.Background())
+	require.NoError(t, err)
+	require.NotNil(t, dockerClient)
+
+	img := "nginx:alpine"
+
+	pullImage(t, dockerClient, img)
+	createContainer(t, dockerClient, img, "nginx-test-pause")
+
+	err = dockerClient.ContainerStart(context.Background(), "nginx-test-pause", container.StartOptions{})
+	require.NoError(t, err)
+
+	err = dockerClient.ContainerPause(context.Background(), "nginx-test-pause")
+	require.NoError(t, err)
+
+	err = dockerClient.ContainerUnpause(context.Background(), "nginx-test-pause")
+	require.NoError(t, err)
+}
+
+func createContainer(tb testing.TB, dockerClient *client.Client, img string, name string) {
+	tb.Helper()
+
+	resp, err := dockerClient.ContainerCreate(context.Background(), &container.Config{
+		Image: img,
+		ExposedPorts: nat.PortSet{
+			"80/tcp": {},
+		},
+	}, nil, nil, nil, name)
+	require.NoError(tb, err)
+	require.NotNil(tb, resp)
+	require.NotEmpty(tb, resp.ID)
+
+	tb.Cleanup(func() {
+		err := dockerClient.ContainerRemove(context.Background(), resp.ID, container.RemoveOptions{Force: true})
+		require.NoError(tb, err)
 	})
 }
 
