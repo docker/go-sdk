@@ -14,6 +14,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/containerd/errdefs"
 	"github.com/stretchr/testify/require"
 
 	apicontainer "github.com/docker/docker/api/types/container"
@@ -313,10 +314,29 @@ echo "done"
 			require.False(t, strings.HasSuffix(endpoint, ":80"))
 		})
 
+		t.Run("endpoint-no-ports", func(t *testing.T) {
+			ctr, err := container.Run(context.Background(),
+				container.WithImage(bashImage),
+				container.WithWaitStrategy(wait.ForExit().WithTimeout(3*time.Second)),
+			)
+			container.Cleanup(t, ctr)
+			require.NoError(t, err)
+
+			endpoint, err := ctr.Endpoint(context.Background(), "http")
+			require.ErrorIs(t, err, errdefs.ErrNotFound)
+			require.Empty(t, endpoint)
+		})
+
 		t.Run("port-endpoint", func(t *testing.T) {
 			portEndpoint, err := ctr.PortEndpoint(context.Background(), "80/tcp", "tcp")
 			require.NoError(t, err)
 			require.True(t, strings.HasPrefix(portEndpoint, "tcp://"))
+		})
+
+		t.Run("port-endpoint-not-found", func(t *testing.T) {
+			portEndpoint, err := ctr.PortEndpoint(context.Background(), "3306/tcp", "tcp")
+			require.ErrorIs(t, err, errdefs.ErrNotFound)
+			require.Empty(t, portEndpoint)
 		})
 
 		t.Run("mapped-port", func(t *testing.T) {
@@ -324,6 +344,12 @@ echo "done"
 			require.NoError(t, err)
 			require.NotNil(t, mappedPort)
 			require.NotEqual(t, "80", mappedPort.Port())
+		})
+
+		t.Run("mapped-port-not-found", func(t *testing.T) {
+			mappedPort, err := ctr.MappedPort(context.Background(), "3306/tcp")
+			require.ErrorIs(t, err, errdefs.ErrNotFound)
+			require.Empty(t, mappedPort)
 		})
 
 		t.Run("state", func(t *testing.T) {

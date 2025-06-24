@@ -18,6 +18,10 @@ func (c *Container) Endpoint(ctx context.Context, proto string) (string, error) 
 		return "", err
 	}
 
+	if len(inspect.NetworkSettings.Ports) == 0 {
+		return "", errdefs.ErrNotFound.WithMessage("no ports exposed")
+	}
+
 	// Get lowest numbered bound port.
 	var lowestPort nat.Port
 	for port := range inspect.NetworkSettings.Ports {
