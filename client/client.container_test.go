@@ -3,6 +3,7 @@ package client_test
 import (
 	"context"
 	"fmt"
+	"io"
 	"sync"
 	"testing"
 
@@ -20,7 +21,9 @@ func TestContainerList(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, dockerClient)
 
-	pullImage(t, dockerClient, "nginx:alpine")
+	img := "nginx:alpine"
+
+	pullImage(t, dockerClient, img)
 
 	max := 5
 
@@ -32,7 +35,7 @@ func TestContainerList(t *testing.T) {
 			defer wg.Done()
 
 			resp, err := dockerClient.ContainerCreate(context.Background(), &container.Config{
-				Image: "nginx:alpine",
+				Image: img,
 				ExposedPorts: nat.PortSet{
 					"80/tcp": {},
 				},
@@ -100,6 +103,10 @@ func TestFindContainerByName(t *testing.T) {
 func pullImage(tb testing.TB, client *client.Client, img string) {
 	tb.Helper()
 
-	_, err := client.ImagePull(context.Background(), img, image.PullOptions{})
+	r, err := client.ImagePull(context.Background(), img, image.PullOptions{})
+	require.NoError(tb, err)
+	defer r.Close()
+
+	_, err = io.ReadAll(r)
 	require.NoError(tb, err)
 }

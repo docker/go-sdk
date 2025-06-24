@@ -19,7 +19,9 @@ func BenchmarkContainerList(b *testing.B) {
 	require.NoError(b, err)
 	require.NotNil(b, dockerClient)
 
-	pullImage(b, dockerClient, "nginx:alpine")
+	img := "nginx:alpine"
+
+	pullImage(b, dockerClient, img)
 
 	max := 5
 
@@ -31,7 +33,7 @@ func BenchmarkContainerList(b *testing.B) {
 			defer wg.Done()
 
 			resp, err := dockerClient.ContainerCreate(context.Background(), &container.Config{
-				Image: "nginx:alpine",
+				Image: img,
 				ExposedPorts: nat.PortSet{
 					"80/tcp": {},
 				},
