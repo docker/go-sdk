@@ -3,8 +3,9 @@ package container
 import (
 	"testing"
 
-	"github.com/docker/docker/api/types/container"
 	"github.com/stretchr/testify/require"
+
+	"github.com/docker/docker/api/types/container"
 )
 
 func TestValidateMounts(t *testing.T) {
