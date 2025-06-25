@@ -1,10 +1,47 @@
 package image
 
 import (
+	"io"
+
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
 
+	"github.com/docker/docker/api/types/build"
 	"github.com/docker/docker/api/types/image"
 )
+
+// BuildOption is a function that configures the build options.
+type BuildOption func(*buildOptions) error
+
+type buildOptions struct {
+	buildClient ImageBuildClient
+	logWriter   io.Writer
+	opts        build.ImageBuildOptions
+}
+
+// WithBuildClient sets the build client used to build the image.
+func WithBuildClient(buildClient ImageBuildClient) BuildOption {
+	return func(opts *buildOptions) error {
+		opts.buildClient = buildClient
+		return nil
+	}
+}
+
+// WithLogWriter sets the writer to write the build log to.
+func WithLogWriter(logWriter io.Writer) BuildOption {
+	return func(opts *buildOptions) error {
+		opts.logWriter = logWriter
+		return nil
+	}
+}
+
+// WithBuildOptions sets the build options used to build the image.
+// If set, the tag and context reader will be ignored.
+func WithBuildOptions(options build.ImageBuildOptions) BuildOption {
+	return func(opts *buildOptions) error {
+		opts.opts = options
+		return nil
+	}
+}
 
 // PullOption is a function that configures the pull options.
 type PullOption func(*pullOptions) error

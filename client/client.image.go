@@ -2,12 +2,28 @@ package client
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 
+	"github.com/docker/docker/api/types/build"
 	"github.com/docker/docker/api/types/image"
 	"github.com/docker/docker/client"
 )
+
+// ImageBuild builds an image from a build context and options.
+func (c *Client) ImageBuild(ctx context.Context, options build.ImageBuildOptions) (build.ImageBuildResponse, error) {
+	dockerClient, err := c.Client()
+	if err != nil {
+		return build.ImageBuildResponse{}, fmt.Errorf("docker client: %w", err)
+	}
+
+	if options.Context == nil {
+		return build.ImageBuildResponse{}, errors.New("build context is nil")
+	}
+
+	return dockerClient.ImageBuild(ctx, options.Context, options)
+}
 
 // ImageInspect inspects an image.
 func (c *Client) ImageInspect(ctx context.Context, imageID string, inspectOpts ...client.ImageInspectOption) (image.InspectResponse, error) {
