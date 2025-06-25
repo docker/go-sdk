@@ -86,5 +86,4 @@ func BenchmarkContainerPause(b *testing.B) {
 			require.NoError(b, err)
 		}
 	})
-
 }
