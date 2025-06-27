@@ -18,7 +18,7 @@ func TestWithStartupCommand(t *testing.T) {
 		started:    true,
 	}
 
-	testExec := exec.NewRawCommand([]string{"touch", ".testcontainers"}, exec.WithWorkingDir("/tmp"))
+	testExec := exec.NewRawCommand([]string{"touch", ".go-sdk"}, exec.WithWorkingDir("/tmp"))
 
 	err := WithStartupCommand(testExec)(&def)
 	require.NoError(t, err)
@@ -34,7 +34,7 @@ func TestWithAfterReadyCommand(t *testing.T) {
 		started:    true,
 	}
 
-	testExec := exec.NewRawCommand([]string{"touch", "/tmp/.testcontainers"})
+	testExec := exec.NewRawCommand([]string{"touch", "/tmp/.go-sdk"})
 
 	err := WithAfterReadyCommand(testExec)(&def)
 	require.NoError(t, err)

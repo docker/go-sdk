@@ -9,7 +9,7 @@ const (
 	// LabelLang specifies the language which created the container.
 	LabelLang = LabelBase + ".lang"
 
-	// LabelVersion specifies the version of testcontainers which created the container.
+	// LabelVersion specifies the version of go-sdk which created the container.
 	LabelVersion = LabelBase + ".version"
 )
 

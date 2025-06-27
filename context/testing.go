@@ -74,7 +74,7 @@ func createDockerContext(tb testing.TB, metaDir, baseContext string, index int, 
 	contextDir := filepath.Join(metaDir, fmt.Sprintf("context%d", index))
 	tempMkdirAll(tb, contextDir)
 
-	context := fmt.Sprintf(`{"Name":"%s%d","Metadata":{"Description":"Testcontainers Go %d"},"Endpoints":{"docker":{"Host":"%s","SkipTLSVerify":false}}}`,
+	context := fmt.Sprintf(`{"Name":"%s%d","Metadata":{"Description":"Docker Go SDK %d"},"Endpoints":{"docker":{"Host":"%s","SkipTLSVerify":false}}}`,
 		baseContext, index, index, host)
 	err := os.WriteFile(filepath.Join(contextDir, "meta.json"), []byte(context), 0o644)
 	require.NoError(tb, err)

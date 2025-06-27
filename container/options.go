@@ -186,7 +186,7 @@ type Executable interface {
 	AsCommand() []string
 	// Options can container two different types of options:
 	// - Docker's ExecConfigs (WithUser, WithWorkingDir, WithEnv, etc.)
-	// - testcontainers' ProcessOptions (i.e. Multiplexed response)
+	// - SDK's ProcessOptions (i.e. Multiplexed response)
 	Options() []exec.ProcessOption
 }
 
