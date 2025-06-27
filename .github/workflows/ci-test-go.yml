@@ -85,19 +85,13 @@ jobs:
 
       - name: Set Sonar Cloud environment variables
         if: ${{ env.SHOULD_RUN_SONAR == 'true' }}
+        working-directory: ./${{ inputs.project-directory }}
         run: |
-          echo "PROJECT_VERSION=$(grep 'latest_version' mkdocs.yml | cut -d':' -f2 | tr -d ' ')" >> $GITHUB_ENV
-          if [ "${{ inputs.project-directory }}" == "" ]; then
-            echo "PROJECT_KEY=docker_docker-sdk-go" >> $GITHUB_ENV
-            echo "PROJECT_NAME=docker-sdk-go" >> $GITHUB_ENV
-            echo "PROJECT_SRC_EXCLUSIONS=**/*_test.go,**/vendor/**,**/testdata/**,modules/**,examples/**,modulegen/**" >> $GITHUB_ENV
-            echo "PROJECT_TEST_EXCLUSIONS=**/vendor/**,modules/**,examples/**,modulegen/**" >> $GITHUB_ENV
-          else
-            echo "PROJECT_KEY=docker_docker-sdk-go_$(echo ${{ inputs.project-directory }} | tr '/' '_')" >> $GITHUB_ENV
-            echo "PROJECT_NAME=docker-sdk-go-$(echo ${{ inputs.project-directory }} | tr '/' '-')" >> $GITHUB_ENV
-            echo "PROJECT_SRC_EXCLUSIONS=**/*_test.go,**/vendor/**,**/testdata/**" >> $GITHUB_ENV
-            echo "PROJECT_TEST_EXCLUSIONS=**/vendor/**" >> $GITHUB_ENV
-          fi
+          echo "PROJECT_VERSION=$(awk -F'"' '/version = / {print $2}' version.go)" >> $GITHUB_ENV
+          echo "PROJECT_KEY=docker_go-sdk_${{ inputs.project-directory }}" >> $GITHUB_ENV
+          echo "PROJECT_NAME=go-sdk/${{ inputs.project-directory }}" >> $GITHUB_ENV
+          echo "PROJECT_SRC_EXCLUSIONS=**/*_test.go,**/vendor/**,**/testdata/**" >> $GITHUB_ENV
+          echo "PROJECT_TEST_EXCLUSIONS=**/vendor/**" >> $GITHUB_ENV
 
       - name: SonarQube Scan
         if: ${{ env.SHOULD_RUN_SONAR == 'true' }}
