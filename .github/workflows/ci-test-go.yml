@@ -77,12 +77,6 @@ jobs:
             echo "SHOULD_RUN_SONAR=true" >> $GITHUB_ENV
           fi
 
-      # Remove once Sonarcloud is enabled as GitHub app
-      - name: Decide if Sonar must be run
-        if: ${{ matrix.platform == 'ubuntu-latest' }}
-        run: |
-          echo "SHOULD_RUN_SONAR=false" >> $GITHUB_ENV
-
       - name: Set Sonar Cloud environment variables
         if: ${{ env.SHOULD_RUN_SONAR == 'true' }}
         working-directory: ./${{ inputs.project-directory }}
