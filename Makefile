@@ -15,17 +15,9 @@ tidy-all:
 	@echo "Running tidy in all modules..."
 	$(call for-all-modules,go mod tidy)
 
-# Release alpha version for all modules
-release-alpha-all:
-	@echo "Releasing alpha versions for all modules..."
-	$(call for-all-modules,../.github/scripts/release-alpha.sh v0.1.0 "$$(basename "$$module")")
+# Release version for all modules
+release-all:
+	@echo "Preparing releasing versions for all modules..."
+	$(call for-all-modules,make pre-release)
 
-# Release alpha version for a specific module
-release-alpha:
-	@if [ -z "$(MODULE)" ]; then \
-		echo "Usage: make release-alpha MODULE=<module-name>"; \
-		echo "Available modules: client, config, container, context, image, network"; \
-		exit 1; \
-	fi
-	@echo "Releasing alpha version for module: $(MODULE)"
-	@cd "$(MODULE)" && ../.github/scripts/release-alpha.sh v0.1.0 "$(MODULE)"
+	@./.github/scripts/release.sh

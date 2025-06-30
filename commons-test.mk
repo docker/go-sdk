@@ -1,4 +1,5 @@
 ROOT_DIR:=$(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
+MODULE_DIR:=$(shell basename $(CURDIR))
 GOBIN= $(GOPATH)/bin
 
 # ------------------------------------------------------------------------------
@@ -72,4 +73,15 @@ generate: $(GOBIN)/mockery
 dependencies-scan:
 	@echo ">> Scanning dependencies in $(CURDIR)..."
 	go list -json -m all | docker run --rm -i sonatypecommunity/nancy:latest sleuth --skip-update-check
+
 # ------------------------------------------------------------------------------
+# Prepare release
+# ------------------------------------------------------------------------------
+.PHONY: pre-release
+pre-release:
+	@if [ -z "$(MODULE_DIR)" ]; then \
+		echo "Usage: make release"; \
+		exit 1; \
+	fi
+	@echo "Releasing version for module: $(MODULE_DIR)"
+	@$(ROOT_DIR)/.github/scripts/pre-release.sh "$(MODULE_DIR)"

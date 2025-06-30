@@ -1,0 +1,79 @@
+name: Release All Modules
+
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Perform a dry run without creating tags or pushing changes'
+        required: false
+        default: true
+        type: boolean
+      bump_type:
+        description: 'Type of version bump to perform'
+        required: false
+        default: 'prerelease'
+        type: choice
+        options:
+          - prerelease
+          - patch
+          - minor
+          - major
+
+jobs:
+  release-all-modules:
+    # Additional safety check - only run on main branch
+    if: ${{ github.ref == 'refs/heads/main' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      with:
+        fetch-depth: 0  # Fetch all history and tags
+        token: ${{ secrets.GITHUB_TOKEN }}
+    
+    - name: Verify branch
+      run: |
+        if [[ "${{ github.ref_name }}" != "main" ]]; then
+          echo "❌ Releases can only be performed from the main branch"
+          echo "Current branch: ${{ github.ref_name }}"
+          exit 1
+        fi
+        echo "✅ Running release from main branch"
+
+    - name: Set up Go
+      uses: actions/setup-go@f111f3307d8850f501ac008e886eec1fd1932a34 # v5.3.0
+      with:
+        go-version-file: 'go.work'
+    
+    - name: Configure Git
+      if: ${{ !inputs.dry_run }}
+      run: |
+        git config --global user.name "github-actions[bot]"
+        git config --global user.email "github-actions[bot]@users.noreply.github.com"
+    
+    - name: Display run configuration
+      run: |
+        echo "🚀 Release Configuration:"
+        echo "  - Dry Run: ${{ inputs.dry_run }}"
+        echo "  - Bump Type: ${{ inputs.bump_type }}"
+        echo "  - Repository: ${{ github.repository }}"
+        echo "  - Branch: ${{ github.ref_name }}"
+    
+    - name: Run release for all modules
+      env:
+        DRY_RUN: ${{ inputs.dry_run }}
+        BUMP_TYPE: ${{ inputs.bump_type }}
+      run: |
+        echo "Starting release process..."
+        make release-all
+        
+        if [[ "${{ inputs.dry_run }}" == "true" ]]; then
+          echo "✅ Dry run release completed successfully!"
+          echo "No changes were made to the repository."
+        else
+          echo "✅ Release completed successfully!"
+          echo "All modules have been updated, tags have been created and Go proxy has been updated"
+        fi
