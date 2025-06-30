@@ -1,3 +1,4 @@
+.github/scripts/.*-next-tag
 coverage.out
 output.txt
 TEST-unit.xml

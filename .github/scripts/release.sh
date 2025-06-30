@@ -60,11 +60,18 @@ MODULES=$(go work edit -json | jq -r '.Use[] | "\(.DiskPath | ltrimstr("./"))"' 
 for m in $MODULES; do
   execute_or_echo git add "${ROOT_DIR}/${m}/version.go"
   execute_or_echo git add "${ROOT_DIR}/${m}/go.mod"
+
+  nextTag=$(cat "${ROOT_DIR}/.github/scripts/.${m}-next-tag")
+  echo "Next tag for ${m}: ${nextTag}"
+  execute_or_echo git commit -m "chore(${m}): bump version to ${nextTag}"
+
+  execute_or_echo git tag "${m}/${nextTag}"
 done
 
-execute_or_echo git commit -m "chore(deps): bump version to ${TAG_VERSION}"
 execute_or_echo git push origin main --tags
 
 for m in $MODULES; do
-  curlGolangProxy "${m}" "${TAG_VERSION}"
+  nextTag=$(cat "${ROOT_DIR}/.github/scripts/.${m}-next-tag")
+  curlGolangProxy "${m}" "${nextTag}"
+  execute_or_echo rm "${ROOT_DIR}/.github/scripts/.${m}-next-tag"
 done
