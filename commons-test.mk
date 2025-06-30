@@ -80,7 +80,7 @@ dependencies-scan:
 .PHONY: pre-release
 pre-release:
 	@if [ -z "$(MODULE_DIR)" ]; then \
-		echo "Usage: make release"; \
+		echo "Usage: make pre-release, from one of the module directories (e.g. make pre-release from client/ directory)"; \
 		exit 1; \
 	fi
 	@echo "Releasing version for module: $(MODULE_DIR)"
