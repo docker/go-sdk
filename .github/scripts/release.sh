@@ -25,14 +25,13 @@
 #
 # Git Operations:
 #   - Adds all modified version.go and go.mod files
-#   - Creates commit with version bump message
+#   - Creates commit with version bump message (e.g. chore(client): bump version to v0.1.0-alpha005)
+#   - Creates tag with module name and version (e.g. client/v0.1.0-alpha005)
 #   - Pushes changes and tags to origin
 #
 # Post-Release Operations:
 #   - Triggers Go proxy to fetch new module versions
 #   - Makes modules immediately available for download
-#
-# Note: This script uses the client module as reference for version tagging
 #
 # =============================================================================
 
@@ -42,22 +41,14 @@ set -e
 readonly SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 source "${SCRIPT_DIR}/common.sh"
 
-# Use client as default module, serving as a reference for the other modules.
-readonly MODULE="client"
-
-LATEST_TAG=$(find_latest_tag "${MODULE}")
-if [[ -z "$LATEST_TAG" ]]; then
-  LATEST_TAG="${MODULE}/v0.1.0-alpha001"
-fi
-
-echo "Latest tag: ${LATEST_TAG}"
-
-# Remove the module name from the latest tag
-TAG_VERSION=$(echo "${LATEST_TAG}" | sed -E "s/^${MODULE}\///")
-echo "Tag version: ${TAG_VERSION}"
-
 MODULES=$(go work edit -json | jq -r '.Use[] | "\(.DiskPath | ltrimstr("./"))"' | tr '\n' ' ' && echo)
 for m in $MODULES; do
+  # if the module version file does not exist, skip it
+  if [[ ! -f "${ROOT_DIR}/.github/scripts/.${m}-next-tag" ]]; then
+    echo "Skipping ${m} because the pre-release script did not run"
+    continue
+  fi
+
   execute_or_echo git add "${ROOT_DIR}/${m}/version.go"
   execute_or_echo git add "${ROOT_DIR}/${m}/go.mod"
 
