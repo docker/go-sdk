@@ -78,3 +78,23 @@ find_latest_tag() {
   local module="$1"
   git tag --list | grep -E "${module}/v[0-9]+\.[0-9]+\.[0-9]+.*" | sort -V | tail -n 1
 }
+
+# Portable in-place sed editing that works on both BSD (macOS) and GNU (Linux) sed
+portable_sed() {
+  local pattern="$1"
+  local file="$2"
+  
+  if [[ "$DRY_RUN" == "true" ]]; then
+    echo "[DRY RUN] Would execute: sed '$pattern' in $file"
+    return
+  fi
+  
+  # Detect sed version and use appropriate syntax
+  if sed --version >/dev/null 2>&1; then
+    # GNU sed (Linux)
+    sed -i "$pattern" "$file"
+  else
+    # BSD sed (macOS)
+    sed -i '' "$pattern" "$file"
+  fi
+}
