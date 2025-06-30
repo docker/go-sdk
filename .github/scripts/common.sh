@@ -64,7 +64,7 @@ execute_or_echo() {
   if [[ "$DRY_RUN" == "true" ]]; then
     echo "[DRY RUN] Would execute: $*"
   else
-    eval "$@"
+    "$@"
   fi
 }
 
