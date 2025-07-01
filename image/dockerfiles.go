@@ -8,6 +8,9 @@ import (
 	"strings"
 )
 
+// Single regex to handle both ${VAR_NAME:-default_value} and ${VAR_NAME} patterns
+var buildArgPattern = regexp.MustCompile(`\$\{([^}:-]+)(?::-([^}]*))?\}`)
+
 // ImagesFromDockerfile extracts images from the Dockerfile sourced from dockerfile.
 func ImagesFromDockerfile(dockerfile string, buildArgs map[string]*string) ([]string, error) {
 	file, err := os.Open(dockerfile)
@@ -53,9 +56,6 @@ func ImagesFromReader(r io.Reader, buildArgs map[string]*string) ([]string, erro
 }
 
 func handleBuildArgs(part string, buildArgs map[string]*string) string {
-	// Single regex to handle both ${VAR_NAME:-default_value} and ${VAR_NAME} patterns
-	buildArgPattern := regexp.MustCompile(`\$\{([^}:-]+)(?::-([^}]*))?\}`)
-
 	s := buildArgPattern.ReplaceAllStringFunc(part, func(match string) string {
 		matches := buildArgPattern.FindStringSubmatch(match)
 		if len(matches) < 2 {
