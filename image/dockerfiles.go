@@ -1,7 +1,10 @@
 package image
 
 import (
+	"archive/tar"
 	"bufio"
+	"errors"
+	"fmt"
 	"io"
 	"os"
 	"regexp"
@@ -23,6 +26,7 @@ func ImagesFromDockerfile(dockerfile string, buildArgs map[string]*string) ([]st
 }
 
 // ImagesFromReader extracts images from the Dockerfile sourced from r.
+// Use this function if you want to extract images from a Dockerfile that is not in a tar reader.
 func ImagesFromReader(r io.Reader, buildArgs map[string]*string) ([]string, error) {
 	var images []string
 	var lines []string
@@ -53,6 +57,40 @@ func ImagesFromReader(r io.Reader, buildArgs map[string]*string) ([]string, erro
 	}
 
 	return images, nil
+}
+
+// ImagesFromTarReader extracts images from the Dockerfile sourced from a tar reader.
+// The name of the Dockerfile in the tar reader must be the same as the dockerfile parameter.
+// Use this function if you want to extract images from a Dockerfile that is in a tar reader.
+func ImagesFromTarReader(r io.ReadSeeker, dockerfile string, buildArgs map[string]*string) ([]string, error) {
+	tr := tar.NewReader(r)
+
+	for {
+		hdr, err := tr.Next()
+		if err != nil {
+			if errors.Is(err, io.EOF) {
+				return nil, fmt.Errorf("dockerfile %q not found in context archive", dockerfile)
+			}
+
+			return nil, fmt.Errorf("reading tar archive: %w", err)
+		}
+
+		if hdr.Name != dockerfile {
+			continue
+		}
+
+		images, err := ImagesFromReader(tr, buildArgs)
+		if err != nil {
+			return nil, fmt.Errorf("extract images from Dockerfile: %w", err)
+		}
+
+		// Reset the archive to the beginning.
+		if _, err := r.Seek(0, io.SeekStart); err != nil {
+			return nil, fmt.Errorf("seek context archive to start: %w", err)
+		}
+
+		return images, nil
+	}
 }
 
 // handleBuildArgs handles the build args in the Dockerfile.
