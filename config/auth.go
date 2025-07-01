@@ -87,12 +87,14 @@ func (c *Config) RegistryCredentialsForHostname(hostname string) (AuthConfig, er
 	if authConfig.IdentityToken != "" {
 		creds.Username = ""
 		creds.Password = authConfig.IdentityToken
+		creds.ServerAddress = hostname
 		return creds, nil
 	}
 
 	if authConfig.Username != "" && authConfig.Password != "" {
 		creds.Username = authConfig.Username
 		creds.Password = authConfig.Password
+		creds.ServerAddress = hostname
 		return creds, nil
 	}
 
@@ -103,6 +105,7 @@ func (c *Config) RegistryCredentialsForHostname(hostname string) (AuthConfig, er
 
 	creds.Username = user
 	creds.Password = pass
+	creds.ServerAddress = hostname
 
 	return creds, nil
 }

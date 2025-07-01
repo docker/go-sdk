@@ -96,13 +96,14 @@ func validateAuthForHostname(t *testing.T, hostname, expectedUser, expectedPass 
 }
 
 // validateAuthForImage is a helper function to validate the username and password for a given image reference.
-func validateAuthForImage(t *testing.T, imageRef, expectedUser, expectedPass string) {
+func validateAuthForImage(t *testing.T, imageRef, expectedUser, expectedPass, expectedRegistry string) {
 	t.Helper()
 
 	creds, err := RegistryCredentials(imageRef)
 	require.NoError(t, err)
 	require.Equal(t, expectedUser, creds.Username)
 	require.Equal(t, expectedPass, creds.Password)
+	require.Equal(t, expectedRegistry, creds.ServerAddress)
 }
 
 // validateAuthErrorForHostname is a helper function to validate we get an error for the given hostname.
@@ -134,30 +135,30 @@ func TestRegistryCredentialsForImage(t *testing.T) {
 	t.Setenv(EnvOverrideDir, filepath.Join("testdata", "credhelpers-config"))
 
 	t.Run("auths/user-pass", func(t *testing.T) {
-		validateAuthForImage(t, "userpass.io/repo/image:tag", "user", "pass")
+		validateAuthForImage(t, "userpass.io/repo/image:tag", "user", "pass", "userpass.io")
 	})
 
 	t.Run("auths/auth", func(t *testing.T) {
-		validateAuthForImage(t, "auth.io/repo/image:tag", "auth", "authsecret")
+		validateAuthForImage(t, "auth.io/repo/image:tag", "auth", "authsecret", "auth.io")
 	})
 
 	t.Run("credsStore", func(t *testing.T) {
-		validateAuthForImage(t, "credstore.io/repo/image:tag", "", "")
+		validateAuthForImage(t, "credstore.io/repo/image:tag", "", "", "")
 	})
 
 	t.Run("credHelpers/user-pass", func(t *testing.T) {
-		mockExecCommand(t, `HELPER_STDOUT={"Username":"credhelper","Secret":"credhelpersecret"}`)
-		validateAuthForImage(t, "helper.io/repo/image:tag", "credhelper", "credhelpersecret")
+		mockExecCommand(t, `HELPER_STDOUT={"Username":"credhelper","Secret":"credhelpersecret", "ServerURL":"helper.io"}`)
+		validateAuthForImage(t, "helper.io/repo/image:tag", "credhelper", "credhelpersecret", "helper.io")
 	})
 
 	t.Run("credHelpers/token", func(t *testing.T) {
-		mockExecCommand(t, `HELPER_STDOUT={"Username":"<token>", "Secret":"credhelpersecret"}`)
-		validateAuthForImage(t, "helper.io/repo/image:tag", "", "credhelpersecret")
+		mockExecCommand(t, `HELPER_STDOUT={"Username":"<token>", "Secret":"credhelpersecret", "ServerURL":"helper.io"}`)
+		validateAuthForImage(t, "helper.io/repo/image:tag", "", "credhelpersecret", "helper.io")
 	})
 
 	t.Run("credHelpers/not-found", func(t *testing.T) {
 		mockExecCommand(t, "HELPER_STDOUT="+ErrCredentialsNotFound.Error(), "HELPER_EXIT_CODE=1")
-		validateAuthForImage(t, "helper.io/repo/image:tag", "", "")
+		validateAuthForImage(t, "helper.io/repo/image:tag", "", "", "")
 	})
 
 	t.Run("credHelpers/missing-url", func(t *testing.T) {
@@ -173,7 +174,7 @@ func TestRegistryCredentialsForImage(t *testing.T) {
 
 	t.Run("credHelpers/lookup-not-found", func(t *testing.T) {
 		mockExecCommand(t, "HELPER_STDOUT=output", "HELPER_STDERR=my error", "HELPER_EXIT_CODE=10")
-		validateAuthForImage(t, "other.io/repo/image:tag", "", "")
+		validateAuthForImage(t, "other.io/repo/image:tag", "", "", "")
 	})
 
 	t.Run("credHelpers/lookup-error", func(t *testing.T) {
@@ -190,7 +191,7 @@ func TestRegistryCredentialsForImage(t *testing.T) {
 
 	t.Run("config/not-found", func(t *testing.T) {
 		t.Setenv(EnvOverrideDir, filepath.Join("testdata", "missing"))
-		validateAuthForImage(t, "userpass.io/repo/image:tag", "", "")
+		validateAuthForImage(t, "userpass.io/repo/image:tag", "", "", "")
 	})
 }
 
