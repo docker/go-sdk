@@ -110,6 +110,16 @@ func (d *Definition) Name() string {
 	return d.name
 }
 
+// Networks returns the networks of the container.
+func (d *Definition) Networks() []string {
+	return d.networks
+}
+
+// HostConfigModifier returns the host config modifier of the container.
+func (d *Definition) HostConfigModifier() func(*container.HostConfig) {
+	return d.hostConfigModifier
+}
+
 // validateMounts ensures that the mounts do not have duplicate targets.
 // It will check the HostConfigModifier.Binds field.
 func (d *Definition) validateMounts() error {

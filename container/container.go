@@ -2,8 +2,10 @@ package container
 
 import (
 	"context"
+	"fmt"
 	"log/slog"
 
+	"github.com/docker/docker/api/types/container"
 	"github.com/docker/go-sdk/client"
 	"github.com/docker/go-sdk/container/wait"
 )
@@ -65,4 +67,25 @@ func (c *Container) Host(ctx context.Context) (string, error) {
 		return "", err
 	}
 	return host, nil
+}
+
+// FromResponse builds a container struct from the response of the Docker API
+func FromResponse(_ context.Context, response container.Summary) (*Container, error) {
+	exposedPorts := make([]string, len(response.Ports))
+	for i, port := range response.Ports {
+		exposedPorts[i] = fmt.Sprintf("%d/%s", port.PublicPort, port.Type)
+	}
+
+	ctr := &Container{
+		containerID:  response.ID,
+		shortID:      response.ID[:12],
+		image:        response.Image,
+		isRunning:    response.State == "running",
+		exposedPorts: exposedPorts,
+		lifecycleHooks: []LifecycleHooks{
+			DefaultLoggingHook,
+		},
+	}
+
+	return ctr, nil
 }
