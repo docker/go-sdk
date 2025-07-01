@@ -55,6 +55,11 @@ func ImagesFromReader(r io.Reader, buildArgs map[string]*string) ([]string, erro
 	return images, nil
 }
 
+// handleBuildArgs handles the build args in the Dockerfile.
+// It replaces the ${VAR_NAME:-default_value} and ${VAR_NAME} patterns with the actual values.
+// If the build arg is not provided, the default value is used.
+// If the build arg is provided, the actual value is used.
+// If the build arg is provided and the default value is not provided, the original syntax is kept.
 func handleBuildArgs(part string, buildArgs map[string]*string) string {
 	s := buildArgPattern.ReplaceAllStringFunc(part, func(match string) string {
 		matches := buildArgPattern.FindStringSubmatch(match)
