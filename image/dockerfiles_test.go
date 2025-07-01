@@ -44,6 +44,19 @@ func TestExtractImagesFromDockerfile(t *testing.T) {
 		extractImages(t, filepath.Join("testdata", "Dockerfile.multistage.singleBuildArgs"), map[string]*string{"BASE_IMAGE": &baseImage}, []string{"nginx:a", "nginx:b", "nginx:c", "scratch"}, false)
 	})
 
+	t.Run("multiple-images-with-one-build-arg-defaults", func(t *testing.T) {
+		// no build args provided, so the default value should be used
+		extractImages(t, filepath.Join("testdata", "Dockerfile.multistage.singleBuildArgs.defaults"), map[string]*string{"BASE_IMAGE": nil}, []string{"nginx:a", "nginx:b", "nginx:c", "nginx:d"}, false)
+		extractImages(t, filepath.Join("testdata", "Dockerfile.multistage.singleBuildArgs.defaults"), map[string]*string{}, []string{"nginx:a", "nginx:b", "nginx:c", "nginx:d"}, false)
+
+		// build arg provided, but not the default value
+		extractImages(t, filepath.Join("testdata", "Dockerfile.multistage.singleBuildArgs.defaults"), map[string]*string{"BASE_IMAGE": &baseImage}, []string{"nginx:a", "nginx:b", "nginx:c", "scratch"}, false)
+
+		// build arg provided, and the default value
+		nginxZ := "nginx:z"
+		extractImages(t, filepath.Join("testdata", "Dockerfile.multistage.singleBuildArgs.defaults"), map[string]*string{"BASE_IMAGE": &nginxZ}, []string{"nginx:a", "nginx:b", "nginx:c", "nginx:z"}, false)
+	})
+
 	t.Run("multiple-images-with-multiple-build-args", func(t *testing.T) {
 		extractImages(t, filepath.Join("testdata", "Dockerfile.multistage.multiBuildArgs"), map[string]*string{"BASE_IMAGE": &baseImage, "REGISTRY_HOST": &registryHost, "REGISTRY_PORT": &registryPort, "NGINX_IMAGE": &nginxImage}, []string{"nginx:latest", "localhost:5000/nginx:latest", "scratch"}, false)
 	})

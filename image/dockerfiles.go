@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"io"
 	"os"
+	"regexp"
 	"strings"
 )
 
@@ -44,14 +45,37 @@ func ImagesFromReader(r io.Reader, buildArgs map[string]*string) ([]string, erro
 			continue
 		}
 
-		// interpolate build args
-		for k, v := range buildArgs {
-			if v != nil {
-				parts[0] = strings.ReplaceAll(parts[0], "${"+k+"}", *v)
-			}
-		}
+		parts[0] = handleBuildArgs(parts, buildArgs)
 		images = append(images, parts[0])
 	}
 
 	return images, nil
+}
+
+func handleBuildArgs(parts []string, buildArgs map[string]*string) string {
+	defaultValuePattern := regexp.MustCompile(`\$\{([^}:-]+):-([^}]*)\}`)
+	parts[0] = defaultValuePattern.ReplaceAllStringFunc(parts[0], func(match string) string {
+		matches := defaultValuePattern.FindStringSubmatch(match)
+		if len(matches) == 3 {
+			varName := matches[1]
+			defaultValue := matches[2]
+
+			// Check if build arg is provided and not nil
+			if buildArg, exists := buildArgs[varName]; exists && buildArg != nil {
+				return *buildArg
+			}
+			// Use default value
+			return defaultValue
+		}
+		return match
+	})
+
+	// Then handle simple build args without defaults
+	for k, v := range buildArgs {
+		if v != nil {
+			parts[0] = strings.ReplaceAll(parts[0], "${"+k+"}", *v)
+		}
+	}
+
+	return parts[0]
 }
