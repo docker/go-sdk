@@ -45,37 +45,43 @@ func ImagesFromReader(r io.Reader, buildArgs map[string]*string) ([]string, erro
 			continue
 		}
 
-		parts[0] = handleBuildArgs(parts, buildArgs)
+		parts[0] = handleBuildArgs(parts[0], buildArgs)
 		images = append(images, parts[0])
 	}
 
 	return images, nil
 }
 
-func handleBuildArgs(parts []string, buildArgs map[string]*string) string {
-	defaultValuePattern := regexp.MustCompile(`\$\{([^}:-]+):-([^}]*)\}`)
-	parts[0] = defaultValuePattern.ReplaceAllStringFunc(parts[0], func(match string) string {
-		matches := defaultValuePattern.FindStringSubmatch(match)
-		if len(matches) == 3 {
-			varName := matches[1]
-			defaultValue := matches[2]
+func handleBuildArgs(part string, buildArgs map[string]*string) string {
+	// Single regex to handle both ${VAR_NAME:-default_value} and ${VAR_NAME} patterns
+	buildArgPattern := regexp.MustCompile(`\$\{([^}:-]+)(?::-([^}]*))?\}`)
 
-			// Check if build arg is provided and not nil
-			if buildArg, exists := buildArgs[varName]; exists && buildArg != nil {
-				return *buildArg
-			}
-			// Use default value
+	s := buildArgPattern.ReplaceAllStringFunc(part, func(match string) string {
+		matches := buildArgPattern.FindStringSubmatch(match)
+		if len(matches) < 2 {
+			return match
+		}
+
+		varName := matches[1]
+		hasDefault := len(matches) == 3 && matches[2] != ""
+		defaultValue := ""
+		if hasDefault {
+			defaultValue = matches[2]
+		}
+
+		// Check if build arg is provided and not nil
+		if buildArg, exists := buildArgs[varName]; exists && buildArg != nil {
+			return *buildArg
+		}
+
+		// Use default value if available
+		if hasDefault {
 			return defaultValue
 		}
+
+		// For ${VAR} without default and no build arg, keep original syntax
 		return match
 	})
 
-	// Then handle simple build args without defaults
-	for k, v := range buildArgs {
-		if v != nil {
-			parts[0] = strings.ReplaceAll(parts[0], "${"+k+"}", *v)
-		}
-	}
-
-	return parts[0]
+	return s
 }
