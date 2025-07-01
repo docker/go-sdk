@@ -15,6 +15,40 @@ import (
 // When fetching the credentials we check for this value to determine if.
 const tokenUsername = "<token>"
 
+// AuthConfigs returns the auth configs for the given images.
+// The images slice must contain images that are used in a Dockerfile. You can use:
+// - [ImagesFromDockerfile] to extract images from a Dockerfile path.
+// - [ImagesFromTarReader] to extract images from a tar reader.
+// - [ImagesFromReader] to extract images from a reader.
+//
+// The returned map is keyed by the registry registry hostname for each image.
+func AuthConfigs(images []string) (map[string]AuthConfig, error) {
+	// Get the auth configs once for all images as it can be a time-consuming operation.
+	configs, err := authConfigs()
+	if err != nil {
+		return nil, err
+	}
+
+	authConfigs := map[string]AuthConfig{}
+	for _, image := range images {
+		reg, authConfig, err := dockerImageAuth(image, configs)
+		if err != nil {
+			if !errors.Is(err, ErrCredentialsNotFound) {
+				return nil, fmt.Errorf("docker image auth %q: %w", image, err)
+			}
+
+			// Credentials not found no config to add.
+			continue
+		}
+
+		authConfig.ServerAddress = reg
+
+		authConfigs[reg] = authConfig
+	}
+
+	return authConfigs, nil
+}
+
 // RegistryCredentials gets registry credentials for the passed in image reference.
 //
 // This will use [Load] to read registry auth details from the config.

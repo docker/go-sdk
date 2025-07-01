@@ -297,3 +297,23 @@ func TestMain(m *testing.M) {
 		os.Exit(code)
 	}
 }
+
+func TestAuthConfigs(t *testing.T) {
+	t.Setenv(EnvOverrideDir, filepath.Join("testdata", "credhelpers-config"))
+
+	t.Run("success", func(t *testing.T) {
+		authConfigs, err := AuthConfigs([]string{"userpass.io/repo/image:tag"})
+		require.NoError(t, err)
+		require.Equal(t, "user", authConfigs["userpass.io"].Username)
+		require.Equal(t, "pass", authConfigs["userpass.io"].Password)
+		require.Equal(t, "userpass.io", authConfigs["userpass.io"].ServerAddress)
+	})
+
+	t.Run("not-cached", func(t *testing.T) {
+		authConfigs, err := AuthConfigs([]string{"notcached.io/repo/image:tag"})
+		require.NoError(t, err)
+		require.Equal(t, "", authConfigs["notcached.io"].Username)
+		require.Equal(t, "", authConfigs["notcached.io"].Password)
+		require.Equal(t, "", authConfigs["notcached.io"].ServerAddress)
+	})
+}
