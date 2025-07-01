@@ -58,9 +58,6 @@ func ImagesFromReader(r io.Reader, buildArgs map[string]*string) ([]string, erro
 func handleBuildArgs(part string, buildArgs map[string]*string) string {
 	s := buildArgPattern.ReplaceAllStringFunc(part, func(match string) string {
 		matches := buildArgPattern.FindStringSubmatch(match)
-		if len(matches) < 2 {
-			return match
-		}
 
 		varName := matches[1]
 		hasDefault := len(matches) == 3 && matches[2] != ""
