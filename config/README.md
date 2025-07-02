@@ -55,25 +55,25 @@ fmt.Printf("docker config: %+v", cfg)
 
 ### Auth
 
-#### Registry Credentials
+#### AuthConfigs
 
-It will return the registry credentials for the given Docker image.
+It will return a maps of the registry credentials for the given Docker images, indexed by the registry hostname.
 
 ```go
-authConfig, err := config.RegistryCredentials("nginx:latest")
+authConfigs, err := config.AuthConfigs("nginx:latest")
 if err != nil {
     log.Fatalf("failed to get registry credentials: %v", err)
 }
 
-fmt.Printf("registry credentials: %+v", authConfig)
+fmt.Printf("registry credentials: %+v", authConfigs)
 ```
 
-#### Registry Credentials For Hostname
+#### Auth Configs For Hostname
 
 It will return the registry credentials for the given Docker registry.
 
 ```go
-authConfig, err := config.RegistryCredentialsForHostname("https://index.docker.io/v1/")
+authConfig, err := config.AuthConfigForHostname("https://index.docker.io/v1/")
 if err != nil {
     log.Fatalf("failed to get registry credentials: %v", err)
 }

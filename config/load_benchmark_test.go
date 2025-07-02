@@ -6,6 +6,8 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+
+	"github.com/docker/go-sdk/config/auth"
 )
 
 func BenchmarkLoadConfig(b *testing.B) {
@@ -59,7 +61,7 @@ func BenchmarkLoadConfig(b *testing.B) {
 	})
 }
 
-func BenchmarkGetCredentials(b *testing.B) {
+func BenchmarkAuthConfigForHostname(b *testing.B) {
 	tmpDir := b.TempDir()
 
 	configPath := filepath.Join(tmpDir, "config.json")
@@ -89,7 +91,7 @@ func BenchmarkGetCredentials(b *testing.B) {
 		b.ResetTimer()
 		b.ReportAllocs()
 		for range b.N {
-			creds, err := cfg.RegistryCredentialsForHostname("https://index.docker.io/v1/")
+			creds, err := AuthConfigForHostname("https://index.docker.io/v1/")
 			require.NoError(b, err)
 			require.Equal(b, "testuser", creds.Username)
 			require.Equal(b, "testpassword", creds.Password)
@@ -100,7 +102,7 @@ func BenchmarkGetCredentials(b *testing.B) {
 		b.ResetTimer()
 		b.ReportAllocs()
 		for range b.N {
-			creds, err := cfg.RegistryCredentialsForHostname("https://registry.example.com")
+			creds, err := AuthConfigForHostname("https://registry.example.com")
 			require.NoError(b, err)
 			require.Equal(b, "anotheruser", creds.Username)
 			require.Equal(b, "anotherpassword", creds.Password)
@@ -111,7 +113,7 @@ func BenchmarkGetCredentials(b *testing.B) {
 		b.ResetTimer()
 		b.ReportAllocs()
 		for range b.N {
-			creds, err := cfg.RegistryCredentialsForHostname("https://nonexistent.registry.com")
+			creds, err := AuthConfigForHostname("https://nonexistent.registry.com")
 			require.NoError(b, err)
 			require.Empty(b, creds.Username)
 			require.Empty(b, creds.Password)
@@ -125,7 +127,7 @@ func BenchmarkGetCredentials(b *testing.B) {
 			authConfigs, err := AuthConfigs("docker.io/library/nginx:latest")
 			require.NoError(b, err)
 
-			creds, ok := authConfigs["docker.io"]
+			creds, ok := authConfigs[auth.IndexDockerIO]
 			require.True(b, ok)
 			require.Equal(b, "testuser", creds.Username)
 			require.Equal(b, "testpassword", creds.Password)

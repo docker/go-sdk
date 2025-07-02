@@ -2,10 +2,12 @@ package config
 
 import (
 	"crypto/md5"
+	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strings"
 	"sync"
 	"time"
 
@@ -207,4 +209,31 @@ func (c *Config) processStoredAuthConfig(stored AuthConfig, hostname string) (Au
 	}
 
 	return authConfig, nil
+}
+
+// decodeBase64Auth decodes the legacy file-based auth storage from the docker CLI.
+// It takes the "Auth" filed from AuthConfig and decodes that into a username and password.
+//
+// If "Auth" is empty, an empty user/pass will be returned, but not an error.
+func decodeBase64Auth(auth AuthConfig) (string, string, error) {
+	if auth.Auth == "" {
+		return "", "", nil
+	}
+
+	decLen := base64.StdEncoding.DecodedLen(len(auth.Auth))
+	decoded := make([]byte, decLen)
+	n, err := base64.StdEncoding.Decode(decoded, []byte(auth.Auth))
+	if err != nil {
+		return "", "", fmt.Errorf("decode auth: %w", err)
+	}
+
+	decoded = decoded[:n]
+
+	const sep = ":"
+	user, pass, found := strings.Cut(string(decoded), sep)
+	if !found {
+		return "", "", fmt.Errorf("invalid auth: missing %q separator", sep)
+	}
+
+	return user, pass, nil
 }

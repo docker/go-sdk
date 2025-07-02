@@ -34,7 +34,7 @@ func TestConfig_RegistryCredentialsForHostname(t *testing.T) {
 					},
 				}
 				testBase64Case(tc, func() (AuthConfig, error) {
-					return config.RegistryCredentialsForHostname("some.domain")
+					return config.AuthConfigForHostname("some.domain")
 				})(t)
 			})
 		}
@@ -86,7 +86,7 @@ func testBase64Case(tc base64TestCase, authFn testAuthFn) func(t *testing.T) {
 func validateAuthForHostname(t *testing.T, hostname, expectedUser, expectedPass string, expectedErr error) {
 	t.Helper()
 
-	creds, err := RegistryCredentialsForHostname(hostname)
+	creds, err := AuthConfigForHostname(hostname)
 	require.ErrorIs(t, err, expectedErr)
 	require.Equal(t, expectedUser, creds.Username)
 	require.Equal(t, expectedPass, creds.Password)
@@ -114,7 +114,7 @@ func validateAuthForImage(t *testing.T, imageRef, expectedUser, expectedPass, ex
 func validateAuthErrorForHostname(t *testing.T, hostname string, expectedErr error) {
 	t.Helper()
 
-	creds, err := RegistryCredentialsForHostname(hostname)
+	creds, err := AuthConfigForHostname(hostname)
 	require.Error(t, err)
 	require.Equal(t, expectedErr.Error(), err.Error())
 	require.Empty(t, creds.Username)

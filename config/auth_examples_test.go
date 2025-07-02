@@ -19,8 +19,8 @@ func ExampleAuthConfigs() {
 	// true
 }
 
-func ExampleRegistryCredentialsForHostname() {
-	authConfig, err := config.RegistryCredentialsForHostname(auth.IndexDockerIO)
+func ExampleAuthConfigForHostname() {
+	authConfig, err := config.AuthConfigForHostname(auth.IndexDockerIO)
 	fmt.Println(err)
 	fmt.Println(authConfig.Username != "")
 
