@@ -43,6 +43,9 @@ type Config struct {
 	CurrentContext       string                 `json:"currentContext,omitempty"`
 	CLIPluginsExtraDirs  []string               `json:"cliPluginsExtraDirs,omitempty"`
 	Aliases              map[string]string      `json:"aliases,omitempty"`
+
+	// Cache pointer (unexported, not included in JSON, safe to copy)
+	cache *authConfigCache `json:"-"`
 }
 
 // ProxyConfig contains proxy configuration settings.

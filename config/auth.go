@@ -2,12 +2,8 @@ package config
 
 import (
 	"encoding/base64"
-	"errors"
 	"fmt"
-	"io/fs"
 	"strings"
-
-	"github.com/docker/go-sdk/config/auth"
 )
 
 // This is used by the docker CLI in cases where an oauth identity token is used.
@@ -23,30 +19,12 @@ const tokenUsername = "<token>"
 //
 // The returned map is keyed by the registry registry hostname for each image.
 func AuthConfigs(images []string) (map[string]AuthConfig, error) {
-	// Get the auth configs once for all images as it can be a time-consuming operation.
-	configs, err := authConfigs()
+	cfg, err := Load()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("load config: %w", err)
 	}
 
-	authConfigs := map[string]AuthConfig{}
-	for _, image := range images {
-		reg, authConfig, err := dockerImageAuth(image, configs)
-		if err != nil {
-			if !errors.Is(err, ErrCredentialsNotFound) {
-				return nil, fmt.Errorf("docker image auth %q: %w", image, err)
-			}
-
-			// Credentials not found no config to add.
-			continue
-		}
-
-		authConfig.ServerAddress = reg
-
-		authConfigs[reg] = authConfig
-	}
-
-	return authConfigs, nil
+	return cfg.AuthConfigsForImages(images)
 }
 
 // RegistryCredentials gets registry credentials for the passed in image reference.
@@ -54,20 +32,13 @@ func AuthConfigs(images []string) (map[string]AuthConfig, error) {
 // This will use [Load] to read registry auth details from the config.
 // If the config doesn't exist, it will attempt to load registry credentials using the default credential helper for the platform.
 func RegistryCredentials(imageRef string) (AuthConfig, error) {
-	var ref auth.ImageReference
-	var creds AuthConfig
-
-	ref, err := auth.ParseImageRef(imageRef)
+	cfg, err := Load()
 	if err != nil {
-		return creds, fmt.Errorf("parse image ref: %w", err)
+		return AuthConfig{}, fmt.Errorf("load config: %w", err)
 	}
 
-	creds, err = RegistryCredentialsForHostname(ref.Registry)
-	if err != nil {
-		return creds, fmt.Errorf("get credentials for hostname: %w", err)
-	}
-
-	return creds, nil
+	_, authConfig, err := cfg.AuthConfigForImage(imageRef)
+	return authConfig, err
 }
 
 // RegistryCredentialsForHostname gets registry credentials for the passed in registry host.
@@ -75,17 +46,12 @@ func RegistryCredentials(imageRef string) (AuthConfig, error) {
 // This will use [Load] to read registry auth details from the config.
 // If the config doesn't exist, it will attempt to load registry credentials using the default credential helper for the platform.
 func RegistryCredentialsForHostname(hostname string) (AuthConfig, error) {
-	var creds AuthConfig
 	cfg, err := Load()
 	if err != nil {
-		if !errors.Is(err, fs.ErrNotExist) {
-			return creds, fmt.Errorf("load default config: %w", err)
-		}
-
-		return credentialsFromHelper("", hostname)
+		return AuthConfig{}, fmt.Errorf("load config: %w", err)
 	}
 
-	return cfg.RegistryCredentialsForHostname(hostname)
+	return cfg.AuthConfigForHostname(hostname)
 }
 
 // RegistryCredentialsForHostname gets credentials, if any, for the provided hostname.

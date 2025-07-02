@@ -47,7 +47,7 @@ func Dir() (string, error) {
 	dir := os.Getenv(EnvOverrideDir)
 	if dir != "" {
 		if err := fileExists(dir); err != nil {
-			return "", fmt.Errorf("config dir: %w", err)
+			return "", fmt.Errorf("file exists: %w", err)
 		}
 		return dir, nil
 	}
@@ -59,7 +59,7 @@ func Dir() (string, error) {
 
 	configDir := filepath.Join(home, configFileDir)
 	if err := fileExists(configDir); err != nil {
-		return "", fmt.Errorf("config dir: %w", err)
+		return "", fmt.Errorf("file exists: %w", err)
 	}
 
 	return configDir, nil
