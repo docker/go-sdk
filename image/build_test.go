@@ -120,17 +120,6 @@ func testBuild(tb testing.TB, b *testBuildInfo, opts ...image.BuildOption) {
 		require.ErrorContains(tb, err, b.buildErr.Error())
 		require.Empty(tb, tag)
 
-		containers, err := cli.ContainerList(context.Background(), container.ListOptions{
-			Filters: filters.NewArgs(filters.Arg("label", fmt.Sprintf("%s=%s", labelImageBuildTestKey, labelImageBuildTestValue))),
-			All:     true,
-		})
-		require.NoError(tb, err)
-
-		// force the removal of the intermediate containers, if any
-		for _, ctr := range containers {
-			require.NoError(tb, cli.ContainerRemove(context.Background(), ctr.ID, container.RemoveOptions{Force: true}))
-		}
-
 		return
 	}
 
@@ -140,6 +129,17 @@ func testBuild(tb testing.TB, b *testBuildInfo, opts ...image.BuildOption) {
 			PruneChildren: true,
 		}))
 		require.NoError(tb, err)
+
+		containers, err := cli.ContainerList(context.Background(), container.ListOptions{
+			Filters: filters.NewArgs(filters.Arg("status", "created"), filters.Arg("label", fmt.Sprintf("%s=%s", client.LabelBase, "true"))),
+			All:     true,
+		})
+		require.NoError(tb, err)
+
+		// force the removal of the intermediate containers, if any
+		for _, ctr := range containers {
+			require.NoError(tb, cli.ContainerRemove(context.Background(), ctr.ID, container.RemoveOptions{Force: true}))
+		}
 	}()
 
 	require.NoError(tb, err)
