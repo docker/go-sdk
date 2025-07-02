@@ -122,8 +122,11 @@ func BenchmarkGetCredentials(b *testing.B) {
 		b.ResetTimer()
 		b.ReportAllocs()
 		for range b.N {
-			creds, err := RegistryCredentials("docker.io/library/nginx:latest")
+			authConfigs, err := AuthConfigs("docker.io/library/nginx:latest")
 			require.NoError(b, err)
+
+			creds, ok := authConfigs["docker.io"]
+			require.True(b, ok)
 			require.Equal(b, "testuser", creds.Username)
 			require.Equal(b, "testpassword", creds.Password)
 		}

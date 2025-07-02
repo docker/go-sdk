@@ -4,20 +4,23 @@ import (
 	"fmt"
 
 	"github.com/docker/go-sdk/config"
+	"github.com/docker/go-sdk/config/auth"
 )
 
-func ExampleRegistryCredentials() {
-	authConfig, err := config.RegistryCredentials("nginx:latest")
+func ExampleAuthConfigs() {
+	authConfigs, err := config.AuthConfigs("nginx:latest")
 	fmt.Println(err)
-	fmt.Println(authConfig.Username != "")
+	fmt.Println(len(authConfigs))
+	fmt.Println(authConfigs[auth.IndexDockerIO].Username != "")
 
 	// Output:
 	// <nil>
+	// 1
 	// true
 }
 
 func ExampleRegistryCredentialsForHostname() {
-	authConfig, err := config.RegistryCredentialsForHostname("https://index.docker.io/v1/")
+	authConfig, err := config.RegistryCredentialsForHostname(auth.IndexDockerIO)
 	fmt.Println(err)
 	fmt.Println(authConfig.Username != "")
 

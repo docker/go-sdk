@@ -99,8 +99,12 @@ func validateAuthForHostname(t *testing.T, hostname, expectedUser, expectedPass 
 func validateAuthForImage(t *testing.T, imageRef, expectedUser, expectedPass, expectedRegistry string, expectedErr error) {
 	t.Helper()
 
-	creds, err := RegistryCredentials(imageRef)
+	authConfigs, err := AuthConfigs(imageRef)
 	require.ErrorIs(t, err, expectedErr)
+
+	creds, ok := authConfigs[expectedRegistry]
+	require.Equal(t, (expectedErr == nil), ok)
+
 	require.Equal(t, expectedUser, creds.Username)
 	require.Equal(t, expectedPass, creds.Password)
 	require.Equal(t, expectedRegistry, creds.ServerAddress)
@@ -124,11 +128,10 @@ func validateAuthErrorForHostname(t *testing.T, hostname string, expectedErr err
 func validateAuthErrorForImage(t *testing.T, imageRef string, expectedErr error) {
 	t.Helper()
 
-	creds, err := RegistryCredentials(imageRef)
+	authConfigs, err := AuthConfigs(imageRef)
 	require.Error(t, err)
 	require.ErrorContains(t, err, expectedErr.Error())
-	require.Empty(t, creds.Username)
-	require.Empty(t, creds.Password)
+	require.Empty(t, authConfigs)
 }
 
 func TestRegistryCredentialsForImage(t *testing.T) {
@@ -302,7 +305,7 @@ func TestAuthConfigs(t *testing.T) {
 	t.Setenv(EnvOverrideDir, filepath.Join("testdata", "credhelpers-config"))
 
 	t.Run("success", func(t *testing.T) {
-		authConfigs, err := AuthConfigs([]string{"userpass.io/repo/image:tag"})
+		authConfigs, err := AuthConfigs("userpass.io/repo/image:tag")
 		require.NoError(t, err)
 		require.Equal(t, "user", authConfigs["userpass.io"].Username)
 		require.Equal(t, "pass", authConfigs["userpass.io"].Password)
@@ -310,7 +313,7 @@ func TestAuthConfigs(t *testing.T) {
 	})
 
 	t.Run("not-cached", func(t *testing.T) {
-		authConfigs, err := AuthConfigs([]string{"notcached.io/repo/image:tag"})
+		authConfigs, err := AuthConfigs("notcached.io/repo/image:tag")
 		require.NoError(t, err)
 		require.Empty(t, authConfigs["notcached.io"].Username)
 		require.Empty(t, authConfigs["notcached.io"].Password)

@@ -18,27 +18,13 @@ const tokenUsername = "<token>"
 // - [ImagesFromReader] to extract images from a reader.
 //
 // The returned map is keyed by the registry registry hostname for each image.
-func AuthConfigs(images []string) (map[string]AuthConfig, error) {
+func AuthConfigs(images ...string) (map[string]AuthConfig, error) {
 	cfg, err := Load()
 	if err != nil {
 		return nil, fmt.Errorf("load config: %w", err)
 	}
 
 	return cfg.AuthConfigsForImages(images)
-}
-
-// RegistryCredentials gets registry credentials for the passed in image reference.
-//
-// This will use [Load] to read registry auth details from the config.
-// If the config doesn't exist, it will attempt to load registry credentials using the default credential helper for the platform.
-func RegistryCredentials(imageRef string) (AuthConfig, error) {
-	cfg, err := Load()
-	if err != nil {
-		return AuthConfig{}, fmt.Errorf("load config: %w", err)
-	}
-
-	_, authConfig, err := cfg.AuthConfigForImage(imageRef)
-	return authConfig, err
 }
 
 // RegistryCredentialsForHostname gets registry credentials for the passed in registry host.

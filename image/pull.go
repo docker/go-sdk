@@ -14,6 +14,7 @@ import (
 	"github.com/docker/docker/api/types/image"
 	"github.com/docker/go-sdk/client"
 	"github.com/docker/go-sdk/config"
+	"github.com/docker/go-sdk/config/auth"
 )
 
 // ImagePullClient is a client that can pull images.
@@ -47,10 +48,20 @@ func Pull(ctx context.Context, imageName string, opts ...PullOption) error {
 		return errors.New("image name is not set")
 	}
 
-	creds, err := config.RegistryCredentials(imageName)
+	ref, err := auth.ParseImageRef(imageName)
+	if err != nil {
+		return fmt.Errorf("parse image ref: %w", err)
+	}
+
+	authConfigs, err := config.AuthConfigs(imageName)
 	if err != nil {
 		pullOpts.pullClient.Logger().Warn("failed to get image auth, setting empty credentials for the image", "image", imageName, "error", err)
 	} else {
+		creds, ok := authConfigs[ref.Registry]
+		if !ok {
+			pullOpts.pullClient.Logger().Warn("failed to get image auth, setting empty credentials for the image", "image", imageName, "error", err)
+		}
+
 		authConfig := config.AuthConfig{
 			Username: creds.Username,
 			Password: creds.Password,
