@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"path"
 
 	"github.com/docker/docker/api/types/build"
 	dockerimage "github.com/docker/docker/api/types/image"
@@ -13,20 +14,6 @@ import (
 )
 
 func ExampleBuild() {
-	files := []image.BuildFile{
-		{
-			Name:    "say_hi.sh",
-			Content: []byte(`echo hi this is from the say_hi.sh file!`),
-		},
-		{
-			Name: "Dockerfile",
-			Content: []byte(`FROM alpine
-					WORKDIR /app
-					COPY . .
-					CMD ["sh", "./say_hi.sh"]`),
-		},
-	}
-
 	cli, err := client.New(context.Background())
 	if err != nil {
 		log.Println("error creating docker client", err)
@@ -39,7 +26,9 @@ func ExampleBuild() {
 		}
 	}()
 
-	reader, err := image.ReaderFromFiles(files)
+	buildPath := path.Join("testdata", "build")
+
+	reader, err := image.ReaderFromDir(buildPath, "Dockerfile")
 	if err != nil {
 		log.Println("error creating reader", err)
 		return

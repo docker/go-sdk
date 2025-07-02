@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"path"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -26,27 +27,15 @@ const (
 type testBuildInfo struct {
 	imageTag       string
 	buildErr       error
-	contextArchive io.ReadSeeker
+	contextArchive io.Reader
 	logWriter      io.Writer
 }
 
 func TestBuild(t *testing.T) {
-	files := []image.BuildFile{
-		{
-			Name:    "say_hi.sh",
-			Content: []byte(`echo hi this is from the say_hi.sh file!`),
-		},
-		{
-			Name: "Dockerfile",
-			Content: []byte(`FROM alpine
-					WORKDIR /app
-					COPY . .
-					CMD ["sh", "./say_hi.sh"]`),
-		},
-	}
+	buildPath := path.Join("testdata", "build")
 
 	t.Run("success", func(t *testing.T) {
-		contextArchive, err := image.ReaderFromFiles(files)
+		contextArchive, err := image.ReaderFromDir(buildPath, "Dockerfile")
 		require.NoError(t, err)
 
 		b := &testBuildInfo{
@@ -58,7 +47,7 @@ func TestBuild(t *testing.T) {
 	})
 
 	t.Run("success/with-client", func(t *testing.T) {
-		contextArchive, err := image.ReaderFromFiles(files)
+		contextArchive, err := image.ReaderFromDir(buildPath, "Dockerfile")
 		require.NoError(t, err)
 
 		b := &testBuildInfo{

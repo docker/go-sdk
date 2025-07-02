@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"path"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -14,23 +15,11 @@ import (
 	"github.com/docker/go-sdk/image"
 )
 
-var buildFiles = []image.BuildFile{
-	{
-		Name:    "say_hi.sh",
-		Content: []byte(`echo hi this is from the say_hi.sh file!`),
-	},
-	{
-		Name: "Dockerfile",
-		Content: []byte(`FROM alpine
-				WORKDIR /app
-				COPY . .
-				CMD ["sh", "./say_hi.sh"]`),
-	},
-}
+var buildPath = path.Join("testdata", "build")
 
 func BenchmarkBuild(b *testing.B) {
 	b.Run("success", func(b *testing.B) {
-		contextArchive, err := image.ReaderFromFiles(buildFiles)
+		contextArchive, err := image.ReaderFromDir(buildPath, "Dockerfile")
 		require.NoError(b, err)
 
 		bInfo := &testBuildInfo{

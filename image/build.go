@@ -1,8 +1,6 @@
 package image
 
 import (
-	"archive/tar"
-	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -12,6 +10,7 @@ import (
 	"time"
 
 	"github.com/cenkalti/backoff/v4"
+	"github.com/moby/go-archive"
 	"github.com/moby/term"
 
 	"github.com/docker/docker/api/types/build"
@@ -19,85 +18,39 @@ import (
 	"github.com/docker/go-sdk/client"
 )
 
-// BuildFile represents a file that is part of a build context.
-type BuildFile struct {
-	// Name is the name of the file.
-	Name string
-
-	// Content is the content of the file.
-	Content []byte
-}
-
-// ReaderFromFiles creates a TAR archive reader from a list of files.
-// It returns an error if the files cannot be written to the reader.
-// This function is useful for creating a build context to build an image.
-func ReaderFromFiles(files []BuildFile) (r io.ReadSeeker, err error) {
-	var buf bytes.Buffer
-	tarWriter := tar.NewWriter(&buf)
-
-	var errs []error
-	for _, f := range files {
-		err := tarWriter.WriteHeader(&tar.Header{
-			Name:     f.Name,
-			Mode:     0o777,
-			Size:     int64(len(f.Content)),
-			Typeflag: tar.TypeReg,
-			Format:   tar.FormatGNU,
-		})
-		if err != nil {
-			errs = append(errs, fmt.Errorf("write header for file %s: %w", f.Name, err))
-			continue
-		}
-
-		_, err = tarWriter.Write(f.Content)
-		if err != nil {
-			errs = append(errs, fmt.Errorf("write contents for file %s: %w", f.Name, err))
-			continue
-		}
-	}
-	defer func() {
-		closeErr := tarWriter.Close()
-		if closeErr != nil {
-			err = fmt.Errorf("close tar writer: %w", closeErr)
-		}
-	}()
-
-	if len(errs) > 0 {
-		return nil, errors.Join(errs...)
-	}
-
-	return bytes.NewReader(buf.Bytes()), nil
-}
-
 // ReaderFromDir creates a TAR archive reader from a directory.
 // It returns an error if the directory cannot be read or if the files cannot be read.
 // This function is useful for creating a build context to build an image.
-func ReaderFromDir(dir string) (r io.ReadSeeker, err error) {
-	files, err := os.ReadDir(dir)
+func ReaderFromDir(dir string, dockerfile string) (r io.Reader, err error) {
+	includes := []string{"."}
+
+	// always pass context as absolute path
+	abs, err := filepath.Abs(dir)
 	if err != nil {
-		return nil, fmt.Errorf("read dir: %w", err)
+		return nil, fmt.Errorf("error getting absolute path: %w", err)
 	}
 
-	buildFiles := make([]BuildFile, 0, len(files))
-
-	// walk the directory and add all files to the build context
-	for _, f := range files {
-		if f.IsDir() {
-			continue
-		}
-
-		contents, err := os.ReadFile(filepath.Join(dir, f.Name()))
-		if err != nil {
-			return nil, fmt.Errorf("read file %s: %w", f.Name(), err)
-		}
-
-		buildFiles = append(buildFiles, BuildFile{
-			Name:    f.Name(),
-			Content: contents,
-		})
+	dockerIgnoreExists, excluded, err := ParseDockerIgnore(abs)
+	if err != nil {
+		return nil, err
 	}
 
-	return ReaderFromFiles(buildFiles)
+	includes = append(includes, dockerfile)
+
+	if dockerIgnoreExists {
+		// only add .dockerignore if it exists
+		includes = append(includes, ".dockerignore")
+	}
+
+	buildContext, err := archive.TarWithOptions(
+		abs,
+		&archive.TarOptions{ExcludePatterns: excluded, IncludeFiles: includes},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return buildContext, nil
 }
 
 // ImageBuildClient is a client that can build images.
@@ -109,7 +62,7 @@ type ImageBuildClient interface {
 }
 
 // Build will build and image from context and Dockerfile, then return the tag
-func Build(ctx context.Context, contextReader io.ReadSeeker, tag string, opts ...BuildOption) (string, error) {
+func Build(ctx context.Context, contextReader io.Reader, tag string, opts ...BuildOption) (string, error) {
 	buildOpts := &buildOptions{
 		opts: build.ImageBuildOptions{
 			Dockerfile: "Dockerfile",
