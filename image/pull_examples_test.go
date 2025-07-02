@@ -37,10 +37,10 @@ func ExamplePull_withClient() {
 
 func ExamplePull_withPullOptions() {
 	opts := apiimage.PullOptions{
-		All: true,
+		Platform: "linux/amd64",
 	}
 
-	err := image.Pull(context.Background(), "nginx:latest", image.WithPullOptions(opts))
+	err := image.Pull(context.Background(), "alpine:3.22", image.WithPullOptions(opts))
 
 	fmt.Println(err)
 
