@@ -110,7 +110,11 @@ type ImageBuildClient interface {
 
 // Build will build and image from context and Dockerfile, then return the tag
 func Build(ctx context.Context, contextReader io.ReadSeeker, tag string, opts ...BuildOption) (string, error) {
-	buildOpts := &buildOptions{}
+	buildOpts := &buildOptions{
+		opts: build.ImageBuildOptions{
+			Dockerfile: "Dockerfile",
+		},
+	}
 	for _, opt := range opts {
 		if err := opt(buildOpts); err != nil {
 			return "", fmt.Errorf("apply build option: %w", err)
@@ -134,10 +138,6 @@ func Build(ctx context.Context, contextReader io.ReadSeeker, tag string, opts ..
 	}
 	// Set the passed context reader, even if it is set in the build options.
 	buildOpts.opts.Context = contextReader
-
-	if buildOpts.opts.Dockerfile == "" {
-		buildOpts.opts.Dockerfile = "Dockerfile"
-	}
 
 	if buildOpts.buildClient == nil {
 		buildOpts.buildClient = client.DefaultClient
