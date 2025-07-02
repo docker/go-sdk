@@ -23,12 +23,6 @@ const (
 	labelImageBuildTestValue = "true"
 )
 
-// Used as a marker to identify the containers created by the test
-// so it's possible to clean them up after the tests.
-var labelImageBuildTest = map[string]string{
-	labelImageBuildTestKey: labelImageBuildTestValue,
-}
-
 type testBuildInfo struct {
 	imageTag       string
 	buildErr       error
@@ -110,7 +104,11 @@ func testBuild(tb testing.TB, b *testBuildInfo, opts ...image.BuildOption) {
 	})
 
 	opts = append(opts, image.WithBuildOptions(build.ImageBuildOptions{
-		Labels: labelImageBuildTest,
+		// Used as a marker to identify the containers created by the test
+		// so it's possible to clean them up after the tests.
+		Labels: map[string]string{
+			labelImageBuildTestKey: labelImageBuildTestValue,
+		},
 	}))
 
 	tag, err := image.Build(context.Background(), b.contextArchive, b.imageTag, opts...)
@@ -131,7 +129,7 @@ func testBuild(tb testing.TB, b *testBuildInfo, opts ...image.BuildOption) {
 		require.NoError(tb, err)
 
 		containers, err := cli.ContainerList(context.Background(), container.ListOptions{
-			Filters: filters.NewArgs(filters.Arg("status", "created"), filters.Arg("label", fmt.Sprintf("%s=%s", client.LabelBase, "true"))),
+			Filters: filters.NewArgs(filters.Arg("status", "created"), filters.Arg("label", fmt.Sprintf("%s=%s", labelImageBuildTestKey, labelImageBuildTestValue))),
 			All:     true,
 		})
 		require.NoError(tb, err)
