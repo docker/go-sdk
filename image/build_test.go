@@ -111,6 +111,10 @@ func testBuild(tb testing.TB, b *testBuildInfo, opts ...image.BuildOption) {
 		},
 	}))
 
+	if b.logWriter != nil {
+		opts = append(opts, image.WithLogWriter(b.logWriter))
+	}
+
 	tag, err := image.Build(context.Background(), b.contextArchive, b.imageTag, opts...)
 
 	if b.buildErr != nil {
