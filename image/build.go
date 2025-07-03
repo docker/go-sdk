@@ -63,6 +63,11 @@ type ImageBuildClient interface {
 
 // Build will build and image from context and Dockerfile, then return the tag
 func Build(ctx context.Context, contextReader io.Reader, tag string, opts ...BuildOption) (string, error) {
+	// validations happen first to avoid unnecessary allocations
+	if contextReader == nil {
+		return "", errors.New("context reader is required")
+	}
+
 	buildOpts := &buildOptions{
 		logWriter: os.Stdout,
 		opts: build.ImageBuildOptions{
@@ -87,9 +92,6 @@ func Build(ctx context.Context, contextReader io.Reader, tag string, opts ...Bui
 	// Set the passed tag, even if it is set in the build options.
 	buildOpts.opts.Tags[0] = tag
 
-	if contextReader == nil {
-		return "", errors.New("context reader is required")
-	}
 	// Set the passed context reader, even if it is set in the build options.
 	buildOpts.opts.Context = contextReader
 

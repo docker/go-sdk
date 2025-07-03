@@ -66,8 +66,12 @@ func TestBuild(t *testing.T) {
 	})
 
 	t.Run("error/image-tag-empty", func(t *testing.T) {
+		contextArchive, err := image.ArchiveBuildContext(buildPath, "Dockerfile")
+		require.NoError(t, err)
+
 		b := &testBuildInfo{
-			buildErr: errors.New("tag cannot be empty"),
+			contextArchive: contextArchive,
+			buildErr:       errors.New("tag cannot be empty"),
 		}
 
 		testBuild(t, b)
