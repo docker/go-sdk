@@ -48,3 +48,17 @@ if err != nil {
 
 fmt.Printf("docker host from context: %s", dockerHost)
 ```
+
+### List Contexts
+
+It will return the list of contexts available in the Docker configuration.
+
+```go
+contexts, err := context.List()
+if err != nil {
+    log.Printf("failed to list contexts: %v", err)
+    return
+}
+
+fmt.Printf("contexts: %v", contexts)
+```

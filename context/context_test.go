@@ -141,3 +141,13 @@ func TestDockerHostFromContext(t *testing.T) {
 		require.Empty(t, host)
 	})
 }
+
+func TestList(t *testing.T) {
+	t.Run("list/1", func(tt *testing.T) {
+		SetupTestDockerContexts(tt, 1, 3) // current context is context1
+
+		contexts, err := List()
+		require.NoError(t, err)
+		require.Equal(t, []string{"context1", "context2", "context3", "context4"}, contexts)
+	})
+}

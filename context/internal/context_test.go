@@ -50,6 +50,32 @@ func TestExtractDockerHost(t *testing.T) {
 	})
 }
 
+func TestList(t *testing.T) {
+	t.Run("list/1", func(tt *testing.T) {
+		tmpDir := t.TempDir()
+
+		want := metadata{
+			Name: "test",
+			Context: &dockerContext{
+				Description: "test context",
+				Fields:      map[string]any{"test": true},
+			},
+			Endpoints: map[string]*endpoint{
+				"docker": {
+					Host:          "tcp://localhost:2375",
+					SkipTLSVerify: true,
+				},
+			},
+		}
+
+		setupTestContext(tt, tmpDir, "test", want)
+
+		got, err := List(tmpDir)
+		require.NoError(tt, err)
+		require.Equal(tt, []string{"test"}, got)
+	})
+}
+
 func TestStore_load(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
 		tmpDir := t.TempDir()

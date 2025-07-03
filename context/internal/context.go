@@ -55,6 +55,22 @@ func ExtractDockerHost(contextName string, metaRoot string) (string, error) {
 	return "", ErrDockerContextNotFound
 }
 
+// List returns the list of contexts available in the Docker configuration.
+func List(metaRoot string) ([]string, error) {
+	s := &store{root: metaRoot}
+
+	contexts, err := s.list()
+	if err != nil {
+		return nil, fmt.Errorf("list contexts: %w", err)
+	}
+
+	names := make([]string, len(contexts))
+	for i, ctx := range contexts {
+		names[i] = ctx.Name
+	}
+	return names, nil
+}
+
 func (s *store) list() ([]*metadata, error) {
 	dirs, err := s.findMetadataDirs(s.root)
 	if err != nil {
