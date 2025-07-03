@@ -64,6 +64,7 @@ type ImageBuildClient interface {
 // Build will build and image from context and Dockerfile, then return the tag
 func Build(ctx context.Context, contextReader io.Reader, tag string, opts ...BuildOption) (string, error) {
 	buildOpts := &buildOptions{
+		logWriter: os.Stdout,
 		opts: build.ImageBuildOptions{
 			Dockerfile: "Dockerfile",
 		},
@@ -97,12 +98,6 @@ func Build(ctx context.Context, contextReader io.Reader, tag string, opts ...Bui
 		// In case there is no build client set, use the default docker client
 		// to build the image. Needs to be closed when done.
 		defer buildOpts.buildClient.Close()
-	}
-
-	if buildOpts.logWriter == nil {
-		// If no log writer is set, use the default log writer
-		// to build the image.
-		buildOpts.logWriter = os.Stdout
 	}
 
 	if buildOpts.opts.Labels == nil {
