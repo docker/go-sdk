@@ -127,3 +127,38 @@ func BenchmarkCurrentNestedContext(b *testing.B) {
 		}
 	})
 }
+
+func BenchmarkContextList(b *testing.B) {
+	SetupTestDockerContexts(b, 1, 3) // Creates 3 contexts at root level
+
+	b.Run("context-list", func(b *testing.B) {
+		b.ResetTimer()
+		b.ReportAllocs()
+		for range b.N {
+			_, err := List()
+			require.NoError(b, err)
+		}
+	})
+}
+
+func BenchmarkContextInspect(b *testing.B) {
+	SetupTestDockerContexts(b, 1, 3) // Creates 3 contexts at root level
+
+	b.Run("context-inspect", func(b *testing.B) {
+		b.ResetTimer()
+		b.ReportAllocs()
+		for range b.N {
+			_, err := Inspect("context1")
+			require.NoError(b, err)
+		}
+	})
+
+	b.Run("context-inspect/not-found", func(b *testing.B) {
+		b.ResetTimer()
+		b.ReportAllocs()
+		for range b.N {
+			_, err := Inspect("non-existent")
+			require.ErrorIs(b, err, ErrDockerContextNotFound)
+		}
+	})
+}

@@ -38,3 +38,25 @@ func ExampleDockerHostFromContext() {
 
 	// Intentionally not printing the output, as the context could not exist in the CI environment
 }
+
+func ExampleList() {
+	contexts, err := context.List()
+	if err != nil {
+		log.Printf("error listing contexts: %s", err)
+		return
+	}
+
+	fmt.Println(contexts)
+
+	// Intentionally not printing the output, as the contexts could not exist in the CI environment
+}
+
+func ExampleInspect() {
+	_, err := context.Inspect("desktop-linux")
+	if err != nil {
+		log.Printf("error inspecting context: %s", err)
+		return
+	}
+
+	// Intentionally not printing the output, as the context could not exist in the CI environment
+}
