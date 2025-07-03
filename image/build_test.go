@@ -87,6 +87,24 @@ func TestBuild(t *testing.T) {
 	})
 }
 
+func TestBuildFromDir(t *testing.T) {
+	buildPath := path.Join("testdata", "build")
+
+	t.Run("success", func(t *testing.T) {
+		tag, err := image.BuildFromDir(context.Background(), buildPath, "Dockerfile", "test:test")
+		require.NoError(t, err)
+		require.Equal(t, "test:test", tag)
+	})
+
+	t.Run("with-dockerfile/options-are-overridden", func(t *testing.T) {
+		tag, err := image.BuildFromDir(context.Background(), buildPath, "Dockerfile", "test:test", image.WithBuildOptions(build.ImageBuildOptions{
+			Dockerfile: "Dockerfile.custom",
+		}))
+		require.NoError(t, err)
+		require.Equal(t, "test:test", tag)
+	})
+}
+
 func testBuild(tb testing.TB, b *testBuildInfo, opts ...image.BuildOption) {
 	tb.Helper()
 
@@ -119,17 +137,23 @@ func testBuild(tb testing.TB, b *testBuildInfo, opts ...image.BuildOption) {
 	}
 
 	tb.Cleanup(func() {
-		cleanup(tb, cli, tag)
+		cleanup(tb, tag)
 	})
 
 	require.NoError(tb, err)
 	require.Equal(tb, b.imageTag, tag)
 }
 
-func cleanup(tb testing.TB, cli *client.Client, tag string) {
+func cleanup(tb testing.TB, tag string) {
 	tb.Helper()
 
-	_, err := image.Remove(context.Background(), tag, image.WithRemoveOptions(dockerimage.RemoveOptions{
+	cli, err := client.New(context.Background())
+	require.NoError(tb, err)
+	tb.Cleanup(func() {
+		require.NoError(tb, cli.Close())
+	})
+
+	_, err = image.Remove(context.Background(), tag, image.WithRemoveOptions(dockerimage.RemoveOptions{
 		Force:         true,
 		PruneChildren: true,
 	}))

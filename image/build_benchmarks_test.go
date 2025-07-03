@@ -2,6 +2,7 @@ package image_test
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"io"
 	"path"
@@ -38,5 +39,24 @@ func BenchmarkBuild(b *testing.B) {
 			bInfo.imageTag = fmt.Sprintf("test:benchmark-%d", i)
 			testBuild(b, bInfo)
 		}
+	})
+
+	b.Run("from-dir", func(b *testing.B) {
+		buildPath := path.Join("testdata", "build")
+
+		b.ResetTimer()
+		b.ReportAllocs()
+
+		for i := range b.N {
+			// Use a unique tag for each iteration to avoid collisions
+			tag := fmt.Sprintf("test:benchmark-%d", i)
+			_, err := image.BuildFromDir(context.Background(), buildPath, "Dockerfile", tag, image.WithLogWriter(&bytes.Buffer{}))
+			require.NoError(b, err)
+
+			b.Cleanup(func() {
+				cleanup(b, tag)
+			})
+		}
+
 	})
 }

@@ -61,7 +61,25 @@ type ImageBuildClient interface {
 	ImageBuild(ctx context.Context, options build.ImageBuildOptions) (build.ImageBuildResponse, error)
 }
 
-// Build will build and image from context and Dockerfile, then return the tag
+// BuildFromDir builds an image from a directory and the path to the Dockerfile in the directory, then returns the tag.
+// It uses [ArchiveBuildContext] to create a archive reader from the directory.
+func BuildFromDir(ctx context.Context, dir string, dockerfile string, tag string, opts ...BuildOption) (string, error) {
+	archive, err := ArchiveBuildContext(dir, dockerfile)
+	if err != nil {
+		return "", err
+	}
+
+	buildOpts := build.ImageBuildOptions{
+		Dockerfile: dockerfile,
+	}
+
+	opts = append(opts, WithBuildOptions(buildOpts))
+
+	return Build(ctx, archive, tag, opts...)
+}
+
+// Build will build and image from context and Dockerfile, then return the tag. It uses "Dockerfile" as the Dockerfile path,
+// although it can be overridden by the build options.
 func Build(ctx context.Context, contextReader io.Reader, tag string, opts ...BuildOption) (string, error) {
 	// validations happen first to avoid unnecessary allocations
 	if contextReader == nil {
