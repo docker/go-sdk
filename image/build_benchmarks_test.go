@@ -16,7 +16,7 @@ var buildPath = path.Join("testdata", "build")
 
 func BenchmarkBuild(b *testing.B) {
 	b.Run("success", func(b *testing.B) {
-		contextArchive, err := image.ReaderFromDir(buildPath, "Dockerfile")
+		contextArchive, err := image.ArchiveBuildContext(buildPath, "Dockerfile")
 		require.NoError(b, err)
 
 		// Buffer the entire archive data

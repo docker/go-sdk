@@ -24,7 +24,7 @@ func TestBuild_withRetries(t *testing.T) {
 		buf := &bytes.Buffer{}
 		m := &errMockCli{err: errReturned, logger: slog.New(slog.NewTextHandler(buf, nil))}
 
-		contextArchive, err := ReaderFromDir("testdata/retry", "Dockerfile")
+		contextArchive, err := ArchiveBuildContext("testdata/retry", "Dockerfile")
 		require.NoError(t, err)
 
 		// give a chance to retry

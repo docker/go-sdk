@@ -35,7 +35,7 @@ func TestBuild(t *testing.T) {
 	buildPath := path.Join("testdata", "build")
 
 	t.Run("success", func(t *testing.T) {
-		contextArchive, err := image.ReaderFromDir(buildPath, "Dockerfile")
+		contextArchive, err := image.ArchiveBuildContext(buildPath, "Dockerfile")
 		require.NoError(t, err)
 
 		b := &testBuildInfo{
@@ -47,7 +47,7 @@ func TestBuild(t *testing.T) {
 	})
 
 	t.Run("success/with-client", func(t *testing.T) {
-		contextArchive, err := image.ReaderFromDir(buildPath, "Dockerfile")
+		contextArchive, err := image.ArchiveBuildContext(buildPath, "Dockerfile")
 		require.NoError(t, err)
 
 		b := &testBuildInfo{

@@ -18,10 +18,10 @@ import (
 	"github.com/docker/go-sdk/client"
 )
 
-// ReaderFromDir creates a TAR archive reader from a directory.
+// ArchiveBuildContext creates a TAR archive reader from a directory.
 // It returns an error if the directory cannot be read or if the files cannot be read.
 // This function is useful for creating a build context to build an image.
-func ReaderFromDir(dir string, dockerfile string) (r io.Reader, err error) {
+func ArchiveBuildContext(dir string, dockerfile string) (r io.Reader, err error) {
 	includes := []string{"."}
 
 	// always pass context as absolute path

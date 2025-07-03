@@ -28,7 +28,7 @@ func ExampleBuild() {
 
 	buildPath := path.Join("testdata", "build")
 
-	reader, err := image.ReaderFromDir(buildPath, "Dockerfile")
+	contextArchive, err := image.ArchiveBuildContext(buildPath, "Dockerfile")
 	if err != nil {
 		log.Println("error creating reader", err)
 		return
@@ -38,7 +38,7 @@ func ExampleBuild() {
 	buf := &bytes.Buffer{}
 
 	tag, err := image.Build(
-		context.Background(), reader, "example:test",
+		context.Background(), contextArchive, "example:test",
 		image.WithBuildOptions(build.ImageBuildOptions{
 			Dockerfile: "Dockerfile",
 		}),
