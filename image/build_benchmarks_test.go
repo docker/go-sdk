@@ -57,6 +57,5 @@ func BenchmarkBuild(b *testing.B) {
 				cleanup(b, tag)
 			})
 		}
-
 	})
 }
