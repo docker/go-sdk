@@ -10,22 +10,39 @@ import (
 
 const metaFile = "meta.json"
 
+// Context represents a Docker context
+type Context struct {
+	metadata
+}
+
 // dockerContext represents the metadata stored for a context
 type dockerContext struct {
+	// Description is the description of the context
 	Description string
-	Fields      map[string]any // renamed from AdditionalFields for brevity
+
+	// Fields is the additional fields of the context, holding any additional
+	// fields that are not part of the standard metadata.
+	Fields map[string]any
 }
 
 // endpoint represents a Docker endpoint configuration
 type endpoint struct {
-	Host          string `json:",omitempty"`
+	// Host is the host of the endpoint
+	Host string `json:",omitempty"`
+
+	// SkipTLSVerify is the flag to skip TLS verification
 	SkipTLSVerify bool
 }
 
 // metadata represents a complete context configuration
 type metadata struct {
-	Name      string               `json:",omitempty"`
-	Context   *dockerContext       `json:"metadata,omitempty"`
+	// Name is the name of the context
+	Name string `json:",omitempty"`
+
+	// Context is the metadata stored for a context
+	Context *dockerContext `json:"metadata,omitempty"`
+
+	// Endpoints is the list of endpoints for the context
 	Endpoints map[string]*endpoint `json:"endpoints,omitempty"`
 }
 
@@ -34,43 +51,29 @@ type store struct {
 	root string
 }
 
-// ExtractDockerHost extracts the Docker host from the given Docker context
-func ExtractDockerHost(contextName string, metaRoot string) (string, error) {
-	s := &store{root: metaRoot}
-
-	contexts, err := s.list()
-	if err != nil {
-		return "", fmt.Errorf("list contexts: %w", err)
-	}
-
-	for _, ctx := range contexts {
-		if ctx.Name == contextName {
-			ep, ok := ctx.Endpoints["docker"]
-			if !ok || ep == nil || ep.Host == "" { // Check all conditions that should trigger the error
-				return "", ErrDockerHostNotSet
-			}
-			return ep.Host, nil
-		}
-	}
-	return "", ErrDockerContextNotFound
-}
-
 // Inspect returns the description of the given context.
-func Inspect(ctxName string, metaRoot string) (string, error) {
+func Inspect(ctxName string, metaRoot string) (Context, error) {
 	s := &store{root: metaRoot}
 
 	contexts, err := s.list()
 	if err != nil {
-		return "", fmt.Errorf("list contexts: %w", err)
+		return Context{}, fmt.Errorf("list contexts: %w", err)
 	}
 
 	for _, ctx := range contexts {
 		if ctx.Name == ctxName {
-			return ctx.Context.Description, nil
+			ep, ok := ctx.Endpoints["docker"]
+			if !ok || ep == nil || ep.Host == "" { // Check all conditions that should trigger the error
+				return Context{}, ErrDockerHostNotSet
+			}
+
+			return Context{
+				metadata: *ctx,
+			}, nil
 		}
 	}
 
-	return "", ErrDockerContextNotFound
+	return Context{}, ErrDockerContextNotFound
 }
 
 // List returns the list of contexts available in the Docker configuration.

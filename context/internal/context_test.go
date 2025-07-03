@@ -442,9 +442,9 @@ func requireDockerHost(t *testing.T, contextName string, meta metadata) string {
 
 	setupTestContext(t, tmpDir, contextName, meta)
 
-	host, err := ExtractDockerHost(contextName, tmpDir)
+	ctx, err := Inspect(contextName, tmpDir)
 	require.NoError(t, err)
-	return host
+	return ctx.Endpoints["docker"].Host
 }
 
 // requireDockerHostInPath creates a context at a specific path and verifies host extraction
@@ -454,9 +454,9 @@ func requireDockerHostInPath(t *testing.T, contextName, path string, meta metada
 
 	setupTestContext(t, tmpDir, path, meta)
 
-	host, err := ExtractDockerHost(contextName, tmpDir)
+	ctx, err := Inspect(contextName, tmpDir)
 	require.NoError(t, err)
-	return host
+	return ctx.Endpoints["docker"].Host
 }
 
 // requireDockerHostError creates a context and verifies expected error
@@ -466,21 +466,21 @@ func requireDockerHostError(t *testing.T, contextName string, meta metadata, wan
 
 	setupTestContext(t, tmpDir, contextName, meta)
 
-	_, err := ExtractDockerHost(contextName, tmpDir)
+	_, err := Inspect(contextName, tmpDir)
 	require.ErrorIs(t, err, wantErr)
 }
 
 // setupTestContext creates a test context file in the specified location
-func setupTestContext(t *testing.T, root, relPath string, meta metadata) {
-	t.Helper()
+func setupTestContext(tb testing.TB, root, relPath string, meta metadata) {
+	tb.Helper()
 
 	contextDir := filepath.Join(root, relPath)
-	require.NoError(t, os.MkdirAll(contextDir, 0o755))
+	require.NoError(tb, os.MkdirAll(contextDir, 0o755))
 
 	data, err := json.Marshal(meta)
-	require.NoError(t, err)
+	require.NoError(tb, err)
 
-	require.NoError(t, os.WriteFile(
+	require.NoError(tb, os.WriteFile(
 		filepath.Join(contextDir, metaFile),
 		data,
 		0o644,

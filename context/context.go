@@ -111,29 +111,29 @@ func CurrentDockerHost() (string, error) {
 		return DefaultDockerHost, nil
 	}
 
-	metaRoot, err := metaRoot()
+	ctx, err := Inspect(current)
 	if err != nil {
-		return "", fmt.Errorf("meta root: %w", err)
+		return "", fmt.Errorf("inspect context: %w", err)
 	}
 
-	return internal.ExtractDockerHost(current, metaRoot)
+	return ctx.Endpoints["docker"].Host, nil
 }
 
 // DockerHostFromContext returns the Docker host from the given context.
-func DockerHostFromContext(ctx string) (string, error) {
-	metaRoot, err := metaRoot()
+func DockerHostFromContext(ctxName string) (string, error) {
+	ctx, err := Inspect(ctxName)
 	if err != nil {
-		return "", fmt.Errorf("meta root: %w", err)
+		return "", fmt.Errorf("inspect context: %w", err)
 	}
 
-	return internal.ExtractDockerHost(ctx, metaRoot)
+	return ctx.Endpoints["docker"].Host, nil
 }
 
 // Inspect returns the description of the given context.
-func Inspect(ctxName string) (string, error) {
+func Inspect(ctxName string) (Context, error) {
 	metaRoot, err := metaRoot()
 	if err != nil {
-		return "", fmt.Errorf("meta root: %w", err)
+		return Context{}, fmt.Errorf("meta root: %w", err)
 	}
 
 	return internal.Inspect(ctxName, metaRoot)

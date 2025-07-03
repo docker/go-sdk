@@ -4,8 +4,6 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
-
-	"github.com/docker/go-sdk/context/internal"
 )
 
 func TestCurrent(t *testing.T) {
@@ -85,17 +83,6 @@ func TestCurrentDockerHost(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, "tcp://127.0.0.1:2", host) // from context2
 	})
-
-	t.Run("docker-context/not-found", func(tt *testing.T) {
-		SetupTestDockerContexts(tt, 1, 1) // current context is context1
-
-		metaRoot, err := metaRoot()
-		require.NoError(t, err)
-
-		host, err := internal.ExtractDockerHost("context-not-found", metaRoot)
-		require.Error(t, err)
-		require.Empty(t, host)
-	})
 }
 
 func TestDockerHostFromContext(t *testing.T) {
@@ -146,21 +133,21 @@ func TestInspect(t *testing.T) {
 	SetupTestDockerContexts(t, 1, 3) // current context is context1
 
 	t.Run("inspect/1", func(tt *testing.T) {
-		description, err := Inspect("context1")
+		c, err := Inspect("context1")
 		require.NoError(t, err)
-		require.Equal(t, "Docker Go SDK 1", description)
+		require.Equal(t, "Docker Go SDK 1", c.Context.Description)
 	})
 
 	t.Run("inspect/2", func(tt *testing.T) {
-		description, err := Inspect("context2")
+		c, err := Inspect("context2")
 		require.NoError(t, err)
-		require.Equal(t, "Docker Go SDK 2", description)
+		require.Equal(t, "Docker Go SDK 2", c.Context.Description)
 	})
 
 	t.Run("inspect/not-found", func(tt *testing.T) {
-		description, err := Inspect("context-not-found")
+		c, err := Inspect("context-not-found")
 		require.ErrorIs(t, err, ErrDockerContextNotFound)
-		require.Empty(t, description)
+		require.Empty(t, c)
 	})
 }
 
