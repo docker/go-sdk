@@ -57,17 +57,25 @@ func TestInspect(t *testing.T) {
 		Context: &dockerContext{
 			Description: "test context",
 		},
+		Endpoints: map[string]*endpoint{
+			"docker": {
+				Host: "tcp://localhost:2375",
+			},
+		},
 	})
 	t.Run("inspect/1", func(tt *testing.T) {
-		got, err := Inspect("test", tmpDir)
+		ctx, err := Inspect("test", tmpDir)
 		require.NoError(tt, err)
-		require.Equal(tt, "test context", got)
+		require.Equal(tt, "test", ctx.Name)
+		require.Equal(tt, "test context", ctx.Context.Description)
+		require.Equal(tt, "tcp://localhost:2375", ctx.Endpoints["docker"].Host)
+		require.False(tt, ctx.Endpoints["docker"].SkipTLSVerify)
 	})
 
 	t.Run("inspect/not-found", func(tt *testing.T) {
-		got, err := Inspect("not-found", tmpDir)
+		ctx, err := Inspect("not-found", tmpDir)
 		require.ErrorIs(tt, err, ErrDockerContextNotFound)
-		require.Empty(tt, got)
+		require.Empty(tt, ctx)
 	})
 }
 
