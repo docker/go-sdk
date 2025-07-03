@@ -27,6 +27,7 @@ The Pull operation can be customized using functional options. The following opt
 - `WithPullOptions(options apiimage.PullOptions) image.PullOption`: The options to use to pull the image. The type of the options is "github.com/docker/docker/api/types/image".
 
 First, you need to import the following packages:
+
 ```go
 import (
 	"context"
@@ -56,6 +57,61 @@ if err != nil {
     log.Fatalf("failed to pull image: %v", err)
 }
 ```
+
+## Removing images
+
+### Usage
+
+```go
+err = image.Remove(ctx, "nginx:alpine")
+if err != nil {
+    log.Fatalf("failed to remove image: %v", err)
+}
+```
+
+### Customizing the Remove operation
+
+The Remove operation can be customized using functional options. The following options are available:
+
+- `WithRemoveClient(client *client.Client) image.RemoveOption`: The client to use to remove the image. If not provided, the default client will be used.
+- `WithRemoveOptions(options dockerimage.RemoveOptions) image.RemoveOption`: The options to use to remove the image. The type of the options is "github.com/docker/docker/api/types/image".
+
+First, you need to import the following packages:
+
+```go
+import (
+	"context"
+
+    dockerimage "github.com/docker/docker/api/types/image"
+	"github.com/docker/go-sdk/client"
+	"github.com/docker/go-sdk/image"
+)
+```
+
+In your code:
+
+```go
+ctx := context.Background()
+dockerClient, err := client.New(ctx)
+if err != nil {
+    log.Println("failed to create docker client", err)
+    return
+}
+defer dockerClient.Close()
+
+resp, err := image.Remove(ctx, img, image.WithRemoveOptions(dockerimage.RemoveOptions{
+    Force:         true,
+    PruneChildren: true,
+}))
+if err != nil {
+    log.Println("failed to remove image", err)
+    return
+}
+
+```
+
+
+
 
 ## Building images
 
@@ -138,10 +194,7 @@ defer dockerClient.Close()
 // using a buffer to capture the build output
 buf := &bytes.Buffer{}
 
-err = image.Build(
-    ctx,
-    contextArchive,
-    "example:test",
+err = image.Build(ctx, contextArchive, "example:test",
     image.WithBuildClient(dockerClient),
     image.WithBuildOptions(build.ImageBuildOptions{
         Dockerfile: "Dockerfile",
