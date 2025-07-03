@@ -127,10 +127,12 @@ func Build(ctx context.Context, contextReader io.Reader, tag string, opts ...Bui
 	// Add client labels
 	client.AddSDKLabels(buildOpts.opts.Labels)
 
+	// Close the context reader after all retries are complete
+	defer tryClose(contextReader)
+
 	resp, err := backoff.RetryNotifyWithData(
 		func() (build.ImageBuildResponse, error) {
 			var err error
-			defer tryClose(contextReader) // release resources in any case
 
 			resp, err := buildOpts.buildClient.ImageBuild(ctx, buildOpts.opts)
 			if err != nil {
