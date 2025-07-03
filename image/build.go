@@ -29,15 +29,12 @@ func ArchiveBuildContext(dir string, dockerfile string) (r io.Reader, err error)
 		return nil, fmt.Errorf("error getting absolute path: %w", err)
 	}
 
-	includes := []string{abs}
-
 	dockerIgnoreExists, excluded, err := ParseDockerIgnore(abs)
 	if err != nil {
 		return nil, err
 	}
 
-	includes = append(includes, dockerfile)
-
+	includes := []string{".", dockerfile}
 	if dockerIgnoreExists {
 		// only add .dockerignore if it exists
 		includes = append(includes, ".dockerignore")
