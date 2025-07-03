@@ -2,16 +2,13 @@ package image_test
 
 import (
 	"bytes"
-	"context"
 	"fmt"
+	"io"
 	"path"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/docker/docker/api/types/container"
-	"github.com/docker/docker/api/types/filters"
-	"github.com/docker/go-sdk/client"
 	"github.com/docker/go-sdk/image"
 )
 
@@ -22,32 +19,24 @@ func BenchmarkBuild(b *testing.B) {
 		contextArchive, err := image.ReaderFromDir(buildPath, "Dockerfile")
 		require.NoError(b, err)
 
+		// Buffer the entire archive data
+		archiveData, err := io.ReadAll(contextArchive)
+		require.NoError(b, err)
+
 		bInfo := &testBuildInfo{
-			contextArchive: contextArchive,
-			logWriter:      &bytes.Buffer{},
-			imageTag:       "test:test",
+			// using a log writer to avoid writing to stdout, dirtying the benchmark output
+			logWriter: &bytes.Buffer{},
 		}
 
 		b.ResetTimer()
 		b.ReportAllocs()
 
-		for range b.N {
+		for i := range b.N {
+			// Create fresh reader from buffered data
+			bInfo.contextArchive = bytes.NewReader(archiveData)
+			// Use a unique tag for each iteration to avoid collisions
+			bInfo.imageTag = fmt.Sprintf("test:benchmark-%d", i)
 			testBuild(b, bInfo)
-		}
-	})
-
-	b.Cleanup(func() {
-		cli, err := client.New(context.Background())
-		require.NoError(b, err)
-
-		containers, err := cli.ContainerList(context.Background(), container.ListOptions{
-			Filters: filters.NewArgs(filters.Arg("label", fmt.Sprintf("%s=%s", labelImageBuildTestKey, labelImageBuildTestValue))),
-			All:     true,
-		})
-		require.NoError(b, err)
-
-		for _, ctr := range containers {
-			require.NoError(b, cli.ContainerRemove(context.Background(), ctr.ID, container.RemoveOptions{Force: true}))
 		}
 	})
 }

@@ -114,25 +114,31 @@ func testBuild(tb testing.TB, b *testBuildInfo, opts ...image.BuildOption) {
 		return
 	}
 
-	defer func() {
-		_, err = image.Remove(context.Background(), tag, image.WithRemoveOptions(dockerimage.RemoveOptions{
-			Force:         true,
-			PruneChildren: true,
-		}))
-		require.NoError(tb, err)
-
-		containers, err := cli.ContainerList(context.Background(), container.ListOptions{
-			Filters: filters.NewArgs(filters.Arg("status", "created"), filters.Arg("label", fmt.Sprintf("%s=%s", labelImageBuildTestKey, labelImageBuildTestValue))),
-			All:     true,
-		})
-		require.NoError(tb, err)
-
-		// force the removal of the intermediate containers, if any
-		for _, ctr := range containers {
-			require.NoError(tb, cli.ContainerRemove(context.Background(), ctr.ID, container.RemoveOptions{Force: true}))
-		}
-	}()
+	tb.Cleanup(func() {
+		cleanup(tb, cli, tag)
+	})
 
 	require.NoError(tb, err)
 	require.Equal(tb, b.imageTag, tag)
+}
+
+func cleanup(tb testing.TB, cli *client.Client, tag string) {
+	tb.Helper()
+
+	_, err := image.Remove(context.Background(), tag, image.WithRemoveOptions(dockerimage.RemoveOptions{
+		Force:         true,
+		PruneChildren: true,
+	}))
+	require.NoError(tb, err)
+
+	containers, err := cli.ContainerList(context.Background(), container.ListOptions{
+		Filters: filters.NewArgs(filters.Arg("status", "created"), filters.Arg("label", fmt.Sprintf("%s=%s", labelImageBuildTestKey, labelImageBuildTestValue))),
+		All:     true,
+	})
+	require.NoError(tb, err)
+
+	// force the removal of the intermediate containers, if any
+	for _, ctr := range containers {
+		require.NoError(tb, cli.ContainerRemove(context.Background(), ctr.ID, container.RemoveOptions{Force: true}))
+	}
 }
