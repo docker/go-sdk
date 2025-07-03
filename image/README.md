@@ -154,3 +154,39 @@ if err != nil {
 }
 
 ```
+
+## Extracting images from a Dockerfile
+
+There are three functions to extract images from a Dockerfile:
+
+- `ImagesFromDockerfile(dockerfile string, buildArgs map[string]*string) ([]string, error)`: Extracts images from a Dockerfile.
+- `ImagesFromReader(r io.Reader, buildArgs map[string]*string) ([]string, error)`: Extracts images from a Dockerfile reader.
+- `ImagesFromTarReader(r io.ReadSeeker, dockerfile string, buildArgs map[string]*string) ([]string, error)`: Extracts images from a Dockerfile reader that is a tar reader.
+
+A Dockerfile can exist in different formats:
+
+- A single Dockerfile file.
+- A Dockerfile in a reader, which can be a file or a buffer.
+- A Dockerfile inside a tar reader, as part of a build context.
+
+The first two cases are handled by the `ImagesFromDockerfile` and `ImagesFromReader` functions.
+
+```go
+images, err := image.ImagesFromDockerfile("Dockerfile", nil)
+if err != nil {
+    log.Println("error extracting images", err)
+    return
+}
+```
+
+The `ImagesFromTarReader` function is useful when the Dockerfile is inside a tar reader, as part of a build context.
+
+```go
+images, err := image.ImagesFromTarReader(contextArchive, "Dockerfile", nil)
+if err != nil {
+    log.Println("error extracting images", err)
+    return
+}
+```
+
+In this case, the `contextArchive` is a tar reader, and the `Dockerfile` is the path to the Dockerfile inside the tar reader.

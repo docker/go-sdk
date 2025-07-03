@@ -10,11 +10,7 @@ import (
 const tokenUsername = "<token>"
 
 // AuthConfigs returns the auth configs for the given images.
-// The images slice must contain images that are used in a Dockerfile. You can use:
-// - [ImagesFromDockerfile] to extract images from a Dockerfile path.
-// - [ImagesFromTarReader] to extract images from a tar reader.
-// - [ImagesFromReader] to extract images from a reader.
-//
+// The images slice must contain images that are used in a Dockerfile.
 // The returned map is keyed by the registry registry hostname for each image.
 func AuthConfigs(images ...string) (map[string]AuthConfig, error) {
 	cfg, err := Load()
