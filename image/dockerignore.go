@@ -14,16 +14,20 @@ func ParseDockerIgnore(targetDir string) (bool, []string, error) {
 	fileLocation := filepath.Join(targetDir, ".dockerignore")
 	var excluded []string
 	exists := false
-	if f, openErr := os.Open(fileLocation); openErr == nil {
-		defer f.Close()
-
-		exists = true
-
-		var err error
-		excluded, err = ignorefile.ReadAll(f)
-		if err != nil {
-			return true, excluded, fmt.Errorf("error reading .dockerignore: %w", err)
+	f, openErr := os.Open(fileLocation)
+	if openErr != nil {
+		if !os.IsNotExist(openErr) {
+			return false, nil, fmt.Errorf("error opening .dockerignore: %w", openErr)
 		}
+		return false, nil, nil
+	}
+	defer f.Close()
+
+	exists = true
+	var err error
+	excluded, err = ignorefile.ReadAll(f)
+	if err != nil {
+		return true, excluded, fmt.Errorf("error reading .dockerignore: %w", err)
 	}
 
 	return exists, excluded, nil
