@@ -29,6 +29,7 @@ type testBuildInfo struct {
 	buildErr       error
 	contextArchive io.Reader
 	logWriter      io.Writer
+	dockerfilePath string
 }
 
 func TestBuild(t *testing.T) {
@@ -85,6 +86,20 @@ func TestBuild(t *testing.T) {
 
 		testBuild(t, b)
 	})
+
+	t.Run("error/dockerfile-not-found-in-context", func(t *testing.T) {
+		contextArchive, err := image.ArchiveBuildContext(buildPath, "Dockerfile")
+		require.NoError(t, err)
+
+		b := &testBuildInfo{
+			contextArchive: contextArchive,
+			logWriter:      &bytes.Buffer{},
+			imageTag:       "test:test",
+			dockerfilePath: "Dockerfile.not-found",
+			buildErr:       errors.New("Cannot locate specified Dockerfile: Dockerfile.not-found"),
+		}
+		testBuild(t, b)
+	})
 }
 
 func TestBuildFromDir(t *testing.T) {
@@ -114,13 +129,18 @@ func testBuild(tb testing.TB, b *testBuildInfo, opts ...image.BuildOption) {
 		require.NoError(tb, cli.Close())
 	})
 
-	opts = append(opts, image.WithBuildOptions(build.ImageBuildOptions{
+	buildOpts := build.ImageBuildOptions{
 		// Used as a marker to identify the containers created by the test
 		// so it's possible to clean them up after the tests.
 		Labels: map[string]string{
 			labelImageBuildTestKey: labelImageBuildTestValue,
 		},
-	}))
+	}
+	if b.dockerfilePath != "" {
+		buildOpts.Dockerfile = b.dockerfilePath
+	}
+
+	opts = append(opts, image.WithBuildOptions(buildOpts))
 
 	if b.logWriter != nil {
 		opts = append(opts, image.WithLogWriter(b.logWriter))

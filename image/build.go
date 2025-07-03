@@ -21,14 +21,15 @@ import (
 // ArchiveBuildContext creates a TAR archive reader from a directory.
 // It returns an error if the directory cannot be read or if the files cannot be read.
 // This function is useful for creating a build context to build an image.
+// The dockerfile path needs to be relative to the build context.
 func ArchiveBuildContext(dir string, dockerfile string) (r io.Reader, err error) {
-	includes := []string{"."}
-
 	// always pass context as absolute path
 	abs, err := filepath.Abs(dir)
 	if err != nil {
 		return nil, fmt.Errorf("error getting absolute path: %w", err)
 	}
+
+	includes := []string{abs}
 
 	dockerIgnoreExists, excluded, err := ParseDockerIgnore(abs)
 	if err != nil {
@@ -80,6 +81,8 @@ func BuildFromDir(ctx context.Context, dir string, dockerfile string, tag string
 
 // Build will build and image from context and Dockerfile, then return the tag. It uses "Dockerfile" as the Dockerfile path,
 // although it can be overridden by the build options.
+// In the case the build options contains tags or a context reader, they will be overridden by the arguments passed to the function,
+// which are mandatory.
 func Build(ctx context.Context, contextReader io.Reader, tag string, opts ...BuildOption) (string, error) {
 	// validations happen first to avoid unnecessary allocations
 	if contextReader == nil {
