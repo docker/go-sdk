@@ -59,7 +59,7 @@ func Pull(ctx context.Context, imageName string, opts ...PullOption) error {
 	} else {
 		creds, ok := authConfigs[ref.Registry]
 		if !ok {
-			pullOpts.pullClient.Logger().Warn("failed to get image auth, setting empty credentials for the image", "image", imageName, "error", err)
+			pullOpts.pullClient.Logger().Warn("no image auth found for image, setting empty credentials for the image. This is expected for public images", "image", imageName)
 		}
 
 		authConfig := config.AuthConfig{
