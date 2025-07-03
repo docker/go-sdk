@@ -50,6 +50,27 @@ func TestExtractDockerHost(t *testing.T) {
 	})
 }
 
+func TestInspect(t *testing.T) {
+	tmpDir := t.TempDir()
+	setupTestContext(t, tmpDir, "test", metadata{
+		Name: "test",
+		Context: &dockerContext{
+			Description: "test context",
+		},
+	})
+	t.Run("inspect/1", func(tt *testing.T) {
+		got, err := Inspect("test", tmpDir)
+		require.NoError(tt, err)
+		require.Equal(tt, "test context", got)
+	})
+
+	t.Run("inspect/not-found", func(tt *testing.T) {
+		got, err := Inspect("not-found", tmpDir)
+		require.ErrorIs(tt, err, ErrDockerContextNotFound)
+		require.Empty(tt, got)
+	})
+}
+
 func TestList(t *testing.T) {
 	t.Run("list/1", func(tt *testing.T) {
 		tmpDir := t.TempDir()

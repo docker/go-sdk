@@ -129,6 +129,16 @@ func DockerHostFromContext(ctx string) (string, error) {
 	return internal.ExtractDockerHost(ctx, metaRoot)
 }
 
+// Inspect returns the description of the given context.
+func Inspect(ctxName string) (string, error) {
+	metaRoot, err := metaRoot()
+	if err != nil {
+		return "", fmt.Errorf("meta root: %w", err)
+	}
+
+	return internal.Inspect(ctxName, metaRoot)
+}
+
 // List returns the list of contexts available in the Docker configuration.
 func List() ([]string, error) {
 	metaRoot, err := metaRoot()

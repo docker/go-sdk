@@ -142,6 +142,28 @@ func TestDockerHostFromContext(t *testing.T) {
 	})
 }
 
+func TestInspect(t *testing.T) {
+	SetupTestDockerContexts(t, 1, 3) // current context is context1
+
+	t.Run("inspect/1", func(tt *testing.T) {
+		description, err := Inspect("context1")
+		require.NoError(t, err)
+		require.Equal(t, "Docker Go SDK 1", description)
+	})
+
+	t.Run("inspect/2", func(tt *testing.T) {
+		description, err := Inspect("context2")
+		require.NoError(t, err)
+		require.Equal(t, "Docker Go SDK 2", description)
+	})
+
+	t.Run("inspect/not-found", func(tt *testing.T) {
+		description, err := Inspect("context-not-found")
+		require.ErrorIs(t, err, ErrDockerContextNotFound)
+		require.Empty(t, description)
+	})
+}
+
 func TestList(t *testing.T) {
 	t.Run("list/1", func(tt *testing.T) {
 		SetupTestDockerContexts(tt, 1, 3) // current context is context1

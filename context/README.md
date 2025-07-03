@@ -1,6 +1,6 @@
 # Docker Contexts
 
-This package provides a simple API to discover Docker contexts.
+This package provides a simple API to interact with Docker contexts.
 
 ## Installation
 
@@ -12,7 +12,7 @@ go get github.com/docker/go-sdk/context
 
 ### Current Context
 
-It will return the current Docker context name.
+It returns the current Docker context name.
 
 ```go
 current, err := context.Current()
@@ -25,7 +25,7 @@ fmt.Printf("current docker context: %s", current)
 
 ### Current Docker Host
 
-It will return the Docker host that the current context is configured to use.
+It returns the Docker host that the current context is configured to use.
 
 ```go
 dockerHost, err := context.CurrentDockerHost()
@@ -37,7 +37,7 @@ fmt.Printf("current docker host: %s", dockerHost)
 
 ### Docker Host From Context
 
-It will return the Docker host that the given context is configured to use.
+It returns the Docker host that the given context is configured to use.
 
 ```go
 dockerHost, err := context.DockerHostFromContext("desktop-linux")
@@ -49,9 +49,25 @@ if err != nil {
 fmt.Printf("docker host from context: %s", dockerHost)
 ```
 
+### Inspect Context
+
+It returns the description of the given context.
+
+```go
+description, err := context.Inspect("context1")
+if err != nil {
+    log.Printf("failed to inspect context: %v", err)
+    return
+}
+
+fmt.Printf("description: %s", description)
+```
+
+If the context is not found, it returns an `ErrDockerContextNotFound` error.
+
 ### List Contexts
 
-It will return the list of contexts available in the Docker configuration.
+It returns the list of contexts available in the Docker configuration.
 
 ```go
 contexts, err := context.List()
