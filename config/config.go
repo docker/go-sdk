@@ -14,6 +14,8 @@ import (
 	"github.com/docker/go-sdk/config/auth"
 )
 
+var cacheInitMutex sync.Mutex
+
 // authConfigCache holds the caching state for a Config instance
 type authConfigCache struct {
 	entries map[string]AuthConfig
@@ -23,22 +25,22 @@ type authConfigCache struct {
 
 // clearAuthCache clears the cached auth configs
 func (c *Config) clearAuthCache() {
-	if c.cache != nil {
-		c.cache.mutex.Lock()
-		c.cache.entries = make(map[string]AuthConfig)
-		c.cache.mutex.Unlock()
-	}
+	cache := c.getCache()
+	cache.mutex.Lock()
+	defer cache.mutex.Unlock()
+
+	cache.entries = make(map[string]AuthConfig)
 }
 
 // cacheStats returns statistics about the auth config cache
 func (c *Config) cacheStats() cacheStats {
-	c.initCache()
-	c.cache.mutex.RLock()
-	defer c.cache.mutex.RUnlock()
+	cache := c.getCache()
+	cache.mutex.RLock()
+	defer cache.mutex.RUnlock()
 
 	return cacheStats{
-		Size:     len(c.cache.entries),
-		CacheKey: c.cache.key,
+		Size:     len(cache.entries),
+		CacheKey: cache.key,
 	}
 }
 
@@ -47,14 +49,33 @@ type cacheStats struct {
 	CacheKey string
 }
 
+// getCache safely returns the cache, initializing it if necessary
+func (c *Config) getCache() *authConfigCache {
+	c.initCache()
+	return c.cache.Load().(*authConfigCache)
+}
+
 // initCache initializes the cache if it hasn't been initialized yet
 func (c *Config) initCache() {
-	if c.cache == nil {
-		c.cache = &authConfigCache{
-			entries: make(map[string]AuthConfig),
-			key:     c.generateCacheKey(),
-		}
+	// Try to load existing cache
+	if c.cache.Load() != nil {
+		return // Fast path - cache already initialized
 	}
+
+	cacheInitMutex.Lock()
+	defer cacheInitMutex.Unlock()
+
+	// Double-check pattern
+	if c.cache.Load() != nil {
+		return // Another goroutine initialized it
+	}
+
+	newCache := &authConfigCache{
+		entries: make(map[string]AuthConfig),
+		key:     c.generateCacheKey(),
+	}
+
+	c.cache.Store(newCache)
 }
 
 // generateCacheKey creates a unique key for this config instance
@@ -68,15 +89,15 @@ func (c *Config) generateCacheKey() string {
 
 // AuthConfigForHostname returns the auth config for the given hostname with caching
 func (c *Config) AuthConfigForHostname(hostname string) (AuthConfig, error) {
-	c.initCache()
+	cache := c.getCache()
 
 	// Try cache first
-	c.cache.mutex.RLock()
-	if authConfig, exists := c.cache.entries[hostname]; exists {
-		c.cache.mutex.RUnlock()
+	cache.mutex.RLock()
+	if authConfig, exists := cache.entries[hostname]; exists {
+		cache.mutex.RUnlock()
 		return authConfig, nil
 	}
-	c.cache.mutex.RUnlock()
+	cache.mutex.RUnlock()
 
 	// Cache miss - resolve auth config
 	authConfig, err := c.resolveAuthConfigForHostname(hostname)
@@ -85,9 +106,9 @@ func (c *Config) AuthConfigForHostname(hostname string) (AuthConfig, error) {
 	}
 
 	// Cache the result
-	c.cache.mutex.Lock()
-	c.cache.entries[hostname] = authConfig
-	c.cache.mutex.Unlock()
+	cache.mutex.Lock()
+	cache.entries[hostname] = authConfig
+	cache.mutex.Unlock()
 
 	return authConfig, nil
 }
