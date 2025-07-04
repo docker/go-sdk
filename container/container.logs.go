@@ -36,29 +36,34 @@ func (c *Container) Logs(ctx context.Context) (io.ReadCloser, error) {
 
 	go func() {
 		defer rc.Close()
-		defer pw.Close() // Close writer when done
 
-		header := make([]byte, streamHeaderSize)
+		streamHeader := make([]byte, streamHeaderSize)
+		var closeErr error
 
 		for {
-			// Read stream header
-			_, err := r.Read(header)
-			if err != nil {
-				if !errors.Is(err, io.EOF) {
-					pw.CloseWithError(err)
-				}
-				return
+			// Read complete stream header - ensures all 8 bytes are read
+			if _, err := io.ReadFull(r, streamHeader); err != nil {
+				closeErr = err
+				break
 			}
 
 			// Extract frame size from header
-			frameSize := binary.BigEndian.Uint32(header[4:])
+			frameSize := binary.BigEndian.Uint32(streamHeader[4:])
 
 			// Copy frame data
 			if _, err := io.CopyN(pw, r, int64(frameSize)); err != nil {
-				if !errors.Is(err, io.EOF) {
-					pw.CloseWithError(err)
-				}
-				return
+				closeErr = err
+				break
+			}
+		}
+
+		if closeErr != nil && !errors.Is(closeErr, io.EOF) {
+			if err := pw.Close(); err != nil {
+				c.logger.Debug("failed to close pipe writer", "error", err)
+			}
+		} else {
+			if err := pw.CloseWithError(closeErr); err != nil {
+				c.logger.Debug("failed to close pipe writer with error", "error", err, "original", closeErr)
 			}
 		}
 	}()
