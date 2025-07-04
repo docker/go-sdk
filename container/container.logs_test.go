@@ -1,0 +1,110 @@
+package container_test
+
+import (
+	"bufio"
+	"bytes"
+	"context"
+	"errors"
+	"io"
+	"log/slog"
+	"strings"
+	"testing"
+	"time"
+
+	"github.com/stretchr/testify/require"
+
+	"github.com/docker/go-sdk/client"
+	"github.com/docker/go-sdk/container"
+	"github.com/docker/go-sdk/container/wait"
+)
+
+func TestContainer_Logs_fromFailedContainer(t *testing.T) {
+	ctx := context.Background()
+	c, err := container.Run(
+		ctx,
+		container.WithImage(alpineLatest),
+		container.WithCmd("echo", "-n", "I was not expecting this"),
+		container.WithWaitStrategy(wait.ForLog("I was expecting this").WithTimeout(5*time.Second)),
+	)
+
+	container.Cleanup(t, c)
+	require.ErrorContains(t, err, "container exited with code 0")
+
+	logs, logErr := c.Logs(ctx)
+	require.NoError(t, logErr)
+
+	b, err := io.ReadAll(logs)
+	require.NoError(t, err)
+
+	log := string(b)
+	require.Contains(t, log, "I was not expecting this")
+}
+
+func TestContainer_Logs_shouldBeWithoutStreamHeader(t *testing.T) {
+	ctx := context.Background()
+	ctr, err := container.Run(ctx,
+		container.WithImage(alpineLatest),
+		container.WithCmd("sh", "-c", "echo 'abcdefghi' && echo 'foo'"),
+		container.WithWaitStrategy(wait.ForExit()),
+	)
+	container.Cleanup(t, ctr)
+	require.NoError(t, err)
+
+	r, err := ctr.Logs(ctx)
+	require.NoError(t, err)
+	defer r.Close()
+
+	b, err := io.ReadAll(r)
+	require.NoError(t, err)
+	require.Equal(t, "abcdefghi\nfoo", strings.TrimSpace(string(b)))
+}
+
+func TestContainer_Logs_printOnError(t *testing.T) {
+	ctx := context.Background()
+
+	buf := new(bytes.Buffer)
+	logger := slog.New(slog.NewTextHandler(buf, nil))
+
+	cli, err := client.New(ctx, client.WithLogger(logger))
+	require.NoError(t, err)
+
+	ctr, err := container.Run(ctx,
+		container.WithDockerClient(cli),
+		container.WithImage(alpineLatest),
+		container.WithCmd("echo", "-n", "I am expecting this"),
+		container.WithWaitStrategy(wait.ForLog("I was expecting that").WithTimeout(5*time.Second)),
+	)
+	container.Cleanup(t, ctr)
+	// it should fail because the waiting for condition is not met
+	require.Error(t, err)
+
+	containerLogs, err := ctr.Logs(ctx)
+	require.NoError(t, err)
+	defer containerLogs.Close()
+
+	// read container logs line by line, checking that each line is present in the client's logger
+	rd := bufio.NewReader(containerLogs)
+	for {
+		line, err := rd.ReadString('\n')
+
+		// Process the line if we have data, even if there's an EOF error
+		if line != "" {
+			// the last line of the array should contain the line of interest,
+			// but we are checking all the lines to make sure that is present
+			found := false
+			for _, l := range strings.Split(buf.String(), "\n") {
+				if strings.Contains(l, line) {
+					found = true
+					break
+				}
+			}
+			require.True(t, found, "container log line not found in the output of the logger: %s", line)
+		}
+
+		// Check for errors after processing any data
+		if errors.Is(err, io.EOF) {
+			break
+		}
+		require.NoErrorf(t, err, "Read Error")
+	}
+}
