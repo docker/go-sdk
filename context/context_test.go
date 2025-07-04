@@ -120,11 +120,27 @@ func TestDockerHostFromContext(t *testing.T) {
 		require.Equal(t, "tcp://127.0.0.1:2", host) // from context2
 	})
 
+	t.Run("docker-context/4-no-host", func(tt *testing.T) {
+		SetupTestDockerContexts(tt, 4, 3) // current context is context4
+
+		host, err := DockerHostFromContext("context4")
+		require.ErrorIs(t, err, ErrDockerHostNotSet)
+		require.Empty(t, host)
+	})
+
 	t.Run("docker-context/not-found", func(tt *testing.T) {
 		SetupTestDockerContexts(tt, 1, 1) // current context is context1
 
 		host, err := DockerHostFromContext("context-not-found")
 		require.Error(t, err)
+		require.Empty(t, host)
+	})
+
+	t.Run("docker-context/5-no-host", func(tt *testing.T) {
+		SetupTestDockerContexts(tt, 5, 3) // current context is context5
+
+		host, err := DockerHostFromContext("context5")
+		require.ErrorIs(t, err, ErrDockerHostNotSet)
 		require.Empty(t, host)
 	})
 }
@@ -149,6 +165,12 @@ func TestInspect(t *testing.T) {
 		require.ErrorIs(t, err, ErrDockerContextNotFound)
 		require.Empty(t, c)
 	})
+
+	t.Run("inspect/5-no-docker-endpoint", func(t *testing.T) {
+		c, err := Inspect("context5")
+		require.ErrorIs(t, err, ErrDockerHostNotSet)
+		require.Empty(t, c)
+	})
 }
 
 func TestList(t *testing.T) {
@@ -157,6 +179,6 @@ func TestList(t *testing.T) {
 
 		contexts, err := List()
 		require.NoError(t, err)
-		require.Equal(t, []string{"context1", "context2", "context3", "context4"}, contexts)
+		require.Equal(t, []string{"context1", "context2", "context3", "context4", "context5"}, contexts)
 	})
 }

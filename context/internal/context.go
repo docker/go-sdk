@@ -52,6 +52,7 @@ type store struct {
 }
 
 // Inspect returns the description of the given context.
+// It returns an error if the context is not found or if the docker endpoint is not set.
 func Inspect(ctxName string, metaRoot string) (Context, error) {
 	s := &store{root: metaRoot}
 
@@ -63,7 +64,7 @@ func Inspect(ctxName string, metaRoot string) (Context, error) {
 	for _, ctx := range contexts {
 		if ctx.Name == ctxName {
 			ep, ok := ctx.Endpoints["docker"]
-			if !ok || ep == nil || ep.Host == "" { // Check all conditions that should trigger the error
+			if !ok || ep == nil || ep.Host == "" {
 				return Context{}, ErrDockerHostNotSet
 			}
 

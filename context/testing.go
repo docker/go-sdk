@@ -23,7 +23,8 @@ import (
 // The config.json file contains the current context, and the meta.json files contain the metadata for each context.
 // It generates the specified number of contexts, setting the current context to the one specified by currentContextIndex.
 // The docker host for each context is "tcp://127.0.0.1:$i".
-// Finally it always adds a context with an empty host, to validate the behavior when the host is not set.
+// Finally it always adds a context with an empty host, to validate the behavior when the host is not set,
+// and a context with a custom endpoint, to validate the behavior when the endpoint is not the default "docker".
 // This empty context can be used setting the currentContextIndex to a number greater than contextsCount.
 func SetupTestDockerContexts(tb testing.TB, currentContextIndex int, contextsCount int) {
 	tb.Helper()
@@ -65,17 +66,27 @@ func SetupTestDockerContexts(tb testing.TB, currentContextIndex int, contextsCou
 
 	// add a context with no host
 	createDockerContext(tb, metaDir, baseContext, contextsCount+1, "")
+
+	// add a context that does not have a docker endpoint
+	createDockerContextWithCustomEndpoint(tb, metaDir, baseContext, contextsCount+2, "foo", "")
 }
 
 // createDockerContext creates a Docker context with the specified name and host
 func createDockerContext(tb testing.TB, metaDir, baseContext string, index int, host string) {
 	tb.Helper()
 
+	createDockerContextWithCustomEndpoint(tb, metaDir, baseContext, index, "docker", host)
+}
+
+// createDockerContextWithoutDockerEndpoint creates a Docker context with the specified name and no docker endpoint
+func createDockerContextWithCustomEndpoint(tb testing.TB, metaDir, baseContext string, index int, endpointName string, host string) {
+	tb.Helper()
+
 	contextDir := filepath.Join(metaDir, fmt.Sprintf("context%d", index))
 	tempMkdirAll(tb, contextDir)
 
-	context := fmt.Sprintf(`{"Name":"%s%d","Metadata":{"Description":"Docker Go SDK %d"},"Endpoints":{"docker":{"Host":"%s","SkipTLSVerify":false}}}`,
-		baseContext, index, index, host)
+	context := fmt.Sprintf(`{"Name":"%s%d","Metadata":{"Description":"Docker Go SDK %d"},"Endpoints":{"%s":{"Host":"%s","SkipTLSVerify":false}}}`,
+		baseContext, index, index, endpointName, host)
 	err := os.WriteFile(filepath.Join(contextDir, "meta.json"), []byte(context), 0o644)
 	require.NoError(tb, err)
 }

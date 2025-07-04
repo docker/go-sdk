@@ -116,6 +116,7 @@ func CurrentDockerHost() (string, error) {
 		return "", fmt.Errorf("inspect context: %w", err)
 	}
 
+	// Inspect already validates that the docker endpoint is set
 	return ctx.Endpoints["docker"].Host, nil
 }
 
@@ -126,6 +127,7 @@ func DockerHostFromContext(ctxName string) (string, error) {
 		return "", fmt.Errorf("inspect context: %w", err)
 	}
 
+	// Inspect already validates that the docker endpoint is set
 	return ctx.Endpoints["docker"].Host, nil
 }
 
