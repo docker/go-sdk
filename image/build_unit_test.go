@@ -19,8 +19,6 @@ func TestBuild_withRetries(t *testing.T) {
 	testBuild := func(t *testing.T, errReturned error, shouldRetry bool) {
 		t.Helper()
 
-		w := &bytes.Buffer{}
-
 		buf := &bytes.Buffer{}
 		m := &errMockCli{err: errReturned, logger: slog.New(slog.NewTextHandler(buf, nil))}
 
@@ -32,7 +30,7 @@ func TestBuild_withRetries(t *testing.T) {
 		defer cancel()
 		tag, err := Build(
 			ctx, contextArchive, "test",
-			WithBuildClient(m), WithLogWriter(w),
+			WithBuildClient(m),
 			WithBuildOptions(build.ImageBuildOptions{
 				Dockerfile: "Dockerfile",
 			}),

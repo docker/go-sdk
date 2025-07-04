@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"log/slog"
 	"path"
 
 	"github.com/docker/docker/api/types/build"
@@ -14,7 +15,11 @@ import (
 )
 
 func ExampleBuild() {
-	cli, err := client.New(context.Background())
+	// using a buffer to capture the build output
+	buf := &bytes.Buffer{}
+	logger := slog.New(slog.NewTextHandler(buf, nil))
+
+	cli, err := client.New(context.Background(), client.WithLogger(logger))
 	if err != nil {
 		log.Println("error creating docker client", err)
 		return
@@ -34,15 +39,11 @@ func ExampleBuild() {
 		return
 	}
 
-	// using a buffer to capture the build output
-	buf := &bytes.Buffer{}
-
 	tag, err := image.Build(
 		context.Background(), contextArchive, "example:test",
 		image.WithBuildOptions(build.ImageBuildOptions{
 			Dockerfile: "Dockerfile",
 		}),
-		image.WithLogWriter(buf),
 	)
 	if err != nil {
 		log.Println("error building image", err)
@@ -65,7 +66,11 @@ func ExampleBuild() {
 }
 
 func ExampleBuildFromDir() {
-	cli, err := client.New(context.Background())
+	// using a buffer to capture the build output
+	buf := &bytes.Buffer{}
+	logger := slog.New(slog.NewTextHandler(buf, nil))
+
+	cli, err := client.New(context.Background(), client.WithLogger(logger))
 	if err != nil {
 		log.Println("error creating docker client", err)
 		return
@@ -79,15 +84,11 @@ func ExampleBuildFromDir() {
 
 	buildPath := path.Join("testdata", "build")
 
-	// using a buffer to capture the build output
-	buf := &bytes.Buffer{}
-
 	tag, err := image.BuildFromDir(
 		context.Background(), buildPath, "Dockerfile", "example:test",
 		image.WithBuildOptions(build.ImageBuildOptions{
 			Dockerfile: "Dockerfile",
 		}),
-		image.WithLogWriter(buf),
 	)
 	if err != nil {
 		log.Println("error building image", err)

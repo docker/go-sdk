@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log/slog"
 	"path"
 	"testing"
 
@@ -123,7 +124,12 @@ func TestBuildFromDir(t *testing.T) {
 func testBuild(tb testing.TB, b *testBuildInfo, opts ...image.BuildOption) {
 	tb.Helper()
 
-	cli, err := client.New(context.Background())
+	cliOpts := []client.ClientOption{}
+	if b.logWriter != nil {
+		cliOpts = append(cliOpts, client.WithLogger(slog.New(slog.NewTextHandler(b.logWriter, nil))))
+	}
+
+	cli, err := client.New(context.Background(), cliOpts...)
 	require.NoError(tb, err)
 	tb.Cleanup(func() {
 		require.NoError(tb, cli.Close())
@@ -141,10 +147,6 @@ func testBuild(tb testing.TB, b *testBuildInfo, opts ...image.BuildOption) {
 	}
 
 	opts = append(opts, image.WithBuildOptions(buildOpts))
-
-	if b.logWriter != nil {
-		opts = append(opts, image.WithLogWriter(b.logWriter))
-	}
 
 	tag, err := image.Build(context.Background(), b.contextArchive, b.imageTag, opts...)
 

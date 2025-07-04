@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"os"
 	"path/filepath"
 	"time"
 
@@ -87,7 +86,6 @@ func Build(ctx context.Context, contextReader io.Reader, tag string, opts ...Bui
 	}
 
 	buildOpts := &buildOptions{
-		logWriter: os.Stdout,
 		opts: build.ImageBuildOptions{
 			Dockerfile: "Dockerfile",
 		},
@@ -154,7 +152,8 @@ func Build(ctx context.Context, contextReader io.Reader, tag string, opts ...Bui
 	}
 	defer resp.Body.Close()
 
-	output := buildOpts.logWriter
+	// use the bridge to log to the client logger
+	output := &loggerWriter{logger: buildOpts.buildClient.Logger()}
 
 	// Always process the output, even if it is not printed
 	// to ensure that errors during the build process are

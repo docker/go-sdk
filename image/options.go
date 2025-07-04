@@ -1,8 +1,6 @@
 package image
 
 import (
-	"io"
-
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
 
 	"github.com/docker/docker/api/types/build"
@@ -14,7 +12,6 @@ type BuildOption func(*buildOptions) error
 
 type buildOptions struct {
 	buildClient ImageBuildClient
-	logWriter   io.Writer
 	opts        build.ImageBuildOptions
 }
 
@@ -22,14 +19,6 @@ type buildOptions struct {
 func WithBuildClient(buildClient ImageBuildClient) BuildOption {
 	return func(opts *buildOptions) error {
 		opts.buildClient = buildClient
-		return nil
-	}
-}
-
-// WithLogWriter sets the writer to write the build log to.
-func WithLogWriter(logWriter io.Writer) BuildOption {
-	return func(opts *buildOptions) error {
-		opts.logWriter = logWriter
 		return nil
 	}
 }
