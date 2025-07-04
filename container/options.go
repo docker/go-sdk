@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"maps"
 	"time"
 
 	"github.com/docker/docker/api/types/container"
@@ -66,10 +67,7 @@ func WithEnv(envs map[string]string) CustomizeDefinitionOption {
 			def.env = map[string]string{}
 		}
 
-		for key, val := range envs {
-			def.env[key] = val
-		}
-
+		maps.Copy(def.env, envs)
 		return nil
 	}
 }
@@ -337,9 +335,8 @@ func WithLabels(labels map[string]string) CustomizeDefinitionOption {
 		if def.labels == nil {
 			def.labels = make(map[string]string)
 		}
-		for k, v := range labels {
-			def.labels[k] = v
-		}
+
+		maps.Copy(def.labels, labels)
 		return nil
 	}
 }
