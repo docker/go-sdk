@@ -17,7 +17,7 @@ func ParseDockerIgnore(targetDir string) (bool, []string, error) {
 	f, openErr := os.Open(fileLocation)
 	if openErr != nil {
 		if !os.IsNotExist(openErr) {
-			return false, nil, fmt.Errorf("error opening .dockerignore: %w", openErr)
+			return false, nil, fmt.Errorf("open .dockerignore: %w", openErr)
 		}
 		return false, nil, nil
 	}
@@ -27,7 +27,7 @@ func ParseDockerIgnore(targetDir string) (bool, []string, error) {
 	var err error
 	excluded, err = ignorefile.ReadAll(f)
 	if err != nil {
-		return true, excluded, fmt.Errorf("error reading .dockerignore: %w", err)
+		return true, excluded, fmt.Errorf("read .dockerignore: %w", err)
 	}
 
 	return exists, excluded, nil
