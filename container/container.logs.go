@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"context"
 	"encoding/binary"
+	"errors"
 	"io"
 	"log/slog"
 
@@ -43,7 +44,7 @@ func (c *Container) Logs(ctx context.Context) (io.ReadCloser, error) {
 			// Read stream header
 			_, err := r.Read(header)
 			if err != nil {
-				if err != io.EOF {
+				if !errors.Is(err, io.EOF) {
 					pw.CloseWithError(err)
 				}
 				return
@@ -54,7 +55,7 @@ func (c *Container) Logs(ctx context.Context) (io.ReadCloser, error) {
 
 			// Copy frame data
 			if _, err := io.CopyN(pw, r, int64(frameSize)); err != nil {
-				if err != io.EOF {
+				if !errors.Is(err, io.EOF) {
 					pw.CloseWithError(err)
 				}
 				return
