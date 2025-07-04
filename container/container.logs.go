@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/binary"
 	"errors"
+	"fmt"
 	"io"
 	"log/slog"
 
@@ -37,8 +38,26 @@ func (c *Container) Logs(ctx context.Context) (io.ReadCloser, error) {
 	go func() {
 		defer rc.Close()
 
-		streamHeader := make([]byte, streamHeaderSize)
 		var closeErr error
+		defer func() {
+			if r := recover(); r != nil {
+				closeErr = fmt.Errorf("panic in log processing: %v", r)
+			}
+
+			if closeErr != nil && !errors.Is(closeErr, io.EOF) {
+				// Real error, close the pipe with the error
+				if err := pw.CloseWithError(closeErr); err != nil {
+					c.logger.Debug("failed to close pipe writer with error", "error", err, "original", closeErr)
+				}
+			} else {
+				// No error or EOF, close the pipe normally
+				if err := pw.Close(); err != nil {
+					c.logger.Debug("failed to close pipe writer", "error", err)
+				}
+			}
+		}()
+
+		streamHeader := make([]byte, streamHeaderSize)
 
 		for {
 			// Read complete stream header - ensures all 8 bytes are read
@@ -54,16 +73,6 @@ func (c *Container) Logs(ctx context.Context) (io.ReadCloser, error) {
 			if _, err := io.CopyN(pw, r, int64(frameSize)); err != nil {
 				closeErr = err
 				break
-			}
-		}
-
-		if closeErr != nil && !errors.Is(closeErr, io.EOF) {
-			if err := pw.Close(); err != nil {
-				c.logger.Debug("failed to close pipe writer", "error", err)
-			}
-		} else {
-			if err := pw.CloseWithError(closeErr); err != nil {
-				c.logger.Debug("failed to close pipe writer with error", "error", err, "original", closeErr)
 			}
 		}
 	}()
