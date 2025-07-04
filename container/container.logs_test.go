@@ -59,6 +59,35 @@ func TestContainer_Logs_shouldBeWithoutStreamHeader(t *testing.T) {
 	require.Equal(t, "abcdefghi\nfoo", strings.TrimSpace(string(b)))
 }
 
+func TestContainer_Logs_shouldStripHeadersFromStderr(t *testing.T) {
+	ctx := context.Background()
+	ctr, err := container.Run(ctx,
+		container.WithImage(alpineLatest),
+		container.WithCmd("sh", "-c", "echo 'stdout line' && echo 'stderr line' 1>&2"),
+		container.WithWaitStrategy(wait.ForExit()),
+	)
+	container.Cleanup(t, ctr)
+	require.NoError(t, err)
+
+	r, err := ctr.Logs(ctx)
+	require.NoError(t, err)
+	defer r.Close()
+
+	b, err := io.ReadAll(r)
+	require.NoError(t, err)
+
+	logs := strings.TrimSpace(string(b))
+
+	// Both stdout and stderr should be present without stream headers
+	require.Contains(t, logs, "stdout line")
+	require.Contains(t, logs, "stderr line")
+
+	// Verify no binary stream headers are present in the output
+	// Stream headers start with 0x01 (stdout) or 0x02 (stderr)
+	require.NotContains(t, logs, "\x01")
+	require.NotContains(t, logs, "\x02")
+}
+
 func TestContainer_Logs_printOnError(t *testing.T) {
 	ctx := context.Background()
 

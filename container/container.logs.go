@@ -57,6 +57,10 @@ func (c *Container) Logs(ctx context.Context) (io.ReadCloser, error) {
 			}
 		}()
 
+		// the Logs method processes the Docker stream format which includes:
+		// - Byte 0: Stream type (1 = stdout, 2 = stderr)
+		// - Bytes 1-3: Reserved
+		// - Bytes 4-7: Frame size (big-endian uint32)
 		streamHeader := make([]byte, streamHeaderSize)
 
 		for {
