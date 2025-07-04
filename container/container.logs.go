@@ -20,8 +20,6 @@ func (c *Container) Logger() *slog.Logger {
 // Logs will fetch both STDOUT and STDERR from the current container. Returns a
 // ReadCloser and leaves it up to the caller to extract what it wants.
 func (c *Container) Logs(ctx context.Context) (io.ReadCloser, error) {
-	const streamHeaderSize = 8
-
 	options := container.LogsOptions{
 		ShowStdout: true,
 		ShowStderr: true,
@@ -31,6 +29,26 @@ func (c *Container) Logs(ctx context.Context) (io.ReadCloser, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	// Check if the container has TTY enabled, to determine the log format
+	inspect, err := c.Inspect(ctx)
+	if err != nil {
+		rc.Close()
+		return nil, fmt.Errorf("inspect container: %w", err)
+	}
+
+	// If TTY is enabled, logs are not multiplexed - return them directly
+	if inspect.Config.Tty {
+		return rc, nil
+	}
+
+	// TTY is disabled, logs are multiplexed with stream headers - parse them
+	return c.parseMultiplexedLogs(rc), nil
+}
+
+// parseMultiplexedLogs handles the multiplexed log format used when TTY is disabled
+func (c *Container) parseMultiplexedLogs(rc io.ReadCloser) io.ReadCloser {
+	const streamHeaderSize = 8
 
 	pr, pw := io.Pipe()
 	r := bufio.NewReader(rc)
@@ -57,7 +75,7 @@ func (c *Container) Logs(ctx context.Context) (io.ReadCloser, error) {
 			}
 		}()
 
-		// the Logs method processes the Docker stream format which includes:
+		// Process the Docker multiplexed stream format which includes:
 		// - Byte 0: Stream type (1 = stdout, 2 = stderr)
 		// - Bytes 1-3: Reserved
 		// - Bytes 4-7: Frame size (big-endian uint32)
@@ -81,7 +99,7 @@ func (c *Container) Logs(ctx context.Context) (io.ReadCloser, error) {
 		}
 	}()
 
-	return pr, nil
+	return pr
 }
 
 // printLogs is a helper function that will print the logs of a Docker container

@@ -13,6 +13,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	dockercontainer "github.com/docker/docker/api/types/container"
 	"github.com/docker/go-sdk/client"
 	"github.com/docker/go-sdk/container"
 	"github.com/docker/go-sdk/container/wait"
@@ -136,4 +137,28 @@ func TestContainer_Logs_printOnError(t *testing.T) {
 		}
 		require.NoErrorf(t, err, "Read Error")
 	}
+}
+
+func TestContainer_Logs_TTYEnabled(t *testing.T) {
+	ctx := context.Background()
+	ctr, err := container.Run(ctx,
+		container.WithImage(alpineLatest),
+		container.WithCmd("sh", "-c", "echo 'tty output'"),
+		container.WithConfigModifier(func(cfg *dockercontainer.Config) {
+			cfg.Tty = true
+		}),
+		container.WithWaitStrategy(wait.ForExit()),
+	)
+	container.Cleanup(t, ctr)
+	require.NoError(t, err)
+
+	r, err := ctr.Logs(ctx)
+	require.NoError(t, err)
+	defer r.Close()
+
+	b, err := io.ReadAll(r)
+	require.NoError(t, err)
+
+	logs := strings.TrimSpace(string(b))
+	require.Contains(t, logs, "tty output")
 }
