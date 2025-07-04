@@ -34,17 +34,29 @@ func (c *Container) Logs(ctx context.Context) (io.ReadCloser, error) {
 	r := bufio.NewReader(rc)
 
 	go func() {
+		defer rc.Close()
+		defer pw.Close() // Close writer when done
+
 		header := make([]byte, streamHeaderSize)
-		for err == nil {
-			_, errH := r.Read(header)
-			if errH != nil {
-				_ = pw.CloseWithError(err)
+
+		for {
+			// Read stream header
+			_, err := r.Read(header)
+			if err != nil {
+				if err != io.EOF {
+					pw.CloseWithError(err)
+				}
 				return
 			}
 
+			// Extract frame size from header
 			frameSize := binary.BigEndian.Uint32(header[4:])
+
+			// Copy frame data
 			if _, err := io.CopyN(pw, r, int64(frameSize)); err != nil {
-				pw.CloseWithError(err)
+				if err != io.EOF {
+					pw.CloseWithError(err)
+				}
 				return
 			}
 		}
