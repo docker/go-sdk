@@ -197,7 +197,6 @@ func (c *Config) resolveFromCredentialHelper(helper, hostname string) (AuthConfi
 func (c *Config) processStoredAuthConfig(stored AuthConfig, hostname string) (AuthConfig, error) {
 	authConfig := AuthConfig{
 		Auth:          stored.Auth,
-		Email:         stored.Email,
 		IdentityToken: stored.IdentityToken,
 		Password:      stored.Password,
 		RegistryToken: stored.RegistryToken,
