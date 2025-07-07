@@ -1,6 +1,8 @@
 package config
 
 import (
+	"encoding/base64"
+	"encoding/json"
 	"fmt"
 )
 
@@ -32,4 +34,12 @@ func AuthConfigForHostname(hostname string) (AuthConfig, error) {
 	}
 
 	return cfg.AuthConfigForHostname(hostname)
+}
+
+func (authConfig AuthConfig) EncodeBase64() (string, error) {
+	jsonAuth, err := json.Marshal(authConfig)
+	if err != nil {
+		return "", err
+	}
+	return base64.StdEncoding.EncodeToString(jsonAuth), nil
 }
