@@ -44,5 +44,9 @@ func (f *errMockCli) Close() error {
 }
 
 func (f *errMockCli) Logger() *slog.Logger {
+	if f.logger == nil {
+		f.logger = slog.New(slog.NewTextHandler(io.Discard, nil))
+	}
+
 	return f.logger
 }
