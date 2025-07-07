@@ -11,12 +11,12 @@ func ExampleAuthConfigs() {
 	authConfigs, err := config.AuthConfigs("nginx:latest")
 	fmt.Println(err)
 	fmt.Println(len(authConfigs))
-	fmt.Println(authConfigs[auth.IndexDockerIO].Username != "")
+	fmt.Println(authConfigs[auth.DockerRegistry].ServerAddress)
 
 	// Output:
 	// <nil>
 	// 1
-	// true
+	// docker.io
 }
 
 func ExampleAuthConfigForHostname() {
