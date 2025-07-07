@@ -48,15 +48,15 @@ func Pull(ctx context.Context, imageName string, opts ...PullOption) error {
 		return errors.New("image name is not set")
 	}
 
-	ref, err := auth.ParseImageRef(imageName)
-	if err != nil {
-		return fmt.Errorf("parse image ref: %w", err)
-	}
-
 	authConfigs, err := config.AuthConfigs(imageName)
 	if err != nil {
 		pullOpts.pullClient.Logger().Warn("failed to get image auth, setting empty credentials for the image", "image", imageName, "error", err)
 	} else {
+		ref, err := auth.ParseImageRef(imageName)
+		if err != nil {
+			return fmt.Errorf("parse image ref: %w", err)
+		}
+
 		creds, ok := authConfigs[ref.Registry]
 		if !ok {
 			pullOpts.pullClient.Logger().Warn("no image auth found for image, setting empty credentials for the image. This is expected for public images", "image", imageName)
