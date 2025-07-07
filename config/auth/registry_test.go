@@ -25,54 +25,59 @@ func TestParseImageRef(t *testing.T) {
 	t.Run("numbers", func(t *testing.T) {
 		ref, err := auth.ParseImageRef("1234567890")
 		require.NoError(t, err)
-		require.Equal(t, auth.IndexDockerIO, ref.Registry)
-		require.Equal(t, "1234567890", ref.Repository)
+		require.Equal(t, auth.DockerRegistry, ref.Registry)
+		require.Equal(t, "library/1234567890", ref.Repository)
 		require.Empty(t, ref.Tag)
 		require.Empty(t, ref.Digest)
 	})
 
 	t.Run("malformed-image", func(t *testing.T) {
 		ref, err := auth.ParseImageRef("--malformed--")
-		require.NoError(t, err)
-		require.Equal(t, auth.IndexDockerIO, ref.Registry)
-		require.Equal(t, "--malformed--", ref.Repository)
-		require.Empty(t, ref.Tag)
-		require.Empty(t, ref.Digest)
+		require.Error(t, err)
+		require.Empty(t, ref)
+	})
+
+	t.Run("protocol-registry", func(t *testing.T) {
+		ref, err := auth.ParseImageRef("http://docker.io/library/nginx")
+		require.Error(t, err)
+		require.Empty(t, ref)
 	})
 
 	suiteParseImageRefFn := func(t *testing.T, testRegistry string) {
 		t.Helper()
 
 		expectedRegistry := testRegistry
+		expectedRepositoryPrefix := ""
 		if testRegistry != "" {
 			testRegistry += "/"
 		} else {
-			expectedRegistry = auth.IndexDockerIO
+			expectedRepositoryPrefix = "library/"
+			expectedRegistry = auth.DockerRegistry
 		}
 
 		t.Run("image", func(t *testing.T) {
 			ref, err := auth.ParseImageRef(testRegistry + "nginx")
 			require.NoError(t, err)
 			require.Equal(t, expectedRegistry, ref.Registry)
-			require.Equal(t, "nginx", ref.Repository)
+			require.Equal(t, expectedRepositoryPrefix+"nginx", ref.Repository)
 			require.Empty(t, ref.Tag)
 			require.Empty(t, ref.Digest)
 		})
 
 		t.Run("image@256digest", func(t *testing.T) {
-			ref, err := auth.ParseImageRef(testRegistry + "nginx@" + testDigest256)
+			ref, err := auth.ParseImageRef(testRegistry + "nginx@" + string(testDigest256))
 			require.NoError(t, err)
 			require.Equal(t, expectedRegistry, ref.Registry)
-			require.Equal(t, "nginx", ref.Repository)
+			require.Equal(t, expectedRepositoryPrefix+"nginx", ref.Repository)
 			require.Empty(t, ref.Tag)
 			require.Equal(t, testDigest256, ref.Digest)
 		})
 
 		t.Run("image@512digest", func(t *testing.T) {
-			ref, err := auth.ParseImageRef(testRegistry + "nginx@" + testDigest512)
+			ref, err := auth.ParseImageRef(testRegistry + "nginx@" + string(testDigest512))
 			require.NoError(t, err)
 			require.Equal(t, expectedRegistry, ref.Registry)
-			require.Equal(t, "nginx", ref.Repository)
+			require.Equal(t, expectedRepositoryPrefix+"nginx", ref.Repository)
 			require.Empty(t, ref.Tag)
 			require.Equal(t, testDigest512, ref.Digest)
 		})
@@ -81,25 +86,25 @@ func TestParseImageRef(t *testing.T) {
 			ref, err := auth.ParseImageRef(testRegistry + "nginx:latest")
 			require.NoError(t, err)
 			require.Equal(t, expectedRegistry, ref.Registry)
-			require.Equal(t, "nginx", ref.Repository)
+			require.Equal(t, expectedRepositoryPrefix+"nginx", ref.Repository)
 			require.Equal(t, "latest", ref.Tag)
 			require.Empty(t, ref.Digest)
 		})
 
 		t.Run("image:tag@256digest", func(t *testing.T) {
-			ref, err := auth.ParseImageRef(testRegistry + "nginx:latest@" + testDigest256)
+			ref, err := auth.ParseImageRef(testRegistry + "nginx:latest@" + string(testDigest256))
 			require.NoError(t, err)
 			require.Equal(t, expectedRegistry, ref.Registry)
-			require.Equal(t, "nginx", ref.Repository)
+			require.Equal(t, expectedRepositoryPrefix+"nginx", ref.Repository)
 			require.Equal(t, "latest", ref.Tag)
 			require.Equal(t, testDigest256, ref.Digest)
 		})
 
 		t.Run("image:tag@512digest", func(t *testing.T) {
-			ref, err := auth.ParseImageRef(testRegistry + "nginx:latest@" + testDigest512)
+			ref, err := auth.ParseImageRef(testRegistry + "nginx:latest@" + string(testDigest512))
 			require.NoError(t, err)
 			require.Equal(t, expectedRegistry, ref.Registry)
-			require.Equal(t, "nginx", ref.Repository)
+			require.Equal(t, expectedRepositoryPrefix+"nginx", ref.Repository)
 			require.Equal(t, "latest", ref.Tag)
 			require.Equal(t, testDigest512, ref.Digest)
 		})
@@ -114,7 +119,7 @@ func TestParseImageRef(t *testing.T) {
 		})
 
 		t.Run("repository/image@256digest", func(t *testing.T) {
-			ref, err := auth.ParseImageRef(testRegistry + "testcontainers/ryuk@" + testDigest256)
+			ref, err := auth.ParseImageRef(testRegistry + "testcontainers/ryuk@" + string(testDigest256))
 			require.NoError(t, err)
 			require.Equal(t, expectedRegistry, ref.Registry)
 			require.Equal(t, "testcontainers/ryuk", ref.Repository)
@@ -123,7 +128,7 @@ func TestParseImageRef(t *testing.T) {
 		})
 
 		t.Run("repository/image@512digest", func(t *testing.T) {
-			ref, err := auth.ParseImageRef(testRegistry + "testcontainers/ryuk@" + testDigest512)
+			ref, err := auth.ParseImageRef(testRegistry + "testcontainers/ryuk@" + string(testDigest512))
 			require.NoError(t, err)
 			require.Equal(t, expectedRegistry, ref.Registry)
 			require.Equal(t, "testcontainers/ryuk", ref.Repository)
@@ -141,7 +146,7 @@ func TestParseImageRef(t *testing.T) {
 		})
 
 		t.Run("repository/image:tag@256digest", func(t *testing.T) {
-			ref, err := auth.ParseImageRef(testRegistry + "testcontainers/ryuk:latest@" + testDigest256)
+			ref, err := auth.ParseImageRef(testRegistry + "testcontainers/ryuk:latest@" + string(testDigest256))
 			require.NoError(t, err)
 			require.Equal(t, expectedRegistry, ref.Registry)
 			require.Equal(t, "testcontainers/ryuk", ref.Repository)
@@ -150,13 +155,13 @@ func TestParseImageRef(t *testing.T) {
 		})
 
 		t.Run("repository/image:tag@wrong-256digest", func(t *testing.T) {
-			ref, err := auth.ParseImageRef(testRegistry + "testcontainers/ryuk:latest@" + wrongDigest256)
+			ref, err := auth.ParseImageRef(testRegistry + "testcontainers/ryuk:latest@" + string(wrongDigest256))
 			require.Error(t, err)
 			require.Empty(t, ref)
 		})
 
 		t.Run("repository/image:tag@512digest", func(t *testing.T) {
-			ref, err := auth.ParseImageRef(testRegistry + "testcontainers/ryuk:latest@" + testDigest512)
+			ref, err := auth.ParseImageRef(testRegistry + "testcontainers/ryuk:latest@" + string(testDigest512))
 			require.NoError(t, err)
 			require.Equal(t, expectedRegistry, ref.Registry)
 			require.Equal(t, "testcontainers/ryuk", ref.Repository)
@@ -165,7 +170,7 @@ func TestParseImageRef(t *testing.T) {
 		})
 
 		t.Run("repository/image:tag@wrong-512digest", func(t *testing.T) {
-			ref, err := auth.ParseImageRef(testRegistry + "testcontainers/ryuk:latest@" + wrongDigest512)
+			ref, err := auth.ParseImageRef(testRegistry + "testcontainers/ryuk:latest@" + string(wrongDigest512))
 			require.Error(t, err)
 			require.Empty(t, ref)
 		})
@@ -177,17 +182,14 @@ func TestParseImageRef(t *testing.T) {
 
 	t.Run("localhost-registry/port", func(t *testing.T) {
 		suiteParseImageRefFn(t, "localhost:5000")
-		suiteParseImageRefFn(t, "http://localhost:5000")
 	})
 
 	t.Run("host-registry/port", func(t *testing.T) {
 		suiteParseImageRefFn(t, "server.internal:5000")
-		suiteParseImageRefFn(t, "http://server.internal:5000")
 	})
 
 	t.Run("ip-registry/port", func(t *testing.T) {
 		suiteParseImageRefFn(t, "127.0.0.1:5000")
-		suiteParseImageRefFn(t, "http://127.0.0.1:5000")
 	})
 
 	t.Run("dns-registry", func(t *testing.T) {
