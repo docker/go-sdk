@@ -46,7 +46,7 @@ func (c CustomHubSubstitutor) Substitute(image string) (string, error) {
 
 	exclusions := []func() bool{
 		func() bool { return c.hub == "" },
-		func() bool { return registry != auth.IndexDockerIO },
+		func() bool { return registry != auth.DockerRegistry },
 	}
 
 	for _, exclusion := range exclusions {
@@ -96,8 +96,8 @@ func (p prependHubRegistry) Substitute(image string) (string, error) {
 
 	// add the exclusions in the right order
 	exclusions := []func() bool{
-		func() bool { return p.prefix == "" },                 // no prefix set at the configuration level
-		func() bool { return registry != auth.IndexDockerIO }, // explicitly including Docker's URLs
+		func() bool { return p.prefix == "" },                  // no prefix set at the configuration level
+		func() bool { return registry != auth.DockerRegistry }, // explicitly including Docker's URLs
 	}
 
 	for _, exclusion := range exclusions {
