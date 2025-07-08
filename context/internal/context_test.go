@@ -77,18 +77,60 @@ func TestInspect(t *testing.T) {
 		require.ErrorIs(tt, err, ErrDockerContextNotFound)
 		require.Empty(tt, ctx)
 	})
+
+	t.Run("inspect/with-fields", func(tt *testing.T) {
+		// Create a dockerContext and set additional fields using the new methods
+		dockerCtx := &dockerContext{
+			Description: "ctx with fields",
+		}
+		dockerCtx.SetField("otel", map[string]any{
+			"OTEL_EXPORTER_OTLP_ENDPOINT": "unix:///Users/mdelapenya/.docker/cloud/daemon.grpc.sock",
+			"OTEL_EXPORTER_OTLP_PROTOCOL": "grpc",
+		})
+
+		setupTestContext(t, tmpDir, "fields", metadata{
+			Name:    "ctx-with-fields",
+			Context: dockerCtx,
+			Endpoints: map[string]*endpoint{
+				"docker": {
+					Host: "tcp://localhost:2375",
+				},
+			},
+		})
+
+		ctx, err := Inspect("ctx-with-fields", tmpDir)
+		require.NoError(tt, err)
+		require.Equal(tt, "ctx-with-fields", ctx.Name)
+		require.Equal(tt, "ctx with fields", ctx.Context.Description)
+		require.Equal(tt, "tcp://localhost:2375", ctx.Endpoints["docker"].Host)
+		require.False(tt, ctx.Endpoints["docker"].SkipTLSVerify)
+
+		// Verify additional fields are accessible
+		otelValue, exists := ctx.Context.Field("otel")
+		require.True(tt, exists)
+		require.NotNil(tt, otelValue)
+
+		// Verify the structure of the otel field
+		otelMap, ok := otelValue.(map[string]any)
+		require.True(tt, ok)
+		require.Equal(tt, "unix:///Users/mdelapenya/.docker/cloud/daemon.grpc.sock", otelMap["OTEL_EXPORTER_OTLP_ENDPOINT"])
+		require.Equal(tt, "grpc", otelMap["OTEL_EXPORTER_OTLP_PROTOCOL"])
+	})
 }
 
 func TestList(t *testing.T) {
 	t.Run("list/1", func(tt *testing.T) {
 		tmpDir := t.TempDir()
 
+		// Create a dockerContext and set additional fields using the new methods
+		dockerCtx := &dockerContext{
+			Description: "test context",
+		}
+		dockerCtx.SetField("test", true)
+
 		want := metadata{
-			Name: "test",
-			Context: &dockerContext{
-				Description: "test context",
-				Fields:      map[string]any{"test": true},
-			},
+			Name:    "test",
+			Context: dockerCtx,
 			Endpoints: map[string]*endpoint{
 				"docker": {
 					Host:          "tcp://localhost:2375",
@@ -110,12 +152,15 @@ func TestStore_load(t *testing.T) {
 		tmpDir := t.TempDir()
 		s := &store{root: tmpDir}
 
+		// Create a dockerContext and set additional fields using the new methods
+		dockerCtx := &dockerContext{
+			Description: "test context",
+		}
+		dockerCtx.SetField("test", true)
+
 		want := metadata{
-			Name: "test",
-			Context: &dockerContext{
-				Description: "test context",
-				Fields:      map[string]any{"test": true},
-			},
+			Name:    "test",
+			Context: dockerCtx,
 			Endpoints: map[string]*endpoint{
 				"docker": {
 					Host:          "tcp://localhost:2375",
@@ -131,7 +176,13 @@ func TestStore_load(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, want.Name, got.Name)
 		require.Equal(t, want.Context.Description, got.Context.Description)
-		require.Equal(t, want.Context.Fields, got.Context.Fields)
+
+		// Verify additional fields
+		wantTestField, _ := want.Context.Field("test")
+		gotTestField, exists := got.Context.Field("test")
+		require.True(t, exists)
+		require.Equal(t, wantTestField, gotTestField)
+
 		require.Equal(t, want.Endpoints["docker"].Host, got.Endpoints["docker"].Host)
 		require.Equal(t, want.Endpoints["docker"].SkipTLSVerify, got.Endpoints["docker"].SkipTLSVerify)
 	})
@@ -440,6 +491,130 @@ func TestStore_list(t *testing.T) {
 		require.Len(t, list, 1)
 		require.Empty(t, list[0].Name)
 		require.Empty(t, list[0].Endpoints)
+	})
+}
+
+func TestDockerContext_JSON_Marshaling(t *testing.T) {
+	t.Run("marshal-with-additional-fields", func(t *testing.T) {
+		// Create a dockerContext with additional fields
+		dockerCtx := &dockerContext{
+			Description: "test context with fields",
+		}
+		dockerCtx.SetField("otel", map[string]any{
+			"OTEL_EXPORTER_OTLP_ENDPOINT": "unix:///socket.sock",
+			"OTEL_EXPORTER_OTLP_PROTOCOL": "grpc",
+		})
+		dockerCtx.SetField("cloud.docker.com", map[string]any{
+			"accountName": "test-account",
+		})
+
+		// Marshal to JSON
+		data, err := json.Marshal(dockerCtx)
+		require.NoError(t, err)
+
+		// Verify the JSON structure - additional fields should be at the same level as Description
+		var result map[string]any
+		err = json.Unmarshal(data, &result)
+		require.NoError(t, err)
+
+		// Description should be at the top level
+		require.Equal(t, "test context with fields", result["Description"])
+
+		// Additional fields should be at the same level, not nested under "Fields"
+		require.Contains(t, result, "otel")
+		require.Contains(t, result, "cloud.docker.com")
+		require.NotContains(t, result, "Fields") // Should NOT have a Fields key
+
+		// Verify otel structure
+		otelValue, ok := result["otel"].(map[string]any)
+		require.True(t, ok)
+		require.Equal(t, "unix:///socket.sock", otelValue["OTEL_EXPORTER_OTLP_ENDPOINT"])
+		require.Equal(t, "grpc", otelValue["OTEL_EXPORTER_OTLP_PROTOCOL"])
+
+		// Verify cloud.docker.com structure
+		cloudValue, ok := result["cloud.docker.com"].(map[string]any)
+		require.True(t, ok)
+		require.Equal(t, "test-account", cloudValue["accountName"])
+	})
+
+	t.Run("unmarshal-with-additional-fields", func(t *testing.T) {
+		// JSON data with additional fields at the same level as Description
+		jsonData := `{
+			"Description": "test context",
+			"otel": {
+				"OTEL_EXPORTER_OTLP_ENDPOINT": "unix:///socket.sock",
+				"OTEL_EXPORTER_OTLP_PROTOCOL": "grpc"
+			},
+			"cloud.docker.com": {
+				"accountName": "test-account"
+			}
+		}`
+
+		var dockerCtx dockerContext
+		err := json.Unmarshal([]byte(jsonData), &dockerCtx)
+		require.NoError(t, err)
+
+		// Verify Description
+		require.Equal(t, "test context", dockerCtx.Description)
+
+		fields := dockerCtx.Fields()
+		require.Len(t, fields, 2)
+		require.Contains(t, fields, "otel")
+		require.Contains(t, fields, "cloud.docker.com")
+
+		// description is not a field, it's a top-level field
+		description, exists := dockerCtx.Field("Description")
+		require.False(t, exists)
+		require.Empty(t, description)
+
+		// Verify additional fields
+		otelValue, exists := dockerCtx.Field("otel")
+		require.True(t, exists)
+		otelMap, ok := otelValue.(map[string]any)
+		require.True(t, ok)
+		require.Equal(t, "unix:///socket.sock", otelMap["OTEL_EXPORTER_OTLP_ENDPOINT"])
+		require.Equal(t, "grpc", otelMap["OTEL_EXPORTER_OTLP_PROTOCOL"])
+
+		cloudValue, exists := dockerCtx.Field("cloud.docker.com")
+		require.True(t, exists)
+		cloudMap, ok := cloudValue.(map[string]any)
+		require.True(t, ok)
+		require.Equal(t, "test-account", cloudMap["accountName"])
+	})
+
+	t.Run("marshal-unmarshal-roundtrip", func(t *testing.T) {
+		// Create original dockerContext
+		original := &dockerContext{
+			Description: "roundtrip test",
+		}
+		original.SetField("custom", "value")
+		original.SetField("complex", map[string]any{
+			"nested": true,
+			"count":  42,
+		})
+
+		// Marshal to JSON
+		data, err := json.Marshal(original)
+		require.NoError(t, err)
+
+		// Unmarshal back
+		var restored dockerContext
+		err = json.Unmarshal(data, &restored)
+		require.NoError(t, err)
+
+		// Verify everything matches
+		require.Equal(t, original.Description, restored.Description)
+
+		customValue, exists := restored.Field("custom")
+		require.True(t, exists)
+		require.Equal(t, "value", customValue)
+
+		complexValue, exists := restored.Field("complex")
+		require.True(t, exists)
+		complexMap, ok := complexValue.(map[string]any)
+		require.True(t, ok)
+		require.Equal(t, true, complexMap["nested"])
+		require.Equal(t, float64(42), complexMap["count"]) // JSON numbers are float64
 	})
 }
 

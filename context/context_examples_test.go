@@ -52,11 +52,15 @@ func ExampleList() {
 }
 
 func ExampleInspect() {
-	_, err := context.Inspect("desktop-linux")
+	ctx, err := context.Inspect("docker-cloud")
 	if err != nil {
 		log.Printf("error inspecting context: %s", err)
 		return
 	}
+
+	fmt.Println(ctx.Context.Description)
+	fmt.Println(ctx.Context.Field("otel"))
+	fmt.Println(ctx.Context.Fields())
 
 	// Intentionally not printing the output, as the context could not exist in the CI environment
 }

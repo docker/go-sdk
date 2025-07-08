@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"maps"
 	"os"
 	"path/filepath"
 )
@@ -18,11 +19,81 @@ type Context struct {
 // dockerContext represents the metadata stored for a context
 type dockerContext struct {
 	// Description is the description of the context
-	Description string
+	Description string `json:"Description,omitempty"`
 
-	// Fields is the additional fields of the context, holding any additional
-	// fields that are not part of the standard metadata.
-	Fields map[string]any
+	// additionalFields holds any additional fields that are not part of the standard metadata.
+	// These are marshaled/unmarshaled at the same level as Description, not nested under a "Fields" key.
+	additionalFields map[string]any
+}
+
+// MarshalJSON implements custom JSON marshaling for dockerContext
+func (dc *dockerContext) MarshalJSON() ([]byte, error) {
+	// Create a map with all fields at the same level
+	result := make(map[string]any)
+
+	// Add Description if not empty
+	if dc.Description != "" {
+		result["Description"] = dc.Description
+	}
+
+	// Add all additional fields at the same level
+	for key, value := range dc.additionalFields {
+		result[key] = value
+	}
+
+	return json.Marshal(result)
+}
+
+// UnmarshalJSON implements custom JSON unmarshaling for dockerContext
+func (dc *dockerContext) UnmarshalJSON(data []byte) error {
+	// First unmarshal into a generic map
+	var raw map[string]any
+	if err := json.Unmarshal(data, &raw); err != nil {
+		return err
+	}
+
+	// Extract known fields
+	if desc, ok := raw["Description"]; ok {
+		if descStr, ok := desc.(string); ok {
+			dc.Description = descStr
+		}
+		delete(raw, "Description")
+	}
+
+	// Store remaining fields as additional fields
+	dc.additionalFields = raw
+
+	return nil
+}
+
+// Field returns the value of an additional field
+func (dc *dockerContext) Field(key string) (any, bool) {
+	if dc.additionalFields == nil {
+		return nil, false
+	}
+	value, exists := dc.additionalFields[key]
+	return value, exists
+}
+
+// SetField sets the value of an additional field
+func (dc *dockerContext) SetField(key string, value any) {
+	if dc.additionalFields == nil {
+		dc.additionalFields = make(map[string]any)
+	}
+	dc.additionalFields[key] = value
+}
+
+// Fields returns a copy of all additional fields
+func (dc *dockerContext) Fields() map[string]any {
+	if dc.additionalFields == nil {
+		return make(map[string]any)
+	}
+	// Return a copy to prevent external modification
+	result := make(map[string]any, len(dc.additionalFields))
+
+	maps.Copy(result, dc.additionalFields)
+
+	return result
 }
 
 // endpoint represents a Docker endpoint configuration
