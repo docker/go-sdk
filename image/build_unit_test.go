@@ -52,19 +52,19 @@ func TestBuild_withRetries(t *testing.T) {
 		testBuild(t, nil, false)
 	})
 
-	t.Run("resource-not-found/no-retry", func(t *testing.T) {
+	t.Run("not-available/no-retry", func(t *testing.T) {
 		testBuild(t, errdefs.ErrNotFound.WithMessage("not available"), false)
 	})
 
-	t.Run("parameters-invalid/no-retry", func(t *testing.T) {
+	t.Run("invalid-parameters/no-retry", func(t *testing.T) {
 		testBuild(t, errdefs.ErrInvalidArgument.WithMessage("invalid"), false)
 	})
 
-	t.Run("access-not-authorized/no-retry", func(t *testing.T) {
+	t.Run("unauthorized/no-retry", func(t *testing.T) {
 		testBuild(t, errdefs.ErrUnauthenticated.WithMessage("not authorized"), false)
 	})
 
-	t.Run("access-forbidden/no-retry", func(t *testing.T) {
+	t.Run("forbidden/no-retry", func(t *testing.T) {
 		testBuild(t, errdefs.ErrPermissionDenied.WithMessage("forbidden"), false)
 	})
 
