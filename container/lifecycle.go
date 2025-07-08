@@ -61,6 +61,12 @@ type ContainerWaiter interface {
 	WaitingFor() wait.Strategy
 }
 
+// ContainerStateManager is an optional capability interface that can be used to manage the state of the container.
+type ContainerStateManager interface {
+	IsRunning() bool
+	Running(b bool)
+}
+
 // ContainerHook is a hook that is called after a container is created
 // It can be used to modify the state of the container after it is created,
 // using the different lifecycle hooks that are available:

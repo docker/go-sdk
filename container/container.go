@@ -59,6 +59,16 @@ func (c *Container) ShortID() string {
 	return c.shortID
 }
 
+// IsRunning returns the running state of the container.
+func (c *Container) IsRunning() bool {
+	return c.isRunning
+}
+
+// Running sets the running state of the container.
+func (c *Container) Running(b bool) {
+	c.isRunning = b
+}
+
 // WaitingFor returns the waiting strategy used by the container.
 func (c *Container) WaitingFor() wait.Strategy {
 	return c.waitingFor

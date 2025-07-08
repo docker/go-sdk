@@ -102,12 +102,9 @@ var defaultReadinessHook = func() LifecycleHooks {
 					}
 				}
 
-				ctr, ok := c.(*Container)
-				if !ok {
-					return errors.New("container is not a Container")
+				if stateManager, ok := c.(ContainerStateManager); ok {
+					stateManager.Running(true)
 				}
-
-				ctr.isRunning = true
 
 				return nil
 			},
