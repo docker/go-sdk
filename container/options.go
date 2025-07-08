@@ -193,25 +193,13 @@ type Executable interface {
 // is started.
 func WithStartupCommand(execs ...Executable) CustomizeDefinitionOption {
 	return func(def *Definition) error {
-		startupCommandsHook := LifecycleHooks{
-			PostStarts: []ContainerHook{},
-		}
-
-		for _, exec := range execs {
-			execFn := func(ctx context.Context, c ContainerInfo) error {
-				if executor, ok := c.(ContainerExecutor); ok {
-					_, _, err := executor.Exec(ctx, exec.AsCommand(), exec.Options()...)
-					return err
-				}
-
-				return errors.New("container does not support execution")
+		startupCommandsHook := createExecutableHooks(execs, func(hooks []ContainerHook) LifecycleHooks {
+			return LifecycleHooks{
+				PostStarts: hooks,
 			}
-
-			startupCommandsHook.PostStarts = append(startupCommandsHook.PostStarts, execFn)
-		}
+		})
 
 		def.lifecycleHooks = append(def.lifecycleHooks, startupCommandsHook)
-
 		return nil
 	}
 }
@@ -221,27 +209,34 @@ func WithStartupCommand(execs ...Executable) CustomizeDefinitionOption {
 // is ready.
 func WithAfterReadyCommand(execs ...Executable) CustomizeDefinitionOption {
 	return func(def *Definition) error {
-		postReadiesHook := []ContainerHook{}
-
-		for _, exec := range execs {
-			execFn := func(ctx context.Context, c ContainerInfo) error {
-				if executor, ok := c.(ContainerExecutor); ok {
-					_, _, err := executor.Exec(ctx, exec.AsCommand(), exec.Options()...)
-					return err
-				}
-
-				return errors.New("container does not support execution")
+		postReadiesHook := createExecutableHooks(execs, func(hooks []ContainerHook) LifecycleHooks {
+			return LifecycleHooks{
+				PostReadies: hooks,
 			}
-
-			postReadiesHook = append(postReadiesHook, execFn)
-		}
-
-		def.lifecycleHooks = append(def.lifecycleHooks, LifecycleHooks{
-			PostReadies: postReadiesHook,
 		})
 
+		def.lifecycleHooks = append(def.lifecycleHooks, postReadiesHook)
 		return nil
 	}
+}
+
+// createExecutableHooks creates lifecycle hooks for a slice of executables
+// hookCreator is a function that creates the appropriate LifecycleHooks with the provided ContainerHook slice
+func createExecutableHooks(execs []Executable, hookCreator func([]ContainerHook) LifecycleHooks) LifecycleHooks {
+	hooks := make([]ContainerHook, 0, len(execs))
+
+	for _, exec := range execs {
+		execFn := func(ctx context.Context, c ContainerInfo) error {
+			if executor, ok := c.(ContainerExecutor); ok {
+				_, _, err := executor.Exec(ctx, exec.AsCommand(), exec.Options()...)
+				return err
+			}
+			return errors.New("container does not support execution")
+		}
+		hooks = append(hooks, execFn)
+	}
+
+	return hookCreator(hooks)
 }
 
 // WithWaitStrategy replaces the wait strategy for a container, using 60 seconds as deadline
