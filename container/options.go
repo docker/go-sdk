@@ -198,9 +198,13 @@ func WithStartupCommand(execs ...Executable) CustomizeDefinitionOption {
 		}
 
 		for _, exec := range execs {
-			execFn := func(ctx context.Context, c *Container) error {
-				_, _, err := c.Exec(ctx, exec.AsCommand(), exec.Options()...)
-				return err
+			execFn := func(ctx context.Context, c ContainerInfo) error {
+				if executor, ok := c.(ContainerExecutor); ok {
+					_, _, err := executor.Exec(ctx, exec.AsCommand(), exec.Options()...)
+					return err
+				}
+
+				return errors.New("container does not support execution")
 			}
 
 			startupCommandsHook.PostStarts = append(startupCommandsHook.PostStarts, execFn)
@@ -220,9 +224,13 @@ func WithAfterReadyCommand(execs ...Executable) CustomizeDefinitionOption {
 		postReadiesHook := []ContainerHook{}
 
 		for _, exec := range execs {
-			execFn := func(ctx context.Context, c *Container) error {
-				_, _, err := c.Exec(ctx, exec.AsCommand(), exec.Options()...)
-				return err
+			execFn := func(ctx context.Context, c ContainerInfo) error {
+				if executor, ok := c.(ContainerExecutor); ok {
+					_, _, err := executor.Exec(ctx, exec.AsCommand(), exec.Options()...)
+					return err
+				}
+
+				return errors.New("container does not support execution")
 			}
 
 			postReadiesHook = append(postReadiesHook, execFn)

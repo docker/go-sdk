@@ -59,6 +59,11 @@ func (c *Container) ShortID() string {
 	return c.shortID
 }
 
+// WaitingFor returns the waiting strategy used by the container.
+func (c *Container) WaitingFor() wait.Strategy {
+	return c.waitingFor
+}
+
 // Host gets host (ip or name) of the docker daemon where the container port is exposed
 // Warning: this is based on your Docker host setting. Will fail if using an SSH tunnel
 func (c *Container) Host(ctx context.Context) (string, error) {

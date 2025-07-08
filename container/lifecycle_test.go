@@ -18,16 +18,16 @@ func TestCombineLifecycleHooks(t *testing.T) {
 			return nil
 		}
 	}
-	hookFunc := func(prefix string, hookType string, hook string, lifecycleID int, hookID int) func(_ context.Context, _ *Container) error {
-		return func(_ context.Context, _ *Container) error {
+	hookFunc := func(prefix string, hookType string, hook string, lifecycleID int, hookID int) func(_ context.Context, _ ContainerInfo) error {
+		return func(_ context.Context, _ ContainerInfo) error {
 			prints = append(prints, fmt.Sprintf("[%s] %s-%s hook %d.%d", prefix, hookType, hook, lifecycleID, hookID))
 			return nil
 		}
 	}
-	preFunc := func(prefix string, hook string, lifecycleID int, hookID int) func(_ context.Context, _ *Container) error {
+	preFunc := func(prefix string, hook string, lifecycleID int, hookID int) func(_ context.Context, _ ContainerInfo) error {
 		return hookFunc(prefix, "pre", hook, lifecycleID, hookID)
 	}
-	postFunc := func(prefix string, hook string, lifecycleID int, hookID int) func(_ context.Context, _ *Container) error {
+	postFunc := func(prefix string, hook string, lifecycleID int, hookID int) func(_ context.Context, _ ContainerInfo) error {
 		return hookFunc(prefix, "post", hook, lifecycleID, hookID)
 	}
 
@@ -162,81 +162,81 @@ func TestLifecycleHooks(t *testing.T) {
 				},
 			},
 			PostCreates: []ContainerHook{
-				func(_ context.Context, _ *Container) error {
+				func(_ context.Context, _ ContainerInfo) error {
 					prints = append(prints, "post-create hook 1")
 					return nil
 				},
-				func(_ context.Context, _ *Container) error {
+				func(_ context.Context, _ ContainerInfo) error {
 					prints = append(prints, "post-create hook 2")
 					return nil
 				},
 			},
 			PreStarts: []ContainerHook{
-				func(_ context.Context, _ *Container) error {
+				func(_ context.Context, _ ContainerInfo) error {
 					prints = append(prints, "pre-start hook 1")
 					return nil
 				},
-				func(_ context.Context, _ *Container) error {
+				func(_ context.Context, _ ContainerInfo) error {
 					prints = append(prints, "pre-start hook 2")
 					return nil
 				},
 			},
 			PostStarts: []ContainerHook{
-				func(_ context.Context, _ *Container) error {
+				func(_ context.Context, _ ContainerInfo) error {
 					prints = append(prints, "post-start hook 1")
 					return nil
 				},
-				func(_ context.Context, _ *Container) error {
+				func(_ context.Context, _ ContainerInfo) error {
 					prints = append(prints, "post-start hook 2")
 					return nil
 				},
 			},
 			PostReadies: []ContainerHook{
-				func(_ context.Context, _ *Container) error {
+				func(_ context.Context, _ ContainerInfo) error {
 					prints = append(prints, "post-ready hook 1")
 					return nil
 				},
-				func(_ context.Context, _ *Container) error {
+				func(_ context.Context, _ ContainerInfo) error {
 					prints = append(prints, "post-ready hook 2")
 					return nil
 				},
 			},
 			PreStops: []ContainerHook{
-				func(_ context.Context, _ *Container) error {
+				func(_ context.Context, _ ContainerInfo) error {
 					prints = append(prints, "pre-stop hook 1")
 					return nil
 				},
-				func(_ context.Context, _ *Container) error {
+				func(_ context.Context, _ ContainerInfo) error {
 					prints = append(prints, "pre-stop hook 2")
 					return nil
 				},
 			},
 			PostStops: []ContainerHook{
-				func(_ context.Context, _ *Container) error {
+				func(_ context.Context, _ ContainerInfo) error {
 					prints = append(prints, "post-stop hook 1")
 					return nil
 				},
-				func(_ context.Context, _ *Container) error {
+				func(_ context.Context, _ ContainerInfo) error {
 					prints = append(prints, "post-stop hook 2")
 					return nil
 				},
 			},
 			PreTerminates: []ContainerHook{
-				func(_ context.Context, _ *Container) error {
+				func(_ context.Context, _ ContainerInfo) error {
 					prints = append(prints, "pre-terminate hook 1")
 					return nil
 				},
-				func(_ context.Context, _ *Container) error {
+				func(_ context.Context, _ ContainerInfo) error {
 					prints = append(prints, "pre-terminate hook 2")
 					return nil
 				},
 			},
 			PostTerminates: []ContainerHook{
-				func(_ context.Context, _ *Container) error {
+				func(_ context.Context, _ ContainerInfo) error {
 					prints = append(prints, "post-terminate hook 1")
 					return nil
 				},
-				func(_ context.Context, _ *Container) error {
+				func(_ context.Context, _ ContainerInfo) error {
 					prints = append(prints, "post-terminate hook 2")
 					return nil
 				},

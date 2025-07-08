@@ -2,6 +2,7 @@ package container
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -30,7 +31,12 @@ var defaultCopyFileToContainerHook = func(files []File) LifecycleHooks {
 	return LifecycleHooks{
 		PostCreates: []ContainerHook{
 			// copy files to container after it's created
-			func(ctx context.Context, c *Container) error {
+			func(ctx context.Context, c ContainerInfo) error {
+				fileOperator, ok := c.(ContainerFileOperator)
+				if !ok {
+					return errors.New("container does not support file operations")
+				}
+
 				for _, f := range files {
 					if err := f.validate(); err != nil {
 						return fmt.Errorf("invalid file: %w", err)
@@ -52,7 +58,7 @@ var defaultCopyFileToContainerHook = func(files []File) LifecycleHooks {
 						}
 
 						if ok {
-							err := c.CopyDirToContainer(ctx, f.HostPath, f.ContainerPath, f.Mode)
+							err := fileOperator.CopyDirToContainer(ctx, f.HostPath, f.ContainerPath, f.Mode)
 							if err != nil {
 								return fmt.Errorf("copy dir to container: %w", err)
 							}
@@ -65,7 +71,7 @@ var defaultCopyFileToContainerHook = func(files []File) LifecycleHooks {
 						}
 					}
 
-					err = c.CopyToContainer(ctx, bs, f.ContainerPath, f.Mode)
+					err = fileOperator.CopyToContainer(ctx, bs, f.ContainerPath, f.Mode)
 					if err != nil {
 						return fmt.Errorf("copy to container at %s: %w", f.ContainerPath, err)
 					}
@@ -82,16 +88,26 @@ var defaultReadinessHook = func() LifecycleHooks {
 	return LifecycleHooks{
 		PostStarts: []ContainerHook{
 			// wait for the container to be ready
-			func(ctx context.Context, c *Container) error {
+			func(ctx context.Context, c ContainerInfo) error {
+				waiter, ok := c.(ContainerWaiter)
+				if !ok {
+					return errors.New("container does not support waiting")
+				}
+
 				// if a Wait Strategy has been specified, wait before returning
-				if c.waitingFor != nil {
-					c.logger.Info("Waiting for container to be ready", "containerID", c.ShortID(), "image", c.Image())
-					if err := c.waitingFor.WaitUntilReady(ctx, c); err != nil {
+				if waiter.WaitingFor() != nil {
+					c.Logger().Info("Waiting for container to be ready", "containerID", c.ShortID(), "image", c.Image())
+					if err := waiter.WaitingFor().WaitUntilReady(ctx, waiter); err != nil {
 						return fmt.Errorf("wait until ready: %w", err)
 					}
 				}
 
-				c.isRunning = true
+				ctr, ok := c.(*Container)
+				if !ok {
+					return errors.New("container is not a Container")
+				}
+
+				ctr.isRunning = true
 
 				return nil
 			},

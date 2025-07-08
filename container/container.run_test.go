@@ -548,49 +548,49 @@ func TestRunWithLifecycleHooks(t *testing.T) {
 						},
 					},
 					PostCreates: []container.ContainerHook{
-						func(_ context.Context, ctr *container.Container) error {
+						func(_ context.Context, ctr container.ContainerInfo) error {
 							ctr.Logger().Info("post-create hook")
 							return nil
 						},
 					},
 					PreStarts: []container.ContainerHook{
-						func(_ context.Context, ctr *container.Container) error {
+						func(_ context.Context, ctr container.ContainerInfo) error {
 							ctr.Logger().Info("pre-start hook")
 							return nil
 						},
 					},
 					PostStarts: []container.ContainerHook{
-						func(_ context.Context, ctr *container.Container) error {
+						func(_ context.Context, ctr container.ContainerInfo) error {
 							ctr.Logger().Info("post-start hook")
 							return nil
 						},
 					},
 					PostReadies: []container.ContainerHook{
-						func(_ context.Context, ctr *container.Container) error {
+						func(_ context.Context, ctr container.ContainerInfo) error {
 							ctr.Logger().Info("post-ready hook")
 							return nil
 						},
 					},
 					PreStops: []container.ContainerHook{
-						func(_ context.Context, ctr *container.Container) error {
+						func(_ context.Context, ctr container.ContainerInfo) error {
 							ctr.Logger().Info("pre-stop hook")
 							return nil
 						},
 					},
 					PostStops: []container.ContainerHook{
-						func(_ context.Context, ctr *container.Container) error {
+						func(_ context.Context, ctr container.ContainerInfo) error {
 							ctr.Logger().Info("post-stop hook")
 							return nil
 						},
 					},
 					PreTerminates: []container.ContainerHook{
-						func(_ context.Context, ctr *container.Container) error {
+						func(_ context.Context, ctr container.ContainerInfo) error {
 							ctr.Logger().Info("pre-terminate hook")
 							return nil
 						},
 					},
 					PostTerminates: []container.ContainerHook{
-						func(_ context.Context, ctr *container.Container) error {
+						func(_ context.Context, ctr container.ContainerInfo) error {
 							ctr.Logger().Info("post-terminate hook")
 							return nil
 						},

@@ -3,9 +3,14 @@ package container
 import (
 	"context"
 	"errors"
+	"io"
+	"log/slog"
 	"reflect"
 	"strings"
 	"time"
+
+	"github.com/docker/go-sdk/container/exec"
+	"github.com/docker/go-sdk/container/wait"
 )
 
 type LifecycleHooks struct {
@@ -28,6 +33,34 @@ type LifecycleHooks struct {
 // For that, it will receive a Definition, modify it and return an error if needed.
 type DefinitionHook func(ctx context.Context, def *Definition) error
 
+// Core interface - always available
+type ContainerInfo interface {
+	ID() string
+	Image() string
+	ShortID() string
+	Logger() *slog.Logger
+}
+
+// Optional capability interfaces
+
+// ContainerExecutor is an optional capability interface that can be used to execute commands in the container.
+type ContainerExecutor interface {
+	Exec(ctx context.Context, cmd []string, opts ...exec.ProcessOption) (int, io.Reader, error)
+}
+
+// ContainerFileOperator is an optional capability interface that can be used to copy files to and from the container.
+type ContainerFileOperator interface {
+	CopyDirToContainer(ctx context.Context, hostDirPath string, containerFilePath string, fileMode int64) error
+	CopyToContainer(ctx context.Context, fileContent []byte, containerFilePath string, fileMode int64) error
+}
+
+// ContainerWaiter is an optional capability interface that can be used to wait for the container to be ready.
+// It embeds the [wait.StrategyTarget] interface to allow the wait strategy to be used to wait for the container to be ready.
+type ContainerWaiter interface {
+	wait.StrategyTarget
+	WaitingFor() wait.Strategy
+}
+
 // ContainerHook is a hook that is called after a container is created
 // It can be used to modify the state of the container after it is created,
 // using the different lifecycle hooks that are available:
@@ -40,7 +73,7 @@ type DefinitionHook func(ctx context.Context, def *Definition) error
 // - Terminating
 // - Terminated
 // It receives a [Container], modify it and return an error if needed.
-type ContainerHook func(ctx context.Context, ctr *Container) error
+type ContainerHook func(ctx context.Context, ctrInfo ContainerInfo) error
 
 // DefaultLoggingHook is a hook that will log the container lifecycle events
 var DefaultLoggingHook = LifecycleHooks{
@@ -51,50 +84,50 @@ var DefaultLoggingHook = LifecycleHooks{
 		},
 	},
 	PostCreates: []ContainerHook{
-		func(_ context.Context, c *Container) error {
-			c.logger.Info("Container created", "containerID", c.shortID)
+		func(_ context.Context, c ContainerInfo) error {
+			c.Logger().Info("Container created", "containerID", c.ShortID())
 			return nil
 		},
 	},
 	PreStarts: []ContainerHook{
-		func(_ context.Context, c *Container) error {
-			c.logger.Info("Starting container", "containerID", c.shortID)
+		func(_ context.Context, c ContainerInfo) error {
+			c.Logger().Info("Starting container", "containerID", c.ShortID())
 			return nil
 		},
 	},
 	PostStarts: []ContainerHook{
-		func(_ context.Context, c *Container) error {
-			c.logger.Info("Container started", "containerID", c.shortID)
+		func(_ context.Context, c ContainerInfo) error {
+			c.Logger().Info("Container started", "containerID", c.ShortID())
 			return nil
 		},
 	},
 	PostReadies: []ContainerHook{
-		func(_ context.Context, c *Container) error {
-			c.logger.Info("Container is ready", "containerID", c.shortID)
+		func(_ context.Context, c ContainerInfo) error {
+			c.Logger().Info("Container is ready", "containerID", c.ShortID())
 			return nil
 		},
 	},
 	PreStops: []ContainerHook{
-		func(_ context.Context, c *Container) error {
-			c.logger.Info("Stopping container", "containerID", c.shortID)
+		func(_ context.Context, c ContainerInfo) error {
+			c.Logger().Info("Stopping container", "containerID", c.ShortID())
 			return nil
 		},
 	},
 	PostStops: []ContainerHook{
-		func(_ context.Context, c *Container) error {
-			c.logger.Info("Container stopped", "containerID", c.shortID)
+		func(_ context.Context, c ContainerInfo) error {
+			c.Logger().Info("Container stopped", "containerID", c.ShortID())
 			return nil
 		},
 	},
 	PreTerminates: []ContainerHook{
-		func(_ context.Context, c *Container) error {
-			c.logger.Info("Terminating container", "containerID", c.shortID)
+		func(_ context.Context, c ContainerInfo) error {
+			c.Logger().Info("Terminating container", "containerID", c.ShortID())
 			return nil
 		},
 	},
 	PostTerminates: []ContainerHook{
-		func(_ context.Context, c *Container) error {
-			c.logger.Info("Container terminated", "containerID", c.shortID)
+		func(_ context.Context, c ContainerInfo) error {
+			c.Logger().Info("Container terminated", "containerID", c.ShortID())
 			return nil
 		},
 	},

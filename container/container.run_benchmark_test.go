@@ -48,42 +48,42 @@ func BenchmarkRun(b *testing.B) {
 					},
 				},
 				PostCreates: []container.ContainerHook{
-					func(_ context.Context, _ *container.Container) error {
+					func(_ context.Context, _ container.ContainerInfo) error {
 						return nil
 					},
 				},
 				PreStarts: []container.ContainerHook{
-					func(_ context.Context, _ *container.Container) error {
+					func(_ context.Context, _ container.ContainerInfo) error {
 						return nil
 					},
 				},
 				PostStarts: []container.ContainerHook{
-					func(_ context.Context, _ *container.Container) error {
+					func(_ context.Context, _ container.ContainerInfo) error {
 						return nil
 					},
 				},
 				PostReadies: []container.ContainerHook{
-					func(_ context.Context, _ *container.Container) error {
+					func(_ context.Context, _ container.ContainerInfo) error {
 						return nil
 					},
 				},
 				PreStops: []container.ContainerHook{
-					func(_ context.Context, _ *container.Container) error {
+					func(_ context.Context, _ container.ContainerInfo) error {
 						return nil
 					},
 				},
 				PostStops: []container.ContainerHook{
-					func(_ context.Context, _ *container.Container) error {
+					func(_ context.Context, _ container.ContainerInfo) error {
 						return nil
 					},
 				},
 				PreTerminates: []container.ContainerHook{
-					func(_ context.Context, _ *container.Container) error {
+					func(_ context.Context, _ container.ContainerInfo) error {
 						return nil
 					},
 				},
 				PostTerminates: []container.ContainerHook{
-					func(_ context.Context, _ *container.Container) error {
+					func(_ context.Context, _ container.ContainerInfo) error {
 						return nil
 					},
 				},
