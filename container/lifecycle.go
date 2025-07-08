@@ -78,7 +78,8 @@ type ContainerStateManager interface {
 // - Stopped
 // - Terminating
 // - Terminated
-// It receives a [Container], modify it and return an error if needed.
+// It receives a [ContainerInfo] interface, allowing custom implementations
+// to be used with the SDK.
 type ContainerHook func(ctx context.Context, ctrInfo ContainerInfo) error
 
 // DefaultLoggingHook is a hook that will log the container lifecycle events
