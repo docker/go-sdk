@@ -42,12 +42,6 @@ var (
 	// DefaultDockerHost is the default host to connect to the Docker socket.
 	// The actual value is platform-specific and defined in host_linux.go and host_windows.go.
 	DefaultDockerHost = ""
-
-	// ErrDockerHostNotSet is the error returned when the Docker host is not set in the Docker context
-	ErrDockerHostNotSet = internal.ErrDockerHostNotSet
-
-	// ErrDockerContextNotFound is the error returned when the Docker context is not found.
-	ErrDockerContextNotFound = internal.ErrDockerContextNotFound
 )
 
 // getContextFromEnv returns the context name from the environment variables.
