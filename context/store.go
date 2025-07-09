@@ -1,4 +1,4 @@
-package internal
+package context
 
 import (
 	"encoding/json"
@@ -9,11 +9,26 @@ import (
 	"path/filepath"
 )
 
-const metaFile = "meta.json"
-
 // Context represents a Docker context
 type Context struct {
 	metadata
+}
+
+// store manages Docker context metadata files
+type store struct {
+	root string
+}
+
+// metadata represents a complete context configuration
+type metadata struct {
+	// Name is the name of the context
+	Name string `json:",omitempty"`
+
+	// Context is the metadata stored for a context
+	Context *dockerContext `json:"metadata,omitempty"`
+
+	// Endpoints is the list of endpoints for the context
+	Endpoints map[string]*endpoint `json:"endpoints,omitempty"`
 }
 
 // dockerContext represents the metadata stored for a context
@@ -105,28 +120,7 @@ type endpoint struct {
 	SkipTLSVerify bool
 }
 
-// metadata represents a complete context configuration
-type metadata struct {
-	// Name is the name of the context
-	Name string `json:",omitempty"`
-
-	// Context is the metadata stored for a context
-	Context *dockerContext `json:"metadata,omitempty"`
-
-	// Endpoints is the list of endpoints for the context
-	Endpoints map[string]*endpoint `json:"endpoints,omitempty"`
-}
-
-// store manages Docker context metadata files
-type store struct {
-	root string
-}
-
-// Inspect returns the description of the given context.
-// It returns an error if the context is not found or if the docker endpoint is not set.
-func Inspect(ctxName string, metaRoot string) (Context, error) {
-	s := &store{root: metaRoot}
-
+func (s *store) inspect(ctxName string) (Context, error) {
 	contexts, err := s.list()
 	if err != nil {
 		return Context{}, fmt.Errorf("list contexts: %w", err)
@@ -146,22 +140,6 @@ func Inspect(ctxName string, metaRoot string) (Context, error) {
 	}
 
 	return Context{}, ErrDockerContextNotFound
-}
-
-// List returns the list of contexts available in the Docker configuration.
-func List(metaRoot string) ([]string, error) {
-	s := &store{root: metaRoot}
-
-	contexts, err := s.list()
-	if err != nil {
-		return nil, fmt.Errorf("list contexts: %w", err)
-	}
-
-	names := make([]string, len(contexts))
-	for i, ctx := range contexts {
-		names[i] = ctx.Name
-	}
-	return names, nil
 }
 
 func (s *store) list() ([]*metadata, error) {

@@ -9,7 +9,6 @@ import (
 	"path/filepath"
 
 	"github.com/docker/go-sdk/config"
-	"github.com/docker/go-sdk/context/internal"
 )
 
 const (
@@ -35,6 +34,9 @@ const (
 
 	// metadataDir is the name of the directory containing the metadata
 	metadataDir = "meta"
+
+	// metaFile is the name of the file containing the context metadata
+	metaFile = "meta.json"
 )
 
 var (
@@ -54,14 +56,17 @@ func DockerHostFromContext(ctxName string) (string, error) {
 	return ctx.Endpoints["docker"].Host, nil
 }
 
-// Inspect returns the description of the given context.
+// Inspect returns the given context.
+// It returns an error if the context is not found or if the docker endpoint is not set.
 func Inspect(ctxName string) (Context, error) {
 	metaRoot, err := metaRoot()
 	if err != nil {
 		return Context{}, fmt.Errorf("meta root: %w", err)
 	}
 
-	return internal.Inspect(ctxName, metaRoot)
+	s := &store{root: metaRoot}
+
+	return s.inspect(ctxName)
 }
 
 // List returns the list of contexts available in the Docker configuration.
@@ -71,7 +76,18 @@ func List() ([]string, error) {
 		return nil, fmt.Errorf("meta root: %w", err)
 	}
 
-	return internal.List(metaRoot)
+	s := &store{root: metaRoot}
+
+	contexts, err := s.list()
+	if err != nil {
+		return nil, fmt.Errorf("list contexts: %w", err)
+	}
+
+	names := make([]string, len(contexts))
+	for i, ctx := range contexts {
+		names[i] = ctx.Name
+	}
+	return names, nil
 }
 
 // metaRoot returns the root directory of the Docker context metadata.
