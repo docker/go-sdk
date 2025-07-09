@@ -12,13 +12,13 @@ import (
 // Context represents a Docker context
 type Context struct {
 	// Name is the name of the context
-	Name string `json:",omitempty"`
+	Name string `json:"Name,omitempty"`
 
 	// Metadata is the metadata stored for a context
-	Metadata *Metadata `json:"metadata,omitempty"`
+	Metadata *Metadata `json:"Metadata,omitempty"`
 
 	// Endpoints is the list of endpoints for the context
-	Endpoints map[string]*endpoint `json:"endpoints,omitempty"`
+	Endpoints map[string]*endpoint `json:"Endpoints,omitempty"`
 }
 
 // store manages Docker context metadata files
