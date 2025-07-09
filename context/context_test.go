@@ -1,6 +1,8 @@
 package context
 
 import (
+	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -180,5 +182,17 @@ func TestList(t *testing.T) {
 		contexts, err := List()
 		require.NoError(t, err)
 		require.Equal(t, []string{"context1", "context2", "context3", "context4", "context5"}, contexts)
+	})
+
+	t.Run("list/empty", func(t *testing.T) {
+		tmpDir := t.TempDir()
+		t.Setenv("HOME", tmpDir)
+		t.Setenv("USERPROFILE", tmpDir) // Windows support
+
+		tempMkdirAll(t, filepath.Join(tmpDir, ".docker"))
+
+		contexts, err := List()
+		require.ErrorIs(t, err, os.ErrNotExist)
+		require.Empty(t, contexts)
 	})
 }

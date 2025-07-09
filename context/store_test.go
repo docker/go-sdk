@@ -161,6 +161,20 @@ func TestStore_List(t *testing.T) {
 		require.True(tt, exists)
 		require.Equal(tt, wantTestField, gotTestField)
 	})
+
+	t.Run("list/empty", func(t *testing.T) {
+		tmpDir := t.TempDir()
+		t.Setenv("HOME", tmpDir)
+		t.Setenv("USERPROFILE", tmpDir) // Windows support
+
+		tempMkdirAll(t, filepath.Join(tmpDir, ".docker"))
+
+		s := &store{root: tmpDir}
+
+		contexts, err := s.list()
+		require.NoError(t, err)
+		require.Empty(t, contexts)
+	})
 }
 
 func TestStore_load(t *testing.T) {
@@ -379,7 +393,7 @@ func TestStore_list(t *testing.T) {
 		s := &store{root: nonExistentDir}
 
 		list, err := s.list()
-		require.NoError(t, err) // Should return empty list, not error
+		require.ErrorIs(t, err, os.ErrNotExist)
 		require.Empty(t, list)
 	})
 

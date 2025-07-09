@@ -145,9 +145,6 @@ func (s *store) inspect(ctxName string) (Context, error) {
 func (s *store) list() ([]*metadata, error) {
 	dirs, err := s.findMetadataDirs(s.root)
 	if err != nil {
-		if errors.Is(err, os.ErrNotExist) {
-			return nil, nil
-		}
 		return nil, fmt.Errorf("find contexts: %w", err)
 	}
 
