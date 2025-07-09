@@ -28,8 +28,8 @@ type dockerContext struct {
 
 // MarshalJSON implements custom JSON marshaling for dockerContext
 func (dc *dockerContext) MarshalJSON() ([]byte, error) {
-	// Create a map with all fields at the same level
-	result := make(map[string]any)
+	// Pre-allocate with capacity for additional fields + Description field
+	result := make(map[string]any, len(dc.additionalFields)+1)
 
 	// Add Description if not empty
 	if dc.Description != "" {
