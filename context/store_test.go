@@ -259,7 +259,6 @@ func TestStore_load(t *testing.T) {
 	t.Run("permission-denied", func(t *testing.T) {
 		if runtime.GOOS == "windows" {
 			t.Skip("permission tests not supported on Windows")
-			return
 		}
 
 		if os.Getuid() == 0 {
@@ -291,7 +290,6 @@ func TestStore_load(t *testing.T) {
 	t.Run("windows-file-access-error", func(t *testing.T) {
 		if runtime.GOOS != "windows" {
 			t.Skip("Windows-specific test")
-			return
 		}
 
 		tmpDir := t.TempDir()
