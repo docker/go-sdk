@@ -40,7 +40,7 @@ const (
 )
 
 // DefaultDockerHost is the default host to connect to the Docker socket.
-// The actual value is platform-specific and defined in host_linux.go and host_windows.go.
+// The actual value is platform-specific and defined in host_unix.go and host_windows.go.
 var DefaultDockerHost = ""
 
 // DockerHostFromContext returns the Docker host from the given context.

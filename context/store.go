@@ -115,6 +115,7 @@ type endpoint struct {
 	SkipTLSVerify bool
 }
 
+// inspect inspects a context by name
 func (s *store) inspect(ctxName string) (Context, error) {
 	contexts, err := s.list()
 	if err != nil {
@@ -135,6 +136,7 @@ func (s *store) inspect(ctxName string) (Context, error) {
 	return Context{}, ErrDockerContextNotFound
 }
 
+// list lists all contexts in the store
 func (s *store) list() ([]*Context, error) {
 	dirs, err := s.findMetadataDirs(s.root)
 	if err != nil {
@@ -155,6 +157,7 @@ func (s *store) list() ([]*Context, error) {
 	return contexts, nil
 }
 
+// load loads a context from a directory
 func (s *store) load(dir string) (*Context, error) {
 	data, err := os.ReadFile(filepath.Join(dir, metaFile))
 	if err != nil {
@@ -168,6 +171,8 @@ func (s *store) load(dir string) (*Context, error) {
 	return &meta, nil
 }
 
+// findMetadataDirs finds all metadata directories in the store,
+// checking for the presence of a meta.json file in each directory.
 func (s *store) findMetadataDirs(root string) ([]string, error) {
 	var dirs []string
 	err := filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
@@ -185,6 +190,7 @@ func (s *store) findMetadataDirs(root string) ([]string, error) {
 	return dirs, err
 }
 
+// hasMetaFile checks if a directory contains a meta.json file
 func hasMetaFile(dir string) bool {
 	info, err := os.Stat(filepath.Join(dir, metaFile))
 	return err == nil && !info.IsDir()
