@@ -113,6 +113,7 @@ func TestInspect(t *testing.T) {
 		// Verify the structure of the otel field
 		otelMap, ok := otelValue.(map[string]any)
 		require.True(tt, ok)
+		require.Len(tt, otelMap, 2)
 		require.Equal(tt, "unix:///Users/mdelapenya/.docker/cloud/daemon.grpc.sock", otelMap["OTEL_EXPORTER_OTLP_ENDPOINT"])
 		require.Equal(tt, "grpc", otelMap["OTEL_EXPORTER_OTLP_PROTOCOL"])
 	})
@@ -528,12 +529,14 @@ func TestDockerContext_JSON_Marshaling(t *testing.T) {
 		// Verify otel structure
 		otelValue, ok := result["otel"].(map[string]any)
 		require.True(t, ok)
+		require.Len(t, otelValue, 2)
 		require.Equal(t, "unix:///socket.sock", otelValue["OTEL_EXPORTER_OTLP_ENDPOINT"])
 		require.Equal(t, "grpc", otelValue["OTEL_EXPORTER_OTLP_PROTOCOL"])
 
 		// Verify cloud.docker.com structure
 		cloudValue, ok := result["cloud.docker.com"].(map[string]any)
 		require.True(t, ok)
+		require.Len(t, cloudValue, 1)
 		require.Equal(t, "test-account", cloudValue["accountName"])
 	})
 
@@ -570,6 +573,7 @@ func TestDockerContext_JSON_Marshaling(t *testing.T) {
 		// Verify additional fields
 		otelValue, exists := dockerCtx.Field("otel")
 		require.True(t, exists)
+		require.Len(t, otelValue, 2)
 		otelMap, ok := otelValue.(map[string]any)
 		require.True(t, ok)
 		require.Equal(t, "unix:///socket.sock", otelMap["OTEL_EXPORTER_OTLP_ENDPOINT"])
@@ -577,6 +581,7 @@ func TestDockerContext_JSON_Marshaling(t *testing.T) {
 
 		cloudValue, exists := dockerCtx.Field("cloud.docker.com")
 		require.True(t, exists)
+		require.Len(t, cloudValue, 1)
 		cloudMap, ok := cloudValue.(map[string]any)
 		require.True(t, ok)
 		require.Equal(t, "test-account", cloudMap["accountName"])
@@ -611,6 +616,7 @@ func TestDockerContext_JSON_Marshaling(t *testing.T) {
 
 		complexValue, exists := restored.Field("complex")
 		require.True(t, exists)
+		require.Len(t, complexValue, 2)
 		complexMap, ok := complexValue.(map[string]any)
 		require.True(t, ok)
 		require.Equal(t, true, complexMap["nested"])
