@@ -40,7 +40,7 @@ func SetupTestDockerContexts(tb testing.TB, currentContextIndex int, contextsCou
 
 	configJSON := filepath.Join(configDir, config.FileName)
 
-	const baseContext = "context"
+	const baseContextName = "context"
 
 	// default config.json with no current context
 	configBytes := `{"currentContext": ""}`
@@ -48,7 +48,7 @@ func SetupTestDockerContexts(tb testing.TB, currentContextIndex int, contextsCou
 	if currentContextIndex <= contextsCount {
 		configBytes = fmt.Sprintf(`{
 	"currentContext": "%s%d"
-}`, baseContext, currentContextIndex)
+}`, baseContextName, currentContextIndex)
 	}
 
 	err = os.WriteFile(configJSON, []byte(configBytes), 0o644)
@@ -61,32 +61,32 @@ func SetupTestDockerContexts(tb testing.TB, currentContextIndex int, contextsCou
 
 	// first index is 1
 	for i := 1; i <= contextsCount; i++ {
-		createDockerContext(tb, metaDir, baseContext, i, fmt.Sprintf("tcp://127.0.0.1:%d", i))
+		createDockerContext(tb, metaDir, baseContextName, i, fmt.Sprintf("tcp://127.0.0.1:%d", i))
 	}
 
 	// add a context with no host
-	createDockerContext(tb, metaDir, baseContext, contextsCount+1, "")
+	createDockerContext(tb, metaDir, baseContextName, contextsCount+1, "")
 
 	// add a context that does not have a docker endpoint
-	createDockerContextWithCustomEndpoint(tb, metaDir, baseContext, contextsCount+2, "foo", "")
+	createDockerContextWithCustomEndpoint(tb, metaDir, baseContextName, contextsCount+2, "foo", "")
 }
 
 // createDockerContext creates a Docker context with the specified name and host
-func createDockerContext(tb testing.TB, metaDir, baseContext string, index int, host string) {
+func createDockerContext(tb testing.TB, metaDir, baseContextName string, index int, host string) {
 	tb.Helper()
 
-	createDockerContextWithCustomEndpoint(tb, metaDir, baseContext, index, "docker", host)
+	createDockerContextWithCustomEndpoint(tb, metaDir, baseContextName, index, "docker", host)
 }
 
 // createDockerContextWithoutDockerEndpoint creates a Docker context with the specified name and no docker endpoint
-func createDockerContextWithCustomEndpoint(tb testing.TB, metaDir, baseContext string, index int, endpointName string, host string) {
+func createDockerContextWithCustomEndpoint(tb testing.TB, metaDir, baseContextName string, index int, endpointName string, host string) {
 	tb.Helper()
 
 	contextDir := filepath.Join(metaDir, fmt.Sprintf("context%d", index))
 	tempMkdirAll(tb, contextDir)
 
 	context := fmt.Sprintf(`{"Name":"%s%d","Metadata":{"Description":"Docker Go SDK %d"},"Endpoints":{"%s":{"Host":"%s","SkipTLSVerify":false}}}`,
-		baseContext, index, index, endpointName, host)
+		baseContextName, index, index, endpointName, host)
 	err := os.WriteFile(filepath.Join(contextDir, "meta.json"), []byte(context), 0o644)
 	require.NoError(tb, err)
 }
