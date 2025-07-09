@@ -153,13 +153,13 @@ func TestInspect(t *testing.T) {
 	t.Run("inspect/1", func(t *testing.T) {
 		c, err := Inspect("context1")
 		require.NoError(t, err)
-		require.Equal(t, "Docker Go SDK 1", c.Context.Description)
+		require.Equal(t, "Docker Go SDK 1", c.Metadata.Description)
 	})
 
 	t.Run("inspect/2", func(t *testing.T) {
 		c, err := Inspect("context2")
 		require.NoError(t, err)
-		require.Equal(t, "Docker Go SDK 2", c.Context.Description)
+		require.Equal(t, "Docker Go SDK 2", c.Metadata.Description)
 	})
 
 	t.Run("inspect/not-found", func(t *testing.T) {

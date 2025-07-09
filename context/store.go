@@ -11,7 +11,14 @@ import (
 
 // Context represents a Docker context
 type Context struct {
-	metadata
+	// Name is the name of the context
+	Name string `json:",omitempty"`
+
+	// Metadata is the metadata stored for a context
+	Metadata *Metadata `json:"metadata,omitempty"`
+
+	// Endpoints is the list of endpoints for the context
+	Endpoints map[string]*endpoint `json:"endpoints,omitempty"`
 }
 
 // store manages Docker context metadata files
@@ -19,20 +26,8 @@ type store struct {
 	root string
 }
 
-// metadata represents a complete context configuration
-type metadata struct {
-	// Name is the name of the context
-	Name string `json:",omitempty"`
-
-	// Context is the metadata stored for a context
-	Context *dockerContext `json:"metadata,omitempty"`
-
-	// Endpoints is the list of endpoints for the context
-	Endpoints map[string]*endpoint `json:"endpoints,omitempty"`
-}
-
-// dockerContext represents the metadata stored for a context
-type dockerContext struct {
+// Metadata represents the metadata stored for a context
+type Metadata struct {
 	// Description is the description of the context
 	Description string `json:"Description,omitempty"`
 
@@ -42,7 +37,7 @@ type dockerContext struct {
 }
 
 // MarshalJSON implements custom JSON marshaling for dockerContext
-func (dc *dockerContext) MarshalJSON() ([]byte, error) {
+func (dc *Metadata) MarshalJSON() ([]byte, error) {
 	// Pre-allocate with capacity for additional fields + Description field
 	result := make(map[string]any, len(dc.additionalFields)+1)
 
@@ -60,7 +55,7 @@ func (dc *dockerContext) MarshalJSON() ([]byte, error) {
 }
 
 // UnmarshalJSON implements custom JSON unmarshaling for dockerContext
-func (dc *dockerContext) UnmarshalJSON(data []byte) error {
+func (dc *Metadata) UnmarshalJSON(data []byte) error {
 	// First unmarshal into a generic map
 	var raw map[string]any
 	if err := json.Unmarshal(data, &raw); err != nil {
@@ -82,7 +77,7 @@ func (dc *dockerContext) UnmarshalJSON(data []byte) error {
 }
 
 // Field returns the value of an additional field
-func (dc *dockerContext) Field(key string) (any, bool) {
+func (dc *Metadata) Field(key string) (any, bool) {
 	if dc.additionalFields == nil {
 		return nil, false
 	}
@@ -91,7 +86,7 @@ func (dc *dockerContext) Field(key string) (any, bool) {
 }
 
 // SetField sets the value of an additional field
-func (dc *dockerContext) SetField(key string, value any) {
+func (dc *Metadata) SetField(key string, value any) {
 	if dc.additionalFields == nil {
 		dc.additionalFields = make(map[string]any)
 	}
@@ -99,7 +94,7 @@ func (dc *dockerContext) SetField(key string, value any) {
 }
 
 // Fields returns a copy of all additional fields
-func (dc *dockerContext) Fields() map[string]any {
+func (dc *Metadata) Fields() map[string]any {
 	if dc.additionalFields == nil {
 		return make(map[string]any)
 	}
@@ -133,22 +128,20 @@ func (s *store) inspect(ctxName string) (Context, error) {
 				return Context{}, ErrDockerHostNotSet
 			}
 
-			return Context{
-				metadata: *ctx,
-			}, nil
+			return *ctx, nil
 		}
 	}
 
 	return Context{}, ErrDockerContextNotFound
 }
 
-func (s *store) list() ([]*metadata, error) {
+func (s *store) list() ([]*Context, error) {
 	dirs, err := s.findMetadataDirs(s.root)
 	if err != nil {
 		return nil, fmt.Errorf("find contexts: %w", err)
 	}
 
-	var contexts []*metadata
+	var contexts []*Context
 	for _, dir := range dirs {
 		ctx, err := s.load(dir)
 		if err != nil {
@@ -162,13 +155,13 @@ func (s *store) list() ([]*metadata, error) {
 	return contexts, nil
 }
 
-func (s *store) load(dir string) (*metadata, error) {
+func (s *store) load(dir string) (*Context, error) {
 	data, err := os.ReadFile(filepath.Join(dir, metaFile))
 	if err != nil {
 		return nil, err
 	}
 
-	var meta metadata
+	var meta Context
 	if err := json.Unmarshal(data, &meta); err != nil {
 		return nil, fmt.Errorf("parse metadata: %w", err)
 	}

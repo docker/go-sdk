@@ -12,7 +12,7 @@ import (
 
 func TestExtractDockerHost(t *testing.T) {
 	t.Run("context-found-with-host", func(t *testing.T) {
-		host := requireDockerHost(t, "test-context", metadata{
+		host := requireDockerHost(t, "test-context", Context{
 			Name: "test-context",
 			Endpoints: map[string]*endpoint{
 				"docker": {Host: "tcp://1.2.3.4:2375"},
@@ -22,7 +22,7 @@ func TestExtractDockerHost(t *testing.T) {
 	})
 
 	t.Run("context-found-without-host", func(t *testing.T) {
-		requireDockerHostError(t, "test-context", metadata{
+		requireDockerHostError(t, "test-context", Context{
 			Name: "test-context",
 			Endpoints: map[string]*endpoint{
 				"docker": {},
@@ -31,7 +31,7 @@ func TestExtractDockerHost(t *testing.T) {
 	})
 
 	t.Run("context-not-found", func(t *testing.T) {
-		requireDockerHostError(t, "missing", metadata{
+		requireDockerHostError(t, "missing", Context{
 			Name: "other-context",
 			Endpoints: map[string]*endpoint{
 				"docker": {Host: "tcp://1.2.3.4:2375"},
@@ -40,7 +40,7 @@ func TestExtractDockerHost(t *testing.T) {
 	})
 
 	t.Run("nested-context-found", func(t *testing.T) {
-		host := requireDockerHostInPath(t, "nested-context", "parent/nested-context", metadata{
+		host := requireDockerHostInPath(t, "nested-context", "parent/nested-context", Context{
 			Name: "nested-context",
 			Endpoints: map[string]*endpoint{
 				"docker": {Host: "tcp://1.2.3.4:2375"},
@@ -52,9 +52,9 @@ func TestExtractDockerHost(t *testing.T) {
 
 func TestStore_Inspect(t *testing.T) {
 	tmpDir := t.TempDir()
-	setupTestContext(t, tmpDir, "test", metadata{
+	setupTestContext(t, tmpDir, "test", Context{
 		Name: "test",
-		Context: &dockerContext{
+		Metadata: &Metadata{
 			Description: "test context",
 		},
 		Endpoints: map[string]*endpoint{
@@ -70,7 +70,7 @@ func TestStore_Inspect(t *testing.T) {
 		ctx, err := s.inspect("test")
 		require.NoError(tt, err)
 		require.Equal(tt, "test", ctx.Name)
-		require.Equal(tt, "test context", ctx.Context.Description)
+		require.Equal(tt, "test context", ctx.Metadata.Description)
 		require.Equal(tt, "tcp://localhost:2375", ctx.Endpoints["docker"].Host)
 		require.False(tt, ctx.Endpoints["docker"].SkipTLSVerify)
 	})
@@ -83,7 +83,7 @@ func TestStore_Inspect(t *testing.T) {
 
 	t.Run("inspect/with-fields", func(tt *testing.T) {
 		// Create a dockerContext and set additional fields using the new methods
-		dockerCtx := &dockerContext{
+		dockerCtx := &Metadata{
 			Description: "ctx with fields",
 		}
 		dockerCtx.SetField("otel", map[string]any{
@@ -91,9 +91,9 @@ func TestStore_Inspect(t *testing.T) {
 			"OTEL_EXPORTER_OTLP_PROTOCOL": "grpc",
 		})
 
-		setupTestContext(t, tmpDir, "fields", metadata{
-			Name:    "ctx-with-fields",
-			Context: dockerCtx,
+		setupTestContext(t, tmpDir, "fields", Context{
+			Name:     "ctx-with-fields",
+			Metadata: dockerCtx,
 			Endpoints: map[string]*endpoint{
 				"docker": {
 					Host: "tcp://localhost:2375",
@@ -104,12 +104,12 @@ func TestStore_Inspect(t *testing.T) {
 		ctx, err := s.inspect("ctx-with-fields")
 		require.NoError(tt, err)
 		require.Equal(tt, "ctx-with-fields", ctx.Name)
-		require.Equal(tt, "ctx with fields", ctx.Context.Description)
+		require.Equal(tt, "ctx with fields", ctx.Metadata.Description)
 		require.Equal(tt, "tcp://localhost:2375", ctx.Endpoints["docker"].Host)
 		require.False(tt, ctx.Endpoints["docker"].SkipTLSVerify)
 
 		// Verify additional fields are accessible
-		otelValue, exists := ctx.Context.Field("otel")
+		otelValue, exists := ctx.Metadata.Field("otel")
 		require.True(tt, exists)
 		require.NotNil(tt, otelValue)
 
@@ -127,14 +127,14 @@ func TestStore_List(t *testing.T) {
 		tmpDir := t.TempDir()
 
 		// Create a dockerContext and set additional fields using the new methods
-		dockerCtx := &dockerContext{
+		dockerCtx := &Metadata{
 			Description: "test context",
 		}
 		dockerCtx.SetField("test", true)
 
-		want := metadata{
-			Name:    "test",
-			Context: dockerCtx,
+		want := Context{
+			Name:     "test",
+			Metadata: dockerCtx,
 			Endpoints: map[string]*endpoint{
 				"docker": {
 					Host:          "tcp://localhost:2375",
@@ -151,13 +151,13 @@ func TestStore_List(t *testing.T) {
 		require.NoError(tt, err)
 		require.Len(tt, got, 1)
 		require.Equal(tt, "test", got[0].Name)
-		require.Equal(tt, "test context", got[0].Context.Description)
+		require.Equal(tt, "test context", got[0].Metadata.Description)
 		require.Equal(tt, "tcp://localhost:2375", got[0].Endpoints["docker"].Host)
 		require.True(tt, got[0].Endpoints["docker"].SkipTLSVerify)
 
 		// Verify additional fields
-		wantTestField, _ := want.Context.Field("test")
-		gotTestField, exists := got[0].Context.Field("test")
+		wantTestField, _ := want.Metadata.Field("test")
+		gotTestField, exists := got[0].Metadata.Field("test")
 		require.True(tt, exists)
 		require.Equal(tt, wantTestField, gotTestField)
 	})
@@ -183,14 +183,14 @@ func TestStore_load(t *testing.T) {
 		s := &store{root: tmpDir}
 
 		// Create a dockerContext and set additional fields using the new methods
-		dockerCtx := &dockerContext{
+		dockerCtx := &Metadata{
 			Description: "test context",
 		}
 		dockerCtx.SetField("test", true)
 
-		want := metadata{
-			Name:    "test",
-			Context: dockerCtx,
+		want := Context{
+			Name:     "test",
+			Metadata: dockerCtx,
 			Endpoints: map[string]*endpoint{
 				"docker": {
 					Host:          "tcp://localhost:2375",
@@ -205,11 +205,11 @@ func TestStore_load(t *testing.T) {
 		got, err := s.load(contextDir)
 		require.NoError(t, err)
 		require.Equal(t, want.Name, got.Name)
-		require.Equal(t, want.Context.Description, got.Context.Description)
+		require.Equal(t, want.Metadata.Description, got.Metadata.Description)
 
 		// Verify additional fields
-		wantTestField, _ := want.Context.Field("test")
-		gotTestField, exists := got.Context.Field("test")
+		wantTestField, _ := want.Metadata.Field("test")
+		gotTestField, exists := got.Metadata.Field("test")
 		require.True(t, exists)
 		require.Equal(t, wantTestField, gotTestField)
 
@@ -271,7 +271,7 @@ func TestStore_load(t *testing.T) {
 		contextDir := filepath.Join(tmpDir, "no-access")
 		require.NoError(t, os.MkdirAll(contextDir, 0o755))
 
-		meta := metadata{
+		meta := Context{
 			Name: "test",
 			Endpoints: map[string]*endpoint{
 				"docker": {Host: "tcp://localhost:2375"},
@@ -327,7 +327,7 @@ func TestStore_load(t *testing.T) {
 		got, err := s.load(contextDir)
 		require.NoError(t, err)
 		require.Empty(t, got.Name)
-		require.Nil(t, got.Context)
+		require.Nil(t, got.Metadata)
 		require.Empty(t, got.Endpoints)
 	})
 
@@ -339,7 +339,7 @@ func TestStore_load(t *testing.T) {
 		require.NoError(t, os.MkdirAll(contextDir, 0o755))
 
 		// Only name and docker endpoint, no context metadata
-		meta := metadata{
+		meta := Context{
 			Name: "test",
 			Endpoints: map[string]*endpoint{
 				"docker": {Host: "tcp://localhost:2375"},
@@ -350,7 +350,7 @@ func TestStore_load(t *testing.T) {
 		got, err := s.load(contextDir)
 		require.NoError(t, err)
 		require.Equal(t, "test", got.Name)
-		require.Nil(t, got.Context)
+		require.Nil(t, got.Metadata)
 		require.Equal(t, "tcp://localhost:2375", got.Endpoints["docker"].Host)
 	})
 }
@@ -361,7 +361,7 @@ func TestStore_list(t *testing.T) {
 		s := &store{root: tmpDir}
 
 		// Setup test contexts
-		contexts := map[string]metadata{
+		contexts := map[string]Context{
 			"context1": {
 				Name: "context1",
 				Endpoints: map[string]*endpoint{
@@ -418,7 +418,7 @@ func TestStore_list(t *testing.T) {
 		s := &store{root: tmpDir}
 
 		// Setup one valid context
-		validMeta := metadata{
+		validMeta := Context{
 			Name: "valid",
 			Endpoints: map[string]*endpoint{
 				"docker": {Host: "tcp://1.2.3.4:2375"},
@@ -457,7 +457,7 @@ func TestStore_list(t *testing.T) {
 		contextDir := filepath.Join(tmpDir, "no-access")
 		require.NoError(t, os.MkdirAll(contextDir, 0o755))
 
-		meta := metadata{
+		meta := Context{
 			Name: "test",
 			Endpoints: map[string]*endpoint{
 				"docker": {Host: "tcp://1.2.3.4:2375"},
@@ -525,7 +525,7 @@ func TestStore_list(t *testing.T) {
 func TestDockerContext_JSON_Marshaling(t *testing.T) {
 	t.Run("marshal-with-additional-fields", func(t *testing.T) {
 		// Create a dockerContext with additional fields
-		dockerCtx := &dockerContext{
+		dockerCtx := &Metadata{
 			Description: "test context with fields",
 		}
 		dockerCtx.SetField("otel", map[string]any{
@@ -580,7 +580,7 @@ func TestDockerContext_JSON_Marshaling(t *testing.T) {
 			}
 		}`
 
-		var dockerCtx dockerContext
+		var dockerCtx Metadata
 		err := json.Unmarshal([]byte(jsonData), &dockerCtx)
 		require.NoError(t, err)
 
@@ -616,7 +616,7 @@ func TestDockerContext_JSON_Marshaling(t *testing.T) {
 
 	t.Run("marshal-unmarshal-roundtrip", func(t *testing.T) {
 		// Create original dockerContext
-		original := &dockerContext{
+		original := &Metadata{
 			Description: "roundtrip test",
 		}
 		original.SetField("custom", "value")
@@ -630,7 +630,7 @@ func TestDockerContext_JSON_Marshaling(t *testing.T) {
 		require.NoError(t, err)
 
 		// Unmarshal back
-		var restored dockerContext
+		var restored Metadata
 		err = json.Unmarshal(data, &restored)
 		require.NoError(t, err)
 
@@ -652,11 +652,11 @@ func TestDockerContext_JSON_Marshaling(t *testing.T) {
 }
 
 // requireDockerHost creates a context and verifies host extraction succeeds
-func requireDockerHost(t *testing.T, contextName string, meta metadata) string {
+func requireDockerHost(t *testing.T, contextName string, ctx Context) string {
 	t.Helper()
 	tmpDir := t.TempDir()
 
-	setupTestContext(t, tmpDir, contextName, meta)
+	setupTestContext(t, tmpDir, contextName, ctx)
 
 	s := &store{root: tmpDir}
 
@@ -666,11 +666,11 @@ func requireDockerHost(t *testing.T, contextName string, meta metadata) string {
 }
 
 // requireDockerHostInPath creates a context at a specific path and verifies host extraction
-func requireDockerHostInPath(t *testing.T, contextName, path string, meta metadata) string {
+func requireDockerHostInPath(t *testing.T, contextName, path string, ctx Context) string {
 	t.Helper()
 	tmpDir := t.TempDir()
 
-	setupTestContext(t, tmpDir, path, meta)
+	setupTestContext(t, tmpDir, path, ctx)
 
 	s := &store{root: tmpDir}
 
@@ -680,11 +680,11 @@ func requireDockerHostInPath(t *testing.T, contextName, path string, meta metada
 }
 
 // requireDockerHostError creates a context and verifies expected error
-func requireDockerHostError(t *testing.T, contextName string, meta metadata, wantErr error) {
+func requireDockerHostError(t *testing.T, contextName string, ctx Context, wantErr error) {
 	t.Helper()
 	tmpDir := t.TempDir()
 
-	setupTestContext(t, tmpDir, contextName, meta)
+	setupTestContext(t, tmpDir, contextName, ctx)
 
 	s := &store{root: tmpDir}
 
@@ -693,13 +693,13 @@ func requireDockerHostError(t *testing.T, contextName string, meta metadata, wan
 }
 
 // setupTestContext creates a test context file in the specified location
-func setupTestContext(tb testing.TB, root, relPath string, meta metadata) {
+func setupTestContext(tb testing.TB, root, relPath string, ctx Context) {
 	tb.Helper()
 
 	contextDir := filepath.Join(root, relPath)
 	require.NoError(tb, os.MkdirAll(contextDir, 0o755))
 
-	data, err := json.Marshal(meta)
+	data, err := json.Marshal(ctx)
 	require.NoError(tb, err)
 
 	require.NoError(tb, os.WriteFile(

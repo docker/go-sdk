@@ -58,9 +58,9 @@ func ExampleInspect() {
 		return
 	}
 
-	fmt.Println(ctx.Context.Description)
-	fmt.Println(ctx.Context.Field("otel"))
-	fmt.Println(ctx.Context.Fields())
+	fmt.Println(ctx.Metadata.Description)
+	fmt.Println(ctx.Metadata.Field("otel"))
+	fmt.Println(ctx.Metadata.Fields())
 
 	// Intentionally not printing the output, as the context could not exist in the CI environment
 }
