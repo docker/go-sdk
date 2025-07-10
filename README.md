@@ -33,6 +33,7 @@ go get github.com/docker/go-sdk/container
 go get github.com/docker/go-sdk/context
 go get github.com/docker/go-sdk/image
 go get github.com/docker/go-sdk/network
+go get github.com/docker/go-sdk/volume
 ```
 
 ## Usage
@@ -149,11 +150,29 @@ if err != nil {
     log.Fatalf("failed to inspect network: %v", err)
 }
 
-fmt.Printf("network: %+v", resp)
-
 err = nw.Terminate(ctx)
 if err != nil {
     log.Fatalf("failed to terminate network: %v", err)
+}
+```
+
+### volume
+
+```go
+v, err := volume.New(ctx)
+if err != nil {
+    log.Fatalf("failed to create volume: %v", err)
+}
+
+vol, err := volume.FindByID(ctx, v.ID())
+if err != nil {
+    log.Println(err)
+    return
+}
+
+err = v.Terminate(ctx)
+if err != nil {
+    log.Fatalf("failed to terminate volume: %v", err)
 }
 ```
 
