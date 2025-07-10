@@ -1,20 +1,21 @@
-package network
+package volume
 
 import (
 	"context"
+	"reflect"
 	"regexp"
 	"testing"
 
 	"github.com/containerd/errdefs"
 	"github.com/stretchr/testify/require"
 
-	"github.com/docker/docker/api/types/network"
+	"github.com/docker/docker/api/types/volume"
 	"github.com/docker/go-sdk/client"
 )
 
-// errAlreadyInProgress is a regular expression that matches the error for a network
+// errAlreadyInProgress is a regular expression that matches the error for a volume
 // removal that is already in progress.
-var errAlreadyInProgress = regexp.MustCompile(`removal of network .* is already in progress`)
+var errAlreadyInProgress = regexp.MustCompile(`removal of volume .* is already in progress`)
 
 // causer is an interface that allows to get the cause of an error.
 type causer interface {
@@ -31,25 +32,25 @@ type unwrapErrs interface {
 	Unwrap() []error
 }
 
-// Cleanup is a helper function that schedules the network to be
+// Cleanup is a helper function that schedules the volume to be
 // removed when the test ends.
 // This should be the first call after [New] in a test before
-// any error check. If network is nil, it's a no-op.
-func Cleanup(tb testing.TB, nw TerminableNetwork) {
+// any error check. If volume is nil, it's a no-op.
+func Cleanup(tb testing.TB, v TerminableVolume) {
 	tb.Helper()
 
 	tb.Cleanup(func() {
-		if !isNil(nw) {
-			noErrorOrIgnored(tb, nw.Terminate(context.Background()))
+		if !isNil(v) {
+			noErrorOrIgnored(tb, v.Terminate(context.Background()))
 		}
 	})
 }
 
-// CleanupByID is a helper function that schedules the network to be
+// CleanupByID is a helper function that schedules the volume to be
 // removed, identified by its ID, when the test ends.
 // This should be the first call after New(...) in a test before
-// any error check. If network is nil, it's a no-op.
-// It uses a new docker client to terminate the network, which is automatically
+// any error check. If volume is nil, it's a no-op.
+// It uses a new docker client to terminate the volume, which is automatically
 // closed when the test ends.
 func CleanupByID(tb testing.TB, id string) {
 	tb.Helper()
@@ -60,9 +61,9 @@ func CleanupByID(tb testing.TB, id string) {
 	}
 
 	// synthetic network using a new docker client.
-	nw := &Network{
-		response: network.CreateResponse{
-			ID: id,
+	nw := &Volume{
+		Volume: &volume.Volume{
+			Name: id,
 		},
 		dockerClient: dockerClient,
 	}
@@ -103,6 +104,21 @@ func isCleanupSafe(err error) bool {
 			}
 		}
 		return true
+	default:
+		return false
+	}
+}
+
+// isNil returns true if val is nil or a nil instance false otherwise.
+func isNil(val any) bool {
+	if val == nil {
+		return true
+	}
+
+	valueOf := reflect.ValueOf(val)
+	switch valueOf.Kind() {
+	case reflect.Chan, reflect.Func, reflect.Map, reflect.Ptr, reflect.UnsafePointer, reflect.Interface, reflect.Slice:
+		return valueOf.IsNil()
 	default:
 		return false
 	}

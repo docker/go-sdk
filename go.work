@@ -7,4 +7,5 @@ use (
 	./context
 	./image
 	./network
+	./volume
 )
