@@ -115,8 +115,11 @@ func BenchmarkNetworkConcurrent(b *testing.B) {
 
 		b.RunParallel(func(pb *testing.PB) {
 			for pb.Next() {
+				b.StartTimer()
 				nw, err := network.New(ctx)
 				require.NoError(b, err)
+				b.StopTimer()
+
 				require.NoError(b, nw.Terminate(ctx))
 			}
 		})
@@ -159,7 +162,10 @@ func BenchmarkNetworkConcurrent(b *testing.B) {
 			for pb.Next() {
 				nw, err := network.New(ctx)
 				require.NoError(b, err)
+
+				b.StartTimer()
 				require.NoError(b, nw.Terminate(ctx))
+				b.StopTimer()
 			}
 		})
 	})
