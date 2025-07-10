@@ -28,7 +28,7 @@ func New(ctx context.Context, opts ...Option) (*Volume, error) {
 
 	client.AddSDKLabels(volumeOptions.labels)
 
-	volume, err := volumeOptions.client.VolumeCreate(ctx, volume.CreateOptions{
+	v, err := volumeOptions.client.VolumeCreate(ctx, volume.CreateOptions{
 		Name:   volumeOptions.name,
 		Labels: volumeOptions.labels,
 	})
@@ -37,7 +37,7 @@ func New(ctx context.Context, opts ...Option) (*Volume, error) {
 	}
 
 	return &Volume{
-		Volume:       &volume,
+		Volume:       &v,
 		dockerClient: volumeOptions.client,
 	}, nil
 }
