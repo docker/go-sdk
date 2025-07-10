@@ -22,6 +22,7 @@ func TestNew(t *testing.T) {
 		require.Equal(t, "local", v.Driver)
 
 		labels := v.Labels
+		require.NotEmpty(t, v.ID()) // Docker generated a random name for the volume.
 		require.NotEmpty(t, v.Name) // Docker generated a random name for the volume.
 		require.Equal(t, "true", labels["com.docker.sdk"])
 		require.Equal(t, "go", labels["com.docker.sdk.lang"])
@@ -36,6 +37,7 @@ func TestNew(t *testing.T) {
 		require.Equal(t, "local", v.Driver)
 
 		labels := v.Labels
+		require.NotEmpty(t, v.ID()) // Docker generated a random name for the volume.
 		require.NotEmpty(t, v.Name) // Docker generated a random name for the volume.
 		require.Equal(t, "true", labels["com.docker.sdk"])
 		require.Equal(t, "go", labels["com.docker.sdk.lang"])
@@ -46,6 +48,7 @@ func TestNew(t *testing.T) {
 		v, err := volume.New(context.Background(), volume.WithName("test"))
 		volume.Cleanup(t, v)
 		require.NoError(t, err)
+		require.Equal(t, "test", v.ID())
 		require.Equal(t, "test", v.Name)
 		require.Equal(t, "local", v.Driver)
 
@@ -69,6 +72,7 @@ func TestNew(t *testing.T) {
 		}))
 		volume.Cleanup(t, v)
 		require.NoError(t, err)
+		require.NotEmpty(t, v.ID())
 		require.NotEmpty(t, v.Name)
 		require.Equal(t, "local", v.Driver)
 

@@ -10,3 +10,8 @@ type Volume struct {
 	*volume.Volume
 	dockerClient *client.Client
 }
+
+// ID is an alias for the Name field, as it coincides with the Name of the volume.
+func (v *Volume) ID() string {
+	return v.Name
+}
