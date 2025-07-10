@@ -116,8 +116,8 @@ func BenchmarkNetworkConcurrent(b *testing.B) {
 		b.RunParallel(func(pb *testing.PB) {
 			for pb.Next() {
 				nw, err := network.New(ctx)
-				network.Cleanup(b, nw)
 				require.NoError(b, err)
+				require.NoError(b, nw.Terminate(ctx))
 			}
 		})
 	})
