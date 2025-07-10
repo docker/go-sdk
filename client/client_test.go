@@ -3,6 +3,7 @@ package client_test
 import (
 	"context"
 	"errors"
+	"os"
 	"path/filepath"
 	"sync"
 	"testing"
@@ -146,7 +147,7 @@ func TestNew(t *testing.T) {
 		t.Run("context-wins/not-found", func(t *testing.T) {
 			t.Setenv(dockercontext.EnvOverrideContext, "foocontext") // this context does not exist
 			cli, err := client.New(context.Background())
-			require.ErrorIs(t, err, dockercontext.ErrDockerContextNotFound)
+			require.ErrorIs(t, err, os.ErrNotExist)
 			require.Nil(t, cli)
 		})
 	})
