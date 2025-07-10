@@ -36,3 +36,17 @@ func WithLabels(labels map[string]string) Option {
 		return nil
 	}
 }
+
+type TerminateOption func(*terminateOptions) error
+
+type terminateOptions struct {
+	force bool
+}
+
+// WithForce sets the force option.
+func WithForce() TerminateOption {
+	return func(o *terminateOptions) error {
+		o.force = true
+		return nil
+	}
+}
