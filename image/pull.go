@@ -17,6 +17,14 @@ import (
 	"github.com/docker/go-sdk/config/auth"
 )
 
+// defaultPullHandler is the default pull handler function.
+// It downloads the entire docker image, and finishes at EOF of the pull request.
+// It's up to the caller to handle the io.ReadCloser and close it properly.
+var defaultPullHandler = func(r io.ReadCloser) error {
+	_, err := io.ReadAll(r)
+	return err
+}
+
 // ImagePullClient is a client that can pull images.
 type ImagePullClient interface {
 	ImageClient
@@ -29,8 +37,11 @@ type ImagePullClient interface {
 // See [client.IsPermanentClientError] for the list of non-permanent errors.
 // It first extracts the registry credentials from the image name, and sets them in the pull options.
 // It needs to be called with a valid image name, and optional pull  options, see [PullOption].
+// It's possible to override the default pull handler function by using the [WithPullHandler] option.
 func Pull(ctx context.Context, imageName string, opts ...PullOption) error {
-	pullOpts := &pullOptions{}
+	pullOpts := &pullOptions{
+		pullHandler: defaultPullHandler,
+	}
 	for _, opt := range opts {
 		if err := opt(pullOpts); err != nil {
 			return fmt.Errorf("apply pull option: %w", err)
@@ -97,7 +108,9 @@ func Pull(ctx context.Context, imageName string, opts ...PullOption) error {
 	}
 	defer pull.Close()
 
-	// download of docker image finishes at EOF of the pull request
-	_, err = io.ReadAll(pull)
+	if err := pullOpts.pullHandler(pull); err != nil {
+		return fmt.Errorf("pull handler: %w", err)
+	}
+
 	return err
 }

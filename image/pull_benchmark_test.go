@@ -88,6 +88,25 @@ func BenchmarkPull(b *testing.B) {
 			require.NoError(b, err)
 		}
 	})
+
+	b.Run("with-pull-handler", func(b *testing.B) {
+		client := setupPullBenchmark(b)
+		// Mock registry credentials
+		client.pullFunc = func(_ context.Context, _ string, options image.PullOptions) (io.ReadCloser, error) {
+			require.NotEmpty(b, options.RegistryAuth)
+			return io.NopCloser(io.Reader(io.MultiReader())), nil
+		}
+		b.ResetTimer()
+		b.ReportAllocs()
+
+		for range b.N {
+			err := Pull(ctx, imageName, WithPullClient(client), WithPullOptions(pullOpt), WithPullHandler(func(r io.ReadCloser) error {
+				_, err := io.Copy(io.Discard, r)
+				return err
+			}))
+			require.NoError(b, err)
+		}
+	})
 }
 
 // testLogger implements a simple logger for testing

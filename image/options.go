@@ -1,6 +1,9 @@
 package image
 
 import (
+	"errors"
+	"io"
+
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
 
 	"github.com/docker/docker/api/types/build"
@@ -38,6 +41,7 @@ type PullOption func(*pullOptions) error
 type pullOptions struct {
 	pullClient  ImagePullClient
 	pullOptions image.PullOptions
+	pullHandler func(r io.ReadCloser) error
 }
 
 // WithPullClient sets the pull client used to pull the image.
@@ -52,6 +56,19 @@ func WithPullClient(pullClient ImagePullClient) PullOption {
 func WithPullOptions(imagePullOptions image.PullOptions) PullOption {
 	return func(opts *pullOptions) error {
 		opts.pullOptions = imagePullOptions
+		return nil
+	}
+}
+
+// WithPullHandler sets the pull handler function for the pull request.
+// Do not close the reader in the function, as it's done by the [Pull] function.
+func WithPullHandler(pullHandler func(r io.ReadCloser) error) PullOption {
+	return func(opts *pullOptions) error {
+		if pullHandler == nil {
+			return errors.New("pull handler is nil")
+		}
+
+		opts.pullHandler = pullHandler
 		return nil
 	}
 }
