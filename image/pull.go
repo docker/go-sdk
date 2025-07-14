@@ -18,10 +18,10 @@ import (
 )
 
 // defaultPullHandler is the default pull handler function.
-// It reads the reader and discards the content.
+// It downloads the entire docker image, and finishes at EOF of the pull request.
 // It's up to the caller to handle the io.ReadCloser and close it properly.
 var defaultPullHandler = func(r io.ReadCloser) error {
-	_, err := io.Copy(io.Discard, r)
+	_, err := io.ReadAll(r)
 	return err
 }
 
