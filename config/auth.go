@@ -1,7 +1,11 @@
 package config
 
 import (
+	"encoding/base64"
+	"encoding/json"
 	"fmt"
+
+	"github.com/docker/docker/api/types/registry"
 )
 
 // This is used by the docker CLI in cases where an oauth identity token is used.
@@ -32,4 +36,24 @@ func AuthConfigForHostname(hostname string) (AuthConfig, error) {
 	}
 
 	return cfg.AuthConfigForHostname(hostname)
+}
+
+func (authConfig AuthConfig) EncodeBase64() (string, error) {
+	jsonAuth, err := json.Marshal(authConfig)
+	if err != nil {
+		return "", err
+	}
+	return base64.URLEncoding.EncodeToString(jsonAuth), nil
+}
+
+func (authConfig AuthConfig) ToRegistryAuthConfig() registry.AuthConfig {
+	return registry.AuthConfig{
+		Username:      authConfig.Username,
+		Password:      authConfig.Password,
+		Auth:          authConfig.Auth,
+		Email:         "",
+		ServerAddress: authConfig.ServerAddress,
+		IdentityToken: authConfig.IdentityToken,
+		RegistryToken: authConfig.RegistryToken,
+	}
 }

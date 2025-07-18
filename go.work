@@ -8,4 +8,5 @@ use (
 	./image
 	./network
 	./volume
+	./legacyadapters
 )

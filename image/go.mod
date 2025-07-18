@@ -11,7 +11,7 @@ replace (
 require (
 	github.com/cenkalti/backoff/v4 v4.2.1
 	github.com/containerd/errdefs v1.0.0
-	github.com/docker/docker v28.2.2+incompatible
+	github.com/docker/docker v28.3.2+incompatible
 	github.com/docker/go-sdk/client v0.1.0-alpha008
 	github.com/docker/go-sdk/config v0.1.0-alpha008
 	github.com/moby/go-archive v0.1.0

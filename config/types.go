@@ -56,6 +56,7 @@ type ProxyConfig struct {
 	HTTPSProxy string `json:"httpsProxy,omitempty"`
 	NoProxy    string `json:"noProxy,omitempty"`
 	FTPProxy   string `json:"ftpProxy,omitempty"`
+	AllProxy   string `json:"allProxy,omitempty"`
 }
 
 // AuthConfig contains authorization information for connecting to a Registry.
