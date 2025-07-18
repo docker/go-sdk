@@ -2,16 +2,12 @@ package container
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
-	"github.com/containerd/errdefs"
-	"github.com/containerd/platforms"
-
 	"github.com/docker/docker/api/types/container"
-	apiimage "github.com/docker/docker/api/types/image"
 	apinetwork "github.com/docker/docker/api/types/network"
 	"github.com/docker/go-sdk/client"
-	"github.com/docker/go-sdk/image"
 )
 
 // Run is a convenience function that creates a new container and starts it.
@@ -21,6 +17,17 @@ func Run(ctx context.Context, opts ...ContainerCustomizer) (*Container, error) {
 	def := Definition{
 		env:     make(map[string]string),
 		started: true,
+	}
+
+	// initialize the validate functions with the default ones
+	def.validateFuncs = []func() error{
+		func() error {
+			if def.image == "" {
+				return errors.New("image is required")
+			}
+			return nil
+		},
+		def.validateMounts,
 	}
 
 	for _, opt := range opts {
@@ -63,42 +70,6 @@ func Run(ctx context.Context, opts ...ContainerCustomizer) (*Container, error) {
 		}
 	}
 
-	var platform *platforms.Platform
-
-	if def.imagePlatform != "" {
-		p, err := platforms.Parse(def.imagePlatform)
-		if err != nil {
-			return nil, fmt.Errorf("invalid platform %s: %w", def.imagePlatform, err)
-		}
-		platform = &p
-	}
-
-	var shouldPullImage bool
-
-	if def.alwaysPullImage {
-		shouldPullImage = true // If requested always attempt to pull image
-	} else {
-		img, err := def.dockerClient.ImageInspect(ctx, def.image)
-		if err != nil {
-			if !errdefs.IsNotFound(err) {
-				return nil, err
-			}
-			shouldPullImage = true
-		}
-		if platform != nil && (img.Architecture != platform.Architecture || img.Os != platform.OS) {
-			shouldPullImage = true
-		}
-	}
-
-	if shouldPullImage {
-		pullOpt := apiimage.PullOptions{
-			Platform: def.imagePlatform, // may be empty
-		}
-		if err := image.Pull(ctx, def.image, image.WithPullClient(def.dockerClient), image.WithPullOptions(pullOpt)); err != nil {
-			return nil, err
-		}
-	}
-
 	def.labels[moduleLabel] = Version()
 
 	dockerInput := &container.Config{
@@ -131,7 +102,7 @@ func Run(ctx context.Context, opts ...ContainerCustomizer) (*Container, error) {
 		return nil, err
 	}
 
-	resp, err := def.dockerClient.ContainerCreate(ctx, dockerInput, hostConfig, networkingConfig, platform, def.name)
+	resp, err := def.dockerClient.ContainerCreate(ctx, dockerInput, hostConfig, networkingConfig, def.platform, def.name)
 	if err != nil {
 		return nil, fmt.Errorf("container create: %w", err)
 	}

@@ -3,14 +3,19 @@ package container
 import (
 	"context"
 	"errors"
+	"fmt"
 	"io"
 	"log/slog"
 	"reflect"
 	"strings"
 	"time"
 
+	"github.com/containerd/errdefs"
+	"github.com/containerd/platforms"
+	apiimage "github.com/docker/docker/api/types/image"
 	"github.com/docker/go-sdk/container/exec"
 	"github.com/docker/go-sdk/container/wait"
+	"github.com/docker/go-sdk/image"
 )
 
 type LifecycleHooks struct {
@@ -188,6 +193,10 @@ func combineContainerHooks(defaultHooks, userDefinedHooks []LifecycleHooks) Life
 		}
 	}
 
+	// Always append the default pull hook after any other pre-create hook.
+	// User could have defined a build hook in which the image has not been defined yet.
+	hooks.PreCreates = append(hooks.PreCreates, defaultPullHook...)
+
 	return hooks
 }
 
@@ -257,4 +266,49 @@ func (c *Container) applyLifecycleHooks(ctx context.Context, logError bool, hook
 	}
 
 	return nil
+}
+
+// defaultPullHook is a hook that will pull the image if it is not present or if the platform is different.
+// It must be used as a [DefinitionHook] and not as a [ContainerHook] because it needs to be executed before the container is created.
+var defaultPullHook = []DefinitionHook{
+	func(ctx context.Context, def *Definition) error {
+		var platform *platforms.Platform
+
+		if def.imagePlatform != "" {
+			p, err := platforms.Parse(def.imagePlatform)
+			if err != nil {
+				return fmt.Errorf("invalid platform %s: %w", def.imagePlatform, err)
+			}
+			platform = &p
+			def.platform = platform
+		}
+
+		var shouldPullImage bool
+
+		if def.alwaysPullImage {
+			shouldPullImage = true // If requested always attempt to pull image
+		} else {
+			img, err := def.dockerClient.ImageInspect(ctx, def.image)
+			if err != nil {
+				if !errdefs.IsNotFound(err) {
+					return err
+				}
+				shouldPullImage = true
+			}
+			if platform != nil && (img.Architecture != platform.Architecture || img.Os != platform.OS) {
+				shouldPullImage = true
+			}
+		}
+
+		if shouldPullImage {
+			pullOpt := apiimage.PullOptions{
+				Platform: def.imagePlatform, // may be empty
+			}
+			if err := image.Pull(ctx, def.image, image.WithPullClient(def.dockerClient), image.WithPullOptions(pullOpt)); err != nil {
+				return err
+			}
+		}
+
+		return nil
+	},
 }

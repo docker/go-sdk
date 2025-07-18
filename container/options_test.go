@@ -2,6 +2,7 @@ package container
 
 import (
 	"bytes"
+	"errors"
 	"testing"
 	"time"
 
@@ -518,4 +519,72 @@ func TestWithWaitStrategy(t *testing.T) {
 			)
 		})
 	})
+}
+
+func TestWithValidateFuncs(t *testing.T) {
+	t.Run("add-zero", func(t *testing.T) {
+		def := Definition{}
+
+		opt := WithValidateFuncs()
+		require.ErrorContains(t, opt.Customize(&def), "validate function is nil")
+		require.Len(t, def.validateFuncs, 0)
+	})
+
+	t.Run("add-nil", func(t *testing.T) {
+		def := Definition{}
+
+		opt := WithValidateFuncs(nil)
+		require.ErrorContains(t, opt.Customize(&def), "validate function is nil")
+		require.Len(t, def.validateFuncs, 0)
+	})
+
+	t.Run("add-one-nil", func(t *testing.T) {
+		def := Definition{}
+
+		opt := WithValidateFuncs(func() error {
+			return nil
+		}, nil)
+		require.ErrorContains(t, opt.Customize(&def), "validate function is nil")
+		require.Len(t, def.validateFuncs, 0)
+	})
+
+	t.Run("add-single", func(t *testing.T) {
+		def := Definition{}
+
+		opt := WithValidateFuncs(func() error {
+			return errors.New("test error")
+		})
+		require.NoError(t, opt.Customize(&def))
+		require.Len(t, def.validateFuncs, 1)
+	})
+
+	t.Run("add-multiple", func(t *testing.T) {
+		def := Definition{}
+
+		opt := WithValidateFuncs(
+			func() error {
+				return errors.New("test error")
+			},
+			func() error {
+				return errors.New("test error 2")
+			},
+		)
+		require.NoError(t, opt.Customize(&def))
+		require.Len(t, def.validateFuncs, 2)
+	})
+}
+
+func TestWithDefinition(t *testing.T) {
+	def1 := Definition{
+		image: "alpine",
+	}
+
+	def2 := Definition{
+		image: "busybox",
+	}
+
+	opt := WithDefinition(&def2)
+	require.NoError(t, opt.Customize(&def1))
+	require.Equal(t, "alpine", def1.image)
+	require.Equal(t, "alpine", def2.image)
 }

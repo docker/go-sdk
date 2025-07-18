@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"maps"
+	"slices"
 	"time"
 
 	"github.com/docker/docker/api/types/container"
@@ -364,6 +365,49 @@ func WithAdditionalLifecycleHooks(hooks ...LifecycleHooks) CustomizeDefinitionOp
 func WithFiles(files ...File) CustomizeDefinitionOption {
 	return func(def *Definition) error {
 		def.files = append(def.files, files...)
+		return nil
+	}
+}
+
+// WithValidateFuncs sets the validate functions for a container.
+// By default, the container is validated using the following functions:
+// - an image is required
+// - mounts are validated
+// The validate functions are executed in the order they are added.
+// If one of the functions returns an error, the container is not created.
+// If no validate functions are provided, the container is validated using the default functions.
+func WithValidateFuncs(fn ...func() error) CustomizeDefinitionOption {
+	return func(def *Definition) error {
+		if fn == nil || slices.ContainsFunc(fn, func(fn func() error) bool {
+			return fn == nil
+		}) {
+			return errors.New("validate function is nil")
+		}
+
+		// override the default validate functions with the user-defined ones
+		def.validateFuncs = fn
+		return nil
+	}
+}
+
+// WithDefinition allows to use the client definition in order to create the container.
+// This option is useful when client code defines a definition and wants its values
+// to be updated on container creation.
+// If used, it's mandatory to pass this option as the last option to the container creation,
+// so that the client definition is updated with the SDK definition.
+func WithDefinition(def *Definition) CustomizeDefinitionOption {
+	return func(d *Definition) error {
+		// validate the definition
+		if d == nil {
+			return errors.New("definition is nil")
+		}
+
+		if def == nil {
+			return errors.New("client definition is nil")
+		}
+
+		// return the definition to the caller
+		*def = *d
 		return nil
 	}
 }

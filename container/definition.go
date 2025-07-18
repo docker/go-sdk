@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/containerd/platforms"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/network"
 	"github.com/docker/go-sdk/client"
@@ -45,6 +46,9 @@ type Definition struct {
 	// hostConfigModifier the modifier for the host config before container creation
 	hostConfigModifier func(*container.HostConfig)
 
+	// validateFuncs the functions to validate the definition.
+	validateFuncs []func() error
+
 	// imageSubstitutors the image substitutors to use for the container.
 	imageSubstitutors []ImageSubstitutor
 
@@ -72,6 +76,10 @@ type Definition struct {
 	// imagePlatform the platform of the image
 	imagePlatform string
 
+	// platform the platform of the container.
+	// Used to override the platform of the image when building the container.
+	platform *platforms.Platform
+
 	// name the name of the container.
 	name string
 
@@ -84,15 +92,14 @@ type Definition struct {
 
 // validate validates the definition.
 func (d *Definition) validate() error {
-	if d.image == "" {
-		return errors.New("image is required")
+	var errs []error
+	for _, fn := range d.validateFuncs {
+		if err := fn(); err != nil {
+			errs = append(errs, err)
+		}
 	}
 
-	if err := d.validateMounts(); err != nil {
-		return fmt.Errorf("validate mounts: %w", err)
-	}
-
-	return nil
+	return errors.Join(errs...)
 }
 
 // DockerClient returns the docker client used by the definition.
