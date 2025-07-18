@@ -14,7 +14,6 @@ import (
 	"github.com/docker/docker/api/types/image"
 	"github.com/docker/go-sdk/client"
 	"github.com/docker/go-sdk/config"
-	"github.com/docker/go-sdk/config/auth"
 )
 
 // defaultPullHandler is the default pull handler function.
@@ -63,25 +62,23 @@ func Pull(ctx context.Context, imageName string, opts ...PullOption) error {
 	if err != nil {
 		pullOpts.pullClient.Logger().Warn("failed to get image auth, setting empty credentials for the image", "image", imageName, "error", err)
 	} else {
-		ref, err := auth.ParseImageRef(imageName)
-		if err != nil {
-			return fmt.Errorf("parse image ref: %w", err)
+		// there must be only one auth config for the image
+		var tmp config.AuthConfig
+		for _, ac := range authConfigs {
+			tmp = ac
 		}
 
-		creds, ok := authConfigs[ref.Registry]
-		if !ok {
-			pullOpts.pullClient.Logger().Warn("no image auth found for image, setting empty credentials for the image. This is expected for public images", "image", imageName)
-		}
-
-		authConfig := config.AuthConfig{
-			Username: creds.Username,
-			Password: creds.Password,
-		}
-		encodedJSON, err := json.Marshal(authConfig)
-		if err != nil {
-			pullOpts.pullClient.Logger().Warn("failed to marshal image auth, setting empty credentials for the image", "image", imageName, "error", err)
-		} else {
-			pullOpts.pullOptions.RegistryAuth = base64.URLEncoding.EncodeToString(encodedJSON)
+		if tmp.Username != "" && tmp.Password != "" {
+			authConfig := config.AuthConfig{
+				Username: tmp.Username,
+				Password: tmp.Password,
+			}
+			encodedJSON, err := json.Marshal(authConfig)
+			if err != nil {
+				pullOpts.pullClient.Logger().Warn("failed to marshal image auth, setting empty credentials for the image", "image", imageName, "error", err)
+			} else {
+				pullOpts.pullOptions.RegistryAuth = base64.URLEncoding.EncodeToString(encodedJSON)
+			}
 		}
 	}
 

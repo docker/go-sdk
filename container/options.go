@@ -277,7 +277,10 @@ func WithAdditionalWaitStrategyAndDeadline(deadline time.Duration, strategies ..
 	}
 }
 
-// WithAlwaysPull will pull the image before starting the container
+// WithAlwaysPull will pull the image before starting the container.
+// Do not use this option in case the image is the result of a build
+// and not yet pushed to a registry. It will try to pull the image
+// from the registry, and fail.
 func WithAlwaysPull() CustomizeDefinitionOption {
 	return func(def *Definition) error {
 		def.alwaysPullImage = true
