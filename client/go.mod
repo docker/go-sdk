@@ -10,7 +10,7 @@ replace (
 require (
 	github.com/caarlos0/env/v11 v11.3.1
 	github.com/containerd/errdefs v1.0.0
-	github.com/docker/docker v28.2.2+incompatible
+	github.com/docker/docker v28.3.2+incompatible
 	github.com/docker/go-connections v0.5.0
 	github.com/docker/go-sdk/context v0.1.0-alpha008
 	github.com/opencontainers/image-spec v1.1.1
@@ -50,5 +50,4 @@ require (
 	golang.org/x/time v0.11.0 // indirect
 	google.golang.org/grpc v1.73.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
-	gotest.tools/v3 v3.5.2 // indirect
 )
