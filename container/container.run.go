@@ -58,18 +58,6 @@ func Run(ctx context.Context, opts ...ContainerCustomizer) (*Container, error) {
 		DefaultLoggingHook,
 	}
 
-	for _, is := range def.imageSubstitutors {
-		modifiedTag, err := is.Substitute(def.image)
-		if err != nil {
-			return nil, fmt.Errorf("failed to substitute image %s with %s: %w", def.image, is.Description(), err)
-		}
-
-		if modifiedTag != def.image {
-			def.dockerClient.Logger().Info("Replacing image", "description", is.Description(), "from", def.image, "to", modifiedTag)
-			def.image = modifiedTag
-		}
-	}
-
 	def.labels[moduleLabel] = Version()
 
 	dockerInput := &container.Config{
@@ -101,6 +89,24 @@ func Run(ctx context.Context, opts ...ContainerCustomizer) (*Container, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	// Image substitution must be done after the creating hook has been called,
+	// as the image could have been overridden in there.
+	for _, is := range def.imageSubstitutors {
+		modifiedTag, err := is.Substitute(def.image)
+		if err != nil {
+			return nil, fmt.Errorf("failed to substitute image %s with %s: %w", def.image, is.Description(), err)
+		}
+
+		if modifiedTag != def.image {
+			def.dockerClient.Logger().Info("Replacing image", "description", is.Description(), "from", def.image, "to", modifiedTag)
+			def.image = modifiedTag
+		}
+	}
+
+	// Update the image name in the docker input after the creating hook has been called,
+	// as it could have been overridden in there.
+	dockerInput.Image = def.image
 
 	resp, err := def.dockerClient.ContainerCreate(ctx, dockerInput, hostConfig, networkingConfig, def.platform, def.name)
 	if err != nil {

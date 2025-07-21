@@ -211,13 +211,13 @@ func applyContainerHooks(ctx context.Context, hooks []ContainerHook, ctr *Contai
 }
 
 func applyDefinitionHooks(ctx context.Context, hooks []DefinitionHook, def *Definition) error {
-	var errs []error
 	for _, hook := range hooks {
 		if err := hook(ctx, def); err != nil {
-			errs = append(errs, err)
+			return fmt.Errorf("apply definition hook: %w", err)
 		}
 	}
-	return errors.Join(errs...)
+
+	return nil
 }
 
 // applyLifecycleHooks calls hook on all LifecycleHooks.

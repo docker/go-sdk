@@ -112,6 +112,20 @@ func (d *Definition) Image() string {
 	return d.image
 }
 
+// ImageSubstitutors returns the image substitutors used by the definition.
+func (d *Definition) ImageSubstitutors() []ImageSubstitutor {
+	return d.imageSubstitutors
+}
+
+// Labels returns the labels used by the definition.
+func (d *Definition) Labels() map[string]string {
+	if d.labels == nil {
+		d.labels = make(map[string]string)
+	}
+
+	return d.labels
+}
+
 // Name returns the name of the container.
 func (d *Definition) Name() string {
 	return d.name
