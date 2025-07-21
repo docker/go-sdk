@@ -25,6 +25,7 @@ The Pull operation can be customized using functional options. The following opt
 
 - `WithPullClient(client *client.Client) image.PullOption`: The client to use to pull the image. If not provided, the default client will be used.
 - `WithPullOptions(options apiimage.PullOptions) image.PullOption`: The options to use to pull the image. The type of the options is "github.com/docker/docker/api/types/image".
+- `WithPullHandler(pullHandler func(r io.ReadCloser) error) image.PullOption`: The handler to use to pull the image, which acts as a callback to the pull operation.
 
 First, you need to import the following packages:
 
@@ -52,6 +53,10 @@ err = image.Pull(ctx,
     "nginx:alpine",
     image.WithPullClient(dockerClient),
     image.WithPullOptions(apiimage.PullOptions{}),
+    image.WithPullHandler(func(r io.ReadCloser) error {
+        // do something with the reader
+        return nil
+    }),
 )
 if err != nil {
     log.Fatalf("failed to pull image: %v", err)
