@@ -2,7 +2,7 @@
 
 > **⚠️ DEPRECATION NOTICE**
 > 
-> This module is **temporary** and already **deprecated** . It will be removed in a future release when all Docker products have migrated to use the go-sdk natively.
+> This module is **temporary** and already **deprecated**. It will be removed in a future release when all Docker products have migrated to use the go-sdk natively.
 > 
 > **We strongly recommend avoiding this module in new projects.** Instead, use the native go-sdk types directly.   
 > This module exists solely to provide a migration path for existing Docker products during the transition period.

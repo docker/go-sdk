@@ -113,10 +113,6 @@ func (c *Config) AuthConfigForHostname(hostname string) (AuthConfig, error) {
 	return authConfig, nil
 }
 
-func (c *Config) GetAuthConfig(registryHostname string) (AuthConfig, error) {
-	return c.resolveAuthConfigForHostname(registryHostname)
-}
-
 // AuthConfigsForImages returns auth configs for multiple images with caching
 func (c *Config) AuthConfigsForImages(images []string) (map[string]AuthConfig, error) {
 	result := make(map[string]AuthConfig)
