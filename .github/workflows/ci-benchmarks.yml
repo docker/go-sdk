@@ -87,7 +87,7 @@ jobs:
 
       - name: Store Benchmark Results for main branch
         uses: benchmark-action/github-action-benchmark@d48d326b4ca9ba73ca0cd0d59f108f9e02a381c7 # v1.20
-        if: ${{ github.ref_name == 'main' && steps.check-benchmarks.outputs.benchmarks_found == 'true' }}
+        if: ${{ steps.check-benchmarks.outputs.benchmarks_found == 'true' && github.ref_name == 'main' && steps.check-benchmarks.outputs.benchmarks_found == 'true' }}
         with:
           tool: 'go'
           output-file-path: ./${{ inputs.project-directory }}/output.txt
@@ -101,7 +101,7 @@ jobs:
 
       - name: Update Benchmark Results cache
         uses: actions/cache/save@5a3ec84eff668545956fd18022155c47e93e2684 # v4
-        if: ${{ github.ref_name == 'main' }}
+        if: ${{ steps.check-benchmarks.outputs.benchmarks_found == 'true' && github.ref_name == 'main' }}
         with:
           path: ./${{ inputs.project-directory }}/cache
           key: ${{ steps.get-main-branch-sha.outputs.sha }}-${{ runner.os }}-${{ steps.system-info.outputs.cpu-model }}-${{ inputs.project-directory }}-benchmark
