@@ -1,9 +1,12 @@
 package image_test
 
 import (
+	"bytes"
 	"context"
 	"fmt"
+	"io"
 	"log"
+	"strings"
 
 	apiimage "github.com/docker/docker/api/types/image"
 	"github.com/docker/go-sdk/client"
@@ -46,4 +49,24 @@ func ExamplePull_withPullOptions() {
 
 	// Output:
 	// <nil>
+}
+
+func ExamplePull_withPullHandler() {
+	opts := apiimage.PullOptions{
+		Platform: "linux/amd64",
+	}
+
+	buff := &bytes.Buffer{}
+
+	err := image.Pull(context.Background(), "alpine:3.22", image.WithPullOptions(opts), image.WithPullHandler(func(r io.ReadCloser) error {
+		_, err := io.Copy(buff, r)
+		return err
+	}))
+
+	fmt.Println(err)
+	fmt.Println(strings.Contains(buff.String(), "Pulling from library/alpine"))
+
+	// Output:
+	// <nil>
+	// true
 }
