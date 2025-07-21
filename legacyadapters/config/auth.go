@@ -57,9 +57,9 @@ func ToConfigFile(cfg config.Config) *configfile.ConfigFile {
 		Proxies:              ToCLIProxyConfigs(cfg.Proxies),
 		CurrentContext:       cfg.CurrentContext,
 		CLIPluginsExtraDirs:  cfg.CLIPluginsExtraDirs,
-		Plugins:              map[string]map[string]string{},
+		Plugins:              make(map[string]map[string]string),
 		Aliases:              cfg.Aliases,
-		Features:             map[string]string{},
+		Features:             make(map[string]string),
 		Experimental:         cfg.Experimental,
 	}
 }
@@ -86,7 +86,7 @@ func ToCLIAuthConfig(authConfig config.AuthConfig) types.AuthConfig {
 // Deprecated: This function is deprecated and will be removed in a future release.
 // Use the native go-sdk types directly and these adapters only when needed.
 func ToCLIAuthConfigs(authConfigs map[string]config.AuthConfig) map[string]types.AuthConfig {
-	result := map[string]types.AuthConfig{}
+	result := make(map[string]types.AuthConfig, len(authConfigs))
 	for name, authConfig := range authConfigs {
 		result[name] = ToCLIAuthConfig(authConfig)
 	}
@@ -111,7 +111,7 @@ func ToCLIProxyConfig(proxy config.ProxyConfig) configfile.ProxyConfig {
 // Deprecated: This function is deprecated and will be removed in a future release.
 // Use the native go-sdk types directly and these adapters only when needed.
 func ToCLIProxyConfigs(proxies map[string]config.ProxyConfig) map[string]configfile.ProxyConfig {
-	result := map[string]configfile.ProxyConfig{}
+	result := make(map[string]configfile.ProxyConfig, len(proxies))
 	for name, proxy := range proxies {
 		result[name] = ToCLIProxyConfig(proxy)
 	}
