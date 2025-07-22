@@ -59,7 +59,7 @@ fi
 
 LATEST_TAG=$(find_latest_tag "${MODULE}")
 if [[ -z "$LATEST_TAG" ]]; then
-  LATEST_TAG="${MODULE}/v0.1.0-alpha001"
+  LATEST_TAG="${MODULE}/v0.1.0-alpha000"
 fi
 
 echo "Latest tag: ${LATEST_TAG}"
