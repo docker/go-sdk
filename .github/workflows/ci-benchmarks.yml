@@ -64,7 +64,7 @@ jobs:
         id: get-main-branch-sha
         working-directory: ${{ inputs.project-directory }}
         run: |
-          SHA=$(git log -1 --format="%H" main -- .)
+          SHA=$(git log -1 --format="%H" origin/main -- .)
           echo "sha=$SHA" >> $GITHUB_OUTPUT
 
       - name: Get Benchmark Results from main branch
