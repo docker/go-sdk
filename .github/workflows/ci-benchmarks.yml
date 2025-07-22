@@ -59,11 +59,12 @@ jobs:
         uses: kenchan0130/actions-system-info@1a16c1960cecc14b8de80e3e11a42f3f9f037593 # v1.3
         id: system-info
 
-      - name: Get Main branch SHA
+      - name: Get latest SHA for ${{ inputs.project-directory }} in main
         if: ${{ steps.check-benchmarks.outputs.benchmarks_found == 'true' }}
         id: get-main-branch-sha
+        working-directory: ${{ inputs.project-directory }}
         run: |
-          SHA=$(git rev-parse origin/main)
+          SHA=$(git log -1 --format="%H" main -- .)
           echo "sha=$SHA" >> $GITHUB_OUTPUT
 
       - name: Get Benchmark Results from main branch
