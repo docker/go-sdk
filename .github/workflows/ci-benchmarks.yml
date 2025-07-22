@@ -44,7 +44,13 @@ jobs:
             echo "No benchmarks found. Workflow completed successfully."
             echo "benchmarks_found=false" >> $GITHUB_OUTPUT
           else
-            echo "benchmarks_found=true" >> $GITHUB_OUTPUT
+            # Check if output indicates no test files
+            if grep -q "${{ inputs.project-directory }} \[no test files\]" output.txt; then
+              echo "No benchmark test files found for this module. Workflow completed successfully."
+              echo "benchmarks_found=false" >> $GITHUB_OUTPUT
+            else
+              echo "benchmarks_found=true" >> $GITHUB_OUTPUT
+            fi
           fi
 
       # NOTE: Benchmarks could change with different CPU types
@@ -87,7 +93,7 @@ jobs:
 
       - name: Store Benchmark Results for main branch
         uses: benchmark-action/github-action-benchmark@d48d326b4ca9ba73ca0cd0d59f108f9e02a381c7 # v1.20
-        if: ${{ steps.check-benchmarks.outputs.benchmarks_found == 'true' && github.ref_name == 'main' && steps.check-benchmarks.outputs.benchmarks_found == 'true' }}
+        if: ${{ github.ref_name == 'main' && steps.check-benchmarks.outputs.benchmarks_found == 'true' }}
         with:
           tool: 'go'
           output-file-path: ./${{ inputs.project-directory }}/output.txt
