@@ -68,9 +68,13 @@ echo "Latest tag: ${LATEST_TAG}"
 TAG_VERSION=$(echo "${LATEST_TAG}" | sed -E "s/^${MODULE}\///")
 echo "Tag version: ${TAG_VERSION}"
 
+# Strip leading zeros from the version before passing to semver-tool
+CLEAN_TAG_VERSION=$(echo "${TAG_VERSION}" | sed -E 's/alpha0+([0-9]+)/alpha\1/')
+echo "Clean tag version for semver-tool: ${CLEAN_TAG_VERSION}"
+
 # Get the version to bump to from the semver-tool and the bump type
-echo "Bumping ${BUMP_TYPE} version of ${LATEST_TAG}"
-BASE_VERSION=$(docker run --rm --platform=linux/amd64 "${DOCKER_IMAGE_SEMVER}" bump "${BUMP_TYPE}" "${TAG_VERSION}")
+echo "Bumping ${BUMP_TYPE} version of ${CLEAN_TAG_VERSION}"
+BASE_VERSION=$(docker run --rm --platform=linux/amd64 "${DOCKER_IMAGE_SEMVER}" bump "${BUMP_TYPE}" "${CLEAN_TAG_VERSION}")
 if [[ "${BASE_VERSION}" == "" ]]; then
   echo "Failed to bump the version. Please check the semver-tool image and the bump type."
   exit 1
