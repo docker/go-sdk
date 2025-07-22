@@ -10,6 +10,7 @@ import (
 
 	"github.com/cenkalti/backoff/v4"
 	"github.com/moby/go-archive"
+	"github.com/moby/go-archive/compression"
 	"github.com/moby/term"
 
 	"github.com/docker/docker/api/types/build"
@@ -21,7 +22,7 @@ import (
 // It returns an error if the directory cannot be read or if the files cannot be read.
 // This function is useful for creating a build context to build an image.
 // The dockerfile path needs to be relative to the build context.
-func ArchiveBuildContext(dir string, dockerfile string) (r io.Reader, err error) {
+func ArchiveBuildContext(dir string, dockerfile string) (r io.ReadCloser, err error) {
 	// always pass context as absolute path
 	abs, err := filepath.Abs(dir)
 	if err != nil {
@@ -41,7 +42,11 @@ func ArchiveBuildContext(dir string, dockerfile string) (r io.Reader, err error)
 
 	buildContext, err := archive.TarWithOptions(
 		abs,
-		&archive.TarOptions{ExcludePatterns: excluded, IncludeFiles: includes},
+		&archive.TarOptions{
+			ExcludePatterns: excluded,
+			IncludeFiles:    includes,
+			Compression:     compression.Gzip,
+		},
 	)
 	if err != nil {
 		return nil, fmt.Errorf("tar with options: %w", err)
@@ -61,7 +66,7 @@ type ImageBuildClient interface {
 // BuildFromDir builds an image from a directory and the path to the Dockerfile in the directory, then returns the tag.
 // It uses [ArchiveBuildContext] to create a archive reader from the directory.
 func BuildFromDir(ctx context.Context, dir string, dockerfile string, tag string, opts ...BuildOption) (string, error) {
-	archive, err := ArchiveBuildContext(dir, dockerfile)
+	contextArchive, err := ArchiveBuildContext(dir, dockerfile)
 	if err != nil {
 		return "", fmt.Errorf("archive build context: %w", err)
 	}
@@ -72,7 +77,7 @@ func BuildFromDir(ctx context.Context, dir string, dockerfile string, tag string
 
 	opts = append(opts, WithBuildOptions(buildOpts))
 
-	return Build(ctx, archive, tag, opts...)
+	return Build(ctx, contextArchive, tag, opts...)
 }
 
 // Build will build and image from context and Dockerfile, then return the tag. It uses "Dockerfile" as the Dockerfile path,
