@@ -23,6 +23,9 @@ var sdkLabels = map[string]string{
 
 // AddSDKLabels adds the SDK labels to target.
 func AddSDKLabels(target map[string]string) {
+	if target == nil {
+		target = make(map[string]string)
+	}
 	maps.Copy(target, sdkLabels)
 }
 
