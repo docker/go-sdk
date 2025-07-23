@@ -13,9 +13,9 @@ const (
 	LabelVersion = LabelBase + ".version"
 )
 
-// SDKLabels returns a map of labels that can be used to identify resources
+// sdkLabels is a map of labels that can be used to identify resources
 // created by this library.
-var SDKLabels = map[string]string{
+var sdkLabels = map[string]string{
 	LabelBase:    "true",
 	LabelLang:    "go",
 	LabelVersion: Version(),
@@ -23,5 +23,15 @@ var SDKLabels = map[string]string{
 
 // AddSDKLabels adds the SDK labels to target.
 func AddSDKLabels(target map[string]string) {
-	maps.Copy(target, SDKLabels)
+	maps.Copy(target, sdkLabels)
+}
+
+// SDKLabels returns a map of labels that can be used to identify resources
+// created by this library.
+func SDKLabels() map[string]string {
+	return map[string]string{
+		LabelBase:    "true",
+		LabelLang:    "go",
+		LabelVersion: Version(),
+	}
 }

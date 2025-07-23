@@ -15,4 +15,14 @@ func TestAddSDKLabels(t *testing.T) {
 	require.Contains(t, labels, client.LabelBase)
 	require.Contains(t, labels, client.LabelLang)
 	require.Contains(t, labels, client.LabelVersion)
+
+	t.Run("idempotent", func(t *testing.T) {
+		sdkLabels := client.SDKLabels()
+		sdkLabels["foo"] = "bar"
+
+		labels := make(map[string]string)
+		client.AddSDKLabels(labels)
+		require.NotEqual(t, sdkLabels, labels)
+		require.NotContains(t, labels, "foo")
+	})
 }
