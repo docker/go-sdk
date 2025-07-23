@@ -150,4 +150,17 @@ func TestNew_internal_state(t *testing.T) {
 		require.ErrorContains(t, err, "docker host from context")
 		require.Nil(t, client)
 	})
+
+	t.Run("error/apply-option", func(t *testing.T) {
+		// custom option that always fails to apply
+		customOpt := func() ClientOption {
+			return newClientOption(func(_ *Client) error {
+				return errors.New("apply option")
+			})
+		}
+
+		cli, err := New(context.Background(), customOpt())
+		require.ErrorContains(t, err, "apply option")
+		require.Nil(t, cli)
+	})
 }

@@ -2,7 +2,6 @@ package client_test
 
 import (
 	"context"
-	"errors"
 	"path/filepath"
 	"sync"
 	"testing"
@@ -85,19 +84,6 @@ func TestNew(t *testing.T) {
 	t.Run("error", func(t *testing.T) {
 		cli, err := client.New(context.Background(), client.FromDockerOpt(dockerclient.WithHost("foobar")))
 		require.Error(t, err)
-		require.Nil(t, cli)
-	})
-
-	t.Run("error/apply-option", func(t *testing.T) {
-		// custom option that always fails to apply
-		customOpt := func() client.ClientOption {
-			return client.NewClientOption(func(_ *client.Client) error {
-				return errors.New("apply option")
-			})
-		}
-
-		cli, err := client.New(context.Background(), customOpt())
-		require.ErrorContains(t, err, "apply option")
 		require.Nil(t, cli)
 	})
 
