@@ -108,6 +108,9 @@ func TestBuildFromDir(t *testing.T) {
 
 	t.Run("success", func(t *testing.T) {
 		tag, err := image.BuildFromDir(context.Background(), buildPath, "Dockerfile", "test:test")
+		t.Cleanup(func() {
+			cleanup(t, tag)
+		})
 		require.NoError(t, err)
 		require.Equal(t, "test:test", tag)
 	})
@@ -116,9 +119,32 @@ func TestBuildFromDir(t *testing.T) {
 		tag, err := image.BuildFromDir(context.Background(), buildPath, "Dockerfile", "test:test", image.WithBuildOptions(build.ImageBuildOptions{
 			Dockerfile: "Dockerfile.custom",
 		}))
+		t.Cleanup(func() {
+			cleanup(t, tag)
+		})
 		require.NoError(t, err)
 		require.Equal(t, "test:test", tag)
 	})
+}
+
+func TestBuild_addSDKLabels(t *testing.T) {
+	buildPath := path.Join("testdata", "build")
+
+	tag, err := image.BuildFromDir(context.Background(), buildPath, "Dockerfile", "test:test")
+	require.NoError(t, err)
+	require.Equal(t, "test:test", tag)
+	t.Cleanup(func() {
+		cleanup(t, tag)
+	})
+
+	inspect, err := client.DefaultClient.ImageInspect(context.Background(), tag)
+	require.NoError(t, err)
+
+	require.Contains(t, inspect.Config.Labels, client.LabelBase)
+	require.Contains(t, inspect.Config.Labels, client.LabelLang)
+	require.Contains(t, inspect.Config.Labels, client.LabelVersion)
+	require.Contains(t, inspect.Config.Labels, client.LabelBase+".image")
+	require.Equal(t, image.Version(), inspect.Config.Labels[client.LabelBase+".image"])
 }
 
 func testBuild(tb testing.TB, b *testBuildInfo, opts ...image.BuildOption) {

@@ -24,6 +24,9 @@ func (c *Client) NetworkCreate(ctx context.Context, name string, options network
 		return network.CreateResponse{}, fmt.Errorf("docker client: %w", err)
 	}
 
+	// Add the labels that identify this as a network created by the SDK.
+	AddSDKLabels(options.Labels)
+
 	return dockerClient.NetworkCreate(ctx, name, options)
 }
 

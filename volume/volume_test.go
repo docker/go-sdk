@@ -78,5 +78,11 @@ func TestNew(t *testing.T) {
 
 		labels := v.Labels
 		require.Equal(t, "bar", labels["foo"])
+
+		require.Contains(t, labels, client.LabelBase)
+		require.Contains(t, labels, client.LabelLang)
+		require.Contains(t, labels, client.LabelVersion)
+		require.Contains(t, labels, client.LabelBase+".volume")
+		require.Equal(t, volume.Version(), labels[client.LabelBase+".volume"])
 	})
 }

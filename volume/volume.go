@@ -26,7 +26,7 @@ func New(ctx context.Context, opts ...Option) (*Volume, error) {
 		volumeOptions.client = client.DefaultClient
 	}
 
-	client.AddSDKLabels(volumeOptions.labels)
+	volumeOptions.labels[moduleLabel] = Version()
 
 	v, err := volumeOptions.client.VolumeCreate(ctx, volume.CreateOptions{
 		Name:   volumeOptions.name,

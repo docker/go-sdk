@@ -30,7 +30,7 @@ func New(ctx context.Context, opts ...Option) (*Network, error) {
 		networkOptions.client = client.DefaultClient
 	}
 
-	client.AddSDKLabels(networkOptions.labels)
+	networkOptions.labels[moduleLabel] = Version()
 
 	nc := network.CreateOptions{
 		Driver:     networkOptions.driver,

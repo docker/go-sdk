@@ -14,6 +14,9 @@ func (c *Client) VolumeCreate(ctx context.Context, options volume.CreateOptions)
 		return volume.Volume{}, fmt.Errorf("docker client: %w", err)
 	}
 
+	// Add the labels that identify this as a volume created by the SDK.
+	AddSDKLabels(options.Labels)
+
 	return dockerClient.VolumeCreate(ctx, options)
 }
 

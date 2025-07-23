@@ -23,6 +23,12 @@ func TestInspect(t *testing.T) {
 		inspect, err := nw.Inspect(context.Background())
 		require.NoError(t, err)
 		require.NotNil(t, inspect)
+
+		require.Contains(t, inspect.Labels, client.LabelBase)
+		require.Contains(t, inspect.Labels, client.LabelLang)
+		require.Contains(t, inspect.Labels, client.LabelVersion)
+		require.Contains(t, inspect.Labels, client.LabelBase+".network")
+		require.Equal(t, network.Version(), inspect.Labels[client.LabelBase+".network"])
 	})
 
 	t.Run("network-does-not-exist", func(t *testing.T) {

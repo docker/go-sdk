@@ -21,6 +21,9 @@ func (c *Client) ContainerCreate(ctx context.Context, config *container.Config, 
 		return container.CreateResponse{}, fmt.Errorf("docker client: %w", err)
 	}
 
+	// Add the labels that identify this as a container created by the SDK.
+	AddSDKLabels(config.Labels)
+
 	return dockerClient.ContainerCreate(ctx, config, hostConfig, networkingConfig, platform, name)
 }
 

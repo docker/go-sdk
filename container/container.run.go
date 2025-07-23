@@ -99,14 +99,13 @@ func Run(ctx context.Context, opts ...ContainerCustomizer) (*Container, error) {
 		}
 	}
 
-	// Add the labels that identify this as a container created by the SDK.
-	client.AddSDKLabels(def.labels)
+	def.labels[moduleLabel] = Version()
 
 	dockerInput := &container.Config{
 		Entrypoint: def.entrypoint,
 		Image:      def.image,
 		Env:        env,
-		Labels:     def.labels,
+		Labels:     def.labels, // the Client will add the SDK labels automatically
 		Cmd:        def.cmd,
 	}
 

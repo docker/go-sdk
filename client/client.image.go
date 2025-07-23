@@ -22,6 +22,9 @@ func (c *Client) ImageBuild(ctx context.Context, options build.ImageBuildOptions
 		return build.ImageBuildResponse{}, errors.New("build context is nil")
 	}
 
+	// Add client labels
+	AddSDKLabels(options.Labels)
+
 	return dockerClient.ImageBuild(ctx, options.Context, options)
 }
 

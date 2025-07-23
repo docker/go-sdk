@@ -406,6 +406,8 @@ func TestRun_addSDKLabels(t *testing.T) {
 	require.Contains(t, inspect.Config.Labels, client.LabelBase)
 	require.Contains(t, inspect.Config.Labels, client.LabelLang)
 	require.Contains(t, inspect.Config.Labels, client.LabelVersion)
+	require.Contains(t, inspect.Config.Labels, client.LabelBase+".container")
+	require.Equal(t, container.Version(), inspect.Config.Labels[client.LabelBase+".container"])
 }
 
 //go:embed testdata/hello.sh

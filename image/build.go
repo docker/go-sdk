@@ -128,7 +128,7 @@ func Build(ctx context.Context, contextReader io.Reader, tag string, opts ...Bui
 	}
 
 	// Add client labels
-	client.AddSDKLabels(buildOpts.opts.Labels)
+	buildOpts.opts.Labels[moduleLabel] = Version()
 
 	// Close the context reader after all retries are complete
 	defer tryClose(contextReader)
