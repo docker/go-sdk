@@ -41,8 +41,8 @@ func WithFilters(filters filters.Args) ListOptions {
 	}
 }
 
-// GetByID returns a network by its ID.
-func GetByID(ctx context.Context, id string, opts ...ListOptions) (network.Inspect, error) {
+// FindByID returns a network by its ID.
+func FindByID(ctx context.Context, id string, opts ...ListOptions) (network.Inspect, error) {
 	opts = append(opts, WithFilters(filters.NewArgs(filters.Arg(filterByID, id))))
 
 	nws, err := list(ctx, opts...)
@@ -53,8 +53,8 @@ func GetByID(ctx context.Context, id string, opts ...ListOptions) (network.Inspe
 	return nws[0], nil
 }
 
-// GetByName returns a network by its name.
-func GetByName(ctx context.Context, name string, opts ...ListOptions) (network.Inspect, error) {
+// FindByName returns a network by its name.
+func FindByName(ctx context.Context, name string, opts ...ListOptions) (network.Inspect, error) {
 	opts = append(opts, WithFilters(filters.NewArgs(filters.Arg(filterByName, name))))
 
 	nws, err := list(ctx, opts...)

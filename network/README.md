@@ -23,14 +23,14 @@ if err != nil {
 
 fmt.Printf("network: %+v", resp)
 
-inspect, err := network.GetByID(ctx, nw.ID())
+inspect, err := network.FindByID(ctx, nw.ID())
 if err != nil {
-    log.Fatalf("failed to get network by id: %v", err)
+    log.Fatalf("failed to find network by id: %v", err)
 }
 
-inspect, err = network.GetByName(ctx, nw.Name())
+inspect, err = network.FindByName(ctx, nw.Name())
 if err != nil {
-    log.Fatalf("failed to get network by name: %v", err)
+    log.Fatalf("failed to find network by name: %v", err)
 }
 
 _, err = network.List(ctx)

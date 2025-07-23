@@ -10,30 +10,30 @@ import (
 	"github.com/docker/go-sdk/network"
 )
 
-func TestGetByID(t *testing.T) {
+func TestFindByID(t *testing.T) {
 	nw, err := network.New(context.Background(), network.WithName("test-by-id"))
 	network.Cleanup(t, nw)
 	require.NoError(t, err)
 
-	inspect, err := network.GetByID(context.Background(), nw.ID())
+	inspect, err := network.FindByID(context.Background(), nw.ID())
 	require.NoError(t, err)
 	require.Equal(t, nw.ID(), inspect.ID)
 
-	no, err := network.GetByID(context.Background(), "not-found-id")
+	no, err := network.FindByID(context.Background(), "not-found-id")
 	require.Error(t, err)
 	require.Empty(t, no.ID)
 }
 
-func TestGetByName(t *testing.T) {
+func TestFindByName(t *testing.T) {
 	nw, err := network.New(context.Background(), network.WithName("test-by-name"))
 	network.Cleanup(t, nw)
 	require.NoError(t, err)
 
-	inspect, err := network.GetByName(context.Background(), nw.Name())
+	inspect, err := network.FindByName(context.Background(), nw.Name())
 	require.NoError(t, err)
 	require.Equal(t, nw.Name(), inspect.Name)
 
-	no, err := network.GetByName(context.Background(), "not-found-name")
+	no, err := network.FindByName(context.Background(), "not-found-name")
 	require.Error(t, err)
 	require.Empty(t, no.Name)
 }
