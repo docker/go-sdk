@@ -63,6 +63,10 @@ func Pull(ctx context.Context, imageName string, opts ...PullOption) error {
 		pullOpts.pullClient.Logger().Warn("failed to get image auth, setting empty credentials for the image", "image", imageName, "error", err)
 	} else {
 		// there must be only one auth config for the image
+		if len(authConfigs) > 1 {
+			return fmt.Errorf("multiple auth configs found for image %s, expected only one", imageName)
+		}
+
 		var tmp config.AuthConfig
 		for _, ac := range authConfigs {
 			tmp = ac
