@@ -72,17 +72,15 @@ func Pull(ctx context.Context, imageName string, opts ...PullOption) error {
 			tmp = ac
 		}
 
-		if tmp.Username != "" && tmp.Password != "" {
-			authConfig := config.AuthConfig{
-				Username: tmp.Username,
-				Password: tmp.Password,
-			}
-			encodedJSON, err := json.Marshal(authConfig)
-			if err != nil {
-				pullOpts.pullClient.Logger().Warn("failed to marshal image auth, setting empty credentials for the image", "image", imageName, "error", err)
-			} else {
-				pullOpts.pullOptions.RegistryAuth = base64.URLEncoding.EncodeToString(encodedJSON)
-			}
+		authConfig := config.AuthConfig{
+			Username: tmp.Username,
+			Password: tmp.Password,
+		}
+		encodedJSON, err := json.Marshal(authConfig)
+		if err != nil {
+			pullOpts.pullClient.Logger().Warn("failed to marshal image auth, setting empty credentials for the image", "image", imageName, "error", err)
+		} else {
+			pullOpts.pullOptions.RegistryAuth = base64.URLEncoding.EncodeToString(encodedJSON)
 		}
 	}
 
