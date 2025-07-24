@@ -3,14 +3,14 @@ package client
 import "maps"
 
 const (
-	// LabelBase is the base label for all Docker labels.
+	// LabelBase is the base label for all Docker SDK labels.
 	LabelBase = "com.docker.sdk"
 
-	// LabelLang specifies the language which created the container.
+	// LabelLang specifies the language.
 	LabelLang = LabelBase + ".lang"
 
-	// LabelVersion specifies the version of go-sdk which created the container.
-	LabelVersion = LabelBase + ".version"
+	// LabelVersion specifies the version of go-sdk's client.
+	LabelVersion = LabelBase + ".client"
 )
 
 // sdkLabels is a map of labels that can be used to identify resources

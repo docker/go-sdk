@@ -26,7 +26,7 @@ func TestNew(t *testing.T) {
 		require.NotEmpty(t, v.Name) // Docker generated a random name for the volume.
 		require.Equal(t, "true", labels["com.docker.sdk"])
 		require.Equal(t, "go", labels["com.docker.sdk.lang"])
-		require.Equal(t, client.Version(), labels["com.docker.sdk.version"])
+		require.Equal(t, client.Version(), labels["com.docker.sdk.client"])
 		require.NotEmpty(t, v.Mountpoint)
 	})
 
@@ -41,7 +41,7 @@ func TestNew(t *testing.T) {
 		require.NotEmpty(t, v.Name) // Docker generated a random name for the volume.
 		require.Equal(t, "true", labels["com.docker.sdk"])
 		require.Equal(t, "go", labels["com.docker.sdk.lang"])
-		require.Equal(t, client.Version(), labels["com.docker.sdk.version"])
+		require.Equal(t, client.Version(), labels["com.docker.sdk.client"])
 	})
 
 	t.Run("with-name", func(t *testing.T) {
@@ -55,7 +55,7 @@ func TestNew(t *testing.T) {
 		labels := v.Labels
 		require.Equal(t, "true", labels["com.docker.sdk"])
 		require.Equal(t, "go", labels["com.docker.sdk.lang"])
-		require.Equal(t, client.Version(), labels["com.docker.sdk.version"])
+		require.Equal(t, client.Version(), labels["com.docker.sdk.client"])
 	})
 
 	t.Run("with-very-long-name", func(t *testing.T) {
