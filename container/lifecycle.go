@@ -12,6 +12,7 @@ import (
 
 	"github.com/containerd/errdefs"
 	"github.com/containerd/platforms"
+
 	apiimage "github.com/docker/docker/api/types/image"
 	"github.com/docker/go-sdk/container/exec"
 	"github.com/docker/go-sdk/container/wait"

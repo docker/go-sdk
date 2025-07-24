@@ -6,8 +6,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/docker/go-sdk/client"
 	"github.com/stretchr/testify/require"
+
+	"github.com/docker/go-sdk/client"
 )
 
 func TestCombineLifecycleHooks(t *testing.T) {

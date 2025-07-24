@@ -527,7 +527,7 @@ func TestWithValidateFuncs(t *testing.T) {
 
 		opt := WithValidateFuncs()
 		require.ErrorContains(t, opt.Customize(&def), "validate function is nil")
-		require.Len(t, def.validateFuncs, 0)
+		require.Empty(t, def.validateFuncs)
 	})
 
 	t.Run("add-nil", func(t *testing.T) {
@@ -535,7 +535,7 @@ func TestWithValidateFuncs(t *testing.T) {
 
 		opt := WithValidateFuncs(nil)
 		require.ErrorContains(t, opt.Customize(&def), "validate function is nil")
-		require.Len(t, def.validateFuncs, 0)
+		require.Empty(t, def.validateFuncs)
 	})
 
 	t.Run("add-one-nil", func(t *testing.T) {
@@ -545,7 +545,7 @@ func TestWithValidateFuncs(t *testing.T) {
 			return nil
 		}, nil)
 		require.ErrorContains(t, opt.Customize(&def), "validate function is nil")
-		require.Len(t, def.validateFuncs, 0)
+		require.Empty(t, def.validateFuncs)
 	})
 
 	t.Run("add-single", func(t *testing.T) {
