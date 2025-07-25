@@ -22,6 +22,7 @@ func TestRootlessSocketPathFromEnv(t *testing.T) {
 	})
 
 	t.Run("env-var-not-set", func(t *testing.T) {
+		t.Setenv("XDG_RUNTIME_DIR", "")
 		path, err := rootlessSocketPathFromEnv()
 		require.ErrorIs(t, err, ErrXDGRuntimeDirNotSet)
 		require.Empty(t, path)

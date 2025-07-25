@@ -9,15 +9,15 @@ import (
 
 var (
 	ErrRootlessDockerNotFoundXDGRuntimeDir = errors.New("$XDG_RUNTIME_DIR does not exist")
-	ErrXDGRuntimeDirNotSet                 = errors.New("XDG_RUNTIME_DIR is not set")
+	ErrXDGRuntimeDirNotSet                 = errors.New("$XDG_RUNTIME_DIR is not set")
 	ErrInvalidSchema                       = errors.New("URL schema is not " + DefaultSchema + " or tcp")
 )
 
 // rootlessSocketPathFromEnv returns the path to the rootless Docker socket from the XDG_RUNTIME_DIR environment variable.
-// It should include the Docker socket schema (unix://) in the returned path.
+// It should include the Docker socket schema (unix://, npipe:// or tcp://) in the returned path.
 func rootlessSocketPathFromEnv() (string, error) {
 	xdgRuntimeDir, exists := os.LookupEnv("XDG_RUNTIME_DIR")
-	if exists {
+	if exists && xdgRuntimeDir != "" {
 		f := filepath.Join(xdgRuntimeDir, "docker.sock")
 		if err := fileExists(f); err == nil {
 			return DefaultSchema + f, nil
