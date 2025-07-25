@@ -7,12 +7,13 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log/slog"
 	"time"
 
 	"github.com/cenkalti/backoff/v4"
-
-	"github.com/docker/docker/api/types/image"
+	moby "github.com/docker/docker/client"
 	"github.com/docker/go-sdk/client"
+
 	"github.com/docker/go-sdk/config"
 	"github.com/docker/go-sdk/config/auth"
 )
@@ -25,12 +26,10 @@ var defaultPullHandler = func(r io.ReadCloser) error {
 	return err
 }
 
-// ImagePullClient is a client that can pull images.
-type ImagePullClient interface {
-	ImageClient
-
-	// ImagePull pulls an image from a remote registry.
-	ImagePull(ctx context.Context, image string, options image.PullOptions) (io.ReadCloser, error)
+// SDK should offer utility func to get a DockerClient implementation from docker/cli config or .. any alternatives?
+type DockerClient interface {
+	API() moby.APIClient
+	Config() config.Config
 }
 
 // Pull pulls an image from a remote registry, retrying on non-permanent errors.
@@ -38,7 +37,7 @@ type ImagePullClient interface {
 // It first extracts the registry credentials from the image name, and sets them in the pull options.
 // It needs to be called with a valid image name, and optional pull  options, see [PullOption].
 // It's possible to override the default pull handler function by using the [WithPullHandler] option.
-func Pull(ctx context.Context, imageName string, opts ...PullOption) error {
+func Pull(ctx context.Context, docker DockerClient, imageName string, opts ...PullOption) error {
 	pullOpts := &pullOptions{
 		pullHandler: defaultPullHandler,
 	}
@@ -48,38 +47,26 @@ func Pull(ctx context.Context, imageName string, opts ...PullOption) error {
 		}
 	}
 
-	if pullOpts.pullClient == nil {
-		pullOpts.pullClient = client.DefaultClient
-		// In case there is no pull client set, we use the default docker client
-		// to pull the image. We need to close it when done.
-		defer pullOpts.pullClient.Close()
-	}
-
 	if imageName == "" {
 		return errors.New("image name is not set")
 	}
 
-	authConfigs, err := config.AuthConfigs(imageName)
+	ref, err := auth.ParseImageRef(imageName)
 	if err != nil {
-		pullOpts.pullClient.Logger().Warn("failed to get image auth, setting empty credentials for the image", "image", imageName, "error", err)
+		return fmt.Errorf("parse image ref: %w", err)
+	}
+
+	creds, err := docker.Config().AuthConfigForHostname(ref.Registry)
+	if err != nil {
+		slog.Warn("failed to get registry credentials, setting empty credentials for the image", "image", imageName, "error", err)
 	} else {
-		ref, err := auth.ParseImageRef(imageName)
-		if err != nil {
-			return fmt.Errorf("parse image ref: %w", err)
-		}
-
-		creds, ok := authConfigs[ref.Registry]
-		if !ok {
-			pullOpts.pullClient.Logger().Warn("no image auth found for image, setting empty credentials for the image. This is expected for public images", "image", imageName)
-		}
-
 		authConfig := config.AuthConfig{
 			Username: creds.Username,
 			Password: creds.Password,
 		}
 		encodedJSON, err := json.Marshal(authConfig)
 		if err != nil {
-			pullOpts.pullClient.Logger().Warn("failed to marshal image auth, setting empty credentials for the image", "image", imageName, "error", err)
+			slog.Warn("failed to marshal image auth, setting empty credentials for the image", "image", imageName, "error", err)
 		} else {
 			pullOpts.pullOptions.RegistryAuth = base64.URLEncoding.EncodeToString(encodedJSON)
 		}
@@ -88,7 +75,7 @@ func Pull(ctx context.Context, imageName string, opts ...PullOption) error {
 	var pull io.ReadCloser
 	err = backoff.RetryNotify(
 		func() error {
-			pull, err = pullOpts.pullClient.ImagePull(ctx, imageName, pullOpts.pullOptions)
+			pull, err = docker.API().ImagePull(ctx, imageName, pullOpts.pullOptions)
 			if err != nil {
 				if client.IsPermanentClientError(err) {
 					return backoff.Permanent(err)
@@ -100,7 +87,7 @@ func Pull(ctx context.Context, imageName string, opts ...PullOption) error {
 		},
 		backoff.WithContext(backoff.NewExponentialBackOff(), ctx),
 		func(err error, _ time.Duration) {
-			pullOpts.pullClient.Logger().Warn("failed to pull image, will retry", "error", err)
+			slog.Warn("failed to pull image, will retry", "error", err)
 		},
 	)
 	if err != nil {
