@@ -50,6 +50,59 @@ func TestExtractDockerHost(t *testing.T) {
 	})
 }
 
+func TestStore_add(t *testing.T) {
+	t.Run("success", func(t *testing.T) {
+		tmpDir := t.TempDir()
+		s := &store{root: tmpDir}
+
+		ctx := Context{
+			Name: "test",
+			Metadata: &Metadata{
+				Description: "test context",
+				additionalFields: map[string]any{
+					"test": map[string]any{
+						"nested": "nested",
+					},
+				},
+			},
+			Endpoints: map[string]*endpoint{
+				"docker": {Host: "tcp://localhost:2375"},
+			},
+		}
+
+		require.NoError(t, s.add(&ctx))
+
+		got, err := s.load(filepath.Join(tmpDir, ctx.encodedName))
+		require.NoError(t, err)
+		require.Equal(t, ctx.Name, got.Name)
+		require.Equal(t, ctx.Metadata.Description, got.Metadata.Description)
+		require.Equal(t, ctx.Endpoints["docker"].Host, got.Endpoints["docker"].Host)
+		require.Equal(t, ctx.Endpoints["docker"].SkipTLSVerify, got.Endpoints["docker"].SkipTLSVerify)
+
+		// verify additional fields
+		fields := got.Metadata.Fields()
+		require.Equal(t, map[string]any{
+			"test": map[string]any{
+				"nested": "nested",
+			},
+		}, fields)
+	})
+
+	t.Run("error/mkdir", func(t *testing.T) {
+		tmpDir := t.TempDir()
+		s := &store{root: tmpDir}
+
+		ctx := Context{
+			Name: "test",
+		}
+
+		require.NoError(t, s.add(&ctx))
+
+		// second add should fail because the context already exists
+		require.Error(t, s.add(&ctx))
+	})
+}
+
 func TestStore_Inspect(t *testing.T) {
 	tmpDir := t.TempDir()
 	setupTestContext(t, tmpDir, "test", Context{

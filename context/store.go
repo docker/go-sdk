@@ -7,12 +7,17 @@ import (
 	"maps"
 	"os"
 	"path/filepath"
+
+	"github.com/opencontainers/go-digest"
 )
 
 // Context represents a Docker context
 type Context struct {
 	// Name is the name of the context
 	Name string `json:"Name,omitempty"`
+
+	// encodedName is the digest of the context name
+	encodedName string `json:"-"`
 
 	// Metadata is the metadata stored for a context
 	Metadata *Metadata `json:"Metadata,omitempty"`
@@ -129,11 +134,47 @@ func (s *store) inspect(ctxName string) (Context, error) {
 				return Context{}, ErrDockerHostNotSet
 			}
 
+			ctx.encodedName = digest.FromString(ctx.Name).Encoded()
+
 			return *ctx, nil
 		}
 	}
 
 	return Context{}, ErrDockerContextNotFound
+}
+
+// add adds a context to the store, creating the directory if it doesn't exist.
+func (s *store) add(ctx *Context) error {
+	if ctx.encodedName == "" {
+		// it's fine to calculate the encoded name here because the context is not yet added to the store
+		ctx.encodedName = digest.FromString(ctx.Name).Encoded()
+	}
+
+	if err := fileExists(filepath.Join(s.root, ctx.encodedName)); err == nil {
+		return fmt.Errorf("context already exists: %s", ctx.encodedName)
+	}
+
+	err := os.MkdirAll(filepath.Join(s.root, ctx.encodedName), 0o755)
+	if err != nil {
+		return fmt.Errorf("mkdir: %w", err)
+	}
+
+	data, err := json.Marshal(ctx)
+	if err != nil {
+		return fmt.Errorf("json marshal: %w", err)
+	}
+
+	if err := os.WriteFile(filepath.Join(s.root, ctx.encodedName, metaFile), data, 0o644); err != nil {
+		return fmt.Errorf("write: %w", err)
+	}
+
+	return nil
+}
+
+// delete deletes a context from the store.
+// The encoded name is the digest of the context name.
+func (s *store) delete(encodedName string) error {
+	return os.RemoveAll(filepath.Join(s.root, encodedName))
 }
 
 // list lists all contexts in the store
