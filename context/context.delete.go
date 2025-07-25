@@ -27,7 +27,7 @@ func (ctx *Context) Delete() error {
 		return fmt.Errorf("delete: %w", err)
 	}
 
-	if ctx.isDefault {
+	if ctx.isCurrent {
 		// reset the current context to the default context
 		cfg, err := config.Load()
 		if err != nil {

@@ -74,7 +74,7 @@ func New(name string, opts ...CreateContextOption) (*Context, error) {
 			return nil, fmt.Errorf("save config: %w", err)
 		}
 
-		ctx.isDefault = true
+		ctx.isCurrent = true
 	}
 
 	return ctx, nil

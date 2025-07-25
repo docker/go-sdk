@@ -21,8 +21,8 @@ type Context struct {
 	// encodedName is the digest of the context name
 	encodedName string `json:"-"`
 
-	// isDefault is true if the context is the default context
-	isDefault bool `json:"-"`
+	// isCurrent is true if the context is the current context
+	isCurrent bool `json:"-"`
 
 	// Metadata is the metadata stored for a context
 	Metadata *Metadata `json:"Metadata,omitempty"`
@@ -143,7 +143,7 @@ func (s *store) inspect(ctxName string) (Context, error) {
 			if err != nil {
 				return Context{}, fmt.Errorf("load config: %w", err)
 			}
-			ctx.isDefault = cfg.CurrentContext == ctx.Name
+			ctx.isCurrent = cfg.CurrentContext == ctx.Name
 
 			ctx.encodedName = digest.FromString(ctx.Name).Encoded()
 
