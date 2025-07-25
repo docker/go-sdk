@@ -39,12 +39,20 @@ func Current() (string, error) {
 // For that, it traverses the directory structure of the Docker configuration directory,
 // looking for the current context and its Docker endpoint.
 //
+// If the Rootless Docker socket is found, using the XDG_RUNTIME_DIR environment variable,
+// it returns the path to the socket.
+//
 // If the current context is the default context, it returns the value of the
 // DOCKER_HOST environment variable.
 //
 // It validates that the Docker host is a valid URL and that the schema is
 // either unix, npipe (on Windows) or tcp.
 func CurrentDockerHost() (string, error) {
+	rootlessSocketPath, err := rootlessSocketPathFromEnv()
+	if err == nil {
+		return parseURL(rootlessSocketPath)
+	}
+
 	current, err := Current()
 	if err != nil {
 		return "", fmt.Errorf("current context: %w", err)
