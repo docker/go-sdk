@@ -4,6 +4,9 @@
 package context
 
 func init() {
+	// DefaultSchema is the default schema to use for the Docker host on Linux
+	DefaultSchema = "unix://"
+
 	// DefaultDockerHost is the default host to connect to the Docker socket on Linux
-	DefaultDockerHost = "unix:///var/run/docker.sock"
+	DefaultDockerHost = DefaultSchema + "/var/run/docker.sock"
 }

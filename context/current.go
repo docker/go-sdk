@@ -2,6 +2,7 @@ package context
 
 import (
 	"fmt"
+	"net/url"
 	"os"
 
 	"github.com/docker/go-sdk/config"
@@ -40,6 +41,9 @@ func Current() (string, error) {
 //
 // If the current context is the default context, it returns the value of the
 // DOCKER_HOST environment variable.
+//
+// It validates that the Docker host is a valid URL and that the schema is
+// either unix, npipe (on Windows) or tcp.
 func CurrentDockerHost() (string, error) {
 	current, err := Current()
 	if err != nil {
@@ -49,10 +53,10 @@ func CurrentDockerHost() (string, error) {
 	if current == DefaultContextName {
 		dockerHost := os.Getenv(EnvOverrideHost)
 		if dockerHost != "" {
-			return dockerHost, nil
+			return parseURL(dockerHost)
 		}
 
-		return DefaultDockerHost, nil
+		return parseURL(DefaultDockerHost)
 	}
 
 	ctx, err := Inspect(current)
@@ -61,7 +65,7 @@ func CurrentDockerHost() (string, error) {
 	}
 
 	// Inspect already validates that the docker endpoint is set
-	return ctx.Endpoints["docker"].Host, nil
+	return parseURL(ctx.Endpoints["docker"].Host)
 }
 
 // getContextFromEnv returns the context name from the environment variables.
@@ -75,4 +79,22 @@ func getContextFromEnv() string {
 	}
 
 	return ""
+}
+
+func parseURL(s string) (string, error) {
+	hostURL, err := url.Parse(s)
+	if err != nil {
+		return "", err
+	}
+
+	switch hostURL.Scheme + "://" {
+	case DefaultSchema:
+		// return the original URL, as it is a valid socket URL
+		return s, nil
+	case TCPSchema:
+		// return the original URL, as it is a valid TCP URL
+		return s, nil
+	default:
+		return "", ErrInvalidSchema
+	}
 }
