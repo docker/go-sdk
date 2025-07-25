@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"os"
 	"strings"
 	"sync"
 	"time"
@@ -192,6 +193,21 @@ func (c *Config) ParseProxyConfig(host string, runOpts map[string]*string) map[s
 		}
 	}
 	return m
+}
+
+// Save saves the config to the file system
+func (c *Config) Save() error {
+	filePath, err := Filepath()
+	if err != nil {
+		return fmt.Errorf("config filepath: %w", err)
+	}
+
+	data, err := json.Marshal(c)
+	if err != nil {
+		return fmt.Errorf("json marshal: %w", err)
+	}
+
+	return os.WriteFile(filePath, data, 0o644)
 }
 
 // resolveAuthConfigForHostname performs the actual auth config resolution

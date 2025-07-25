@@ -39,6 +39,59 @@ func ExampleDockerHostFromContext() {
 	// Intentionally not printing the output, as the context could not exist in the CI environment
 }
 
+func ExampleNew() {
+	ctx, err := context.New("my-context")
+	if err != nil {
+		log.Printf("error adding context: %s", err)
+		return
+	}
+	defer func() {
+		if err := ctx.Delete(); err != nil {
+			log.Printf("error deleting context: %s", err)
+		}
+	}()
+
+	fmt.Println(ctx.Name)
+
+	// Output:
+	// my-context
+}
+
+func ExampleNew_asCurrent() {
+	ctx, err := context.New("my-context", context.AsCurrent(), context.WithHost("tcp://127.0.0.1:2375"))
+	if err != nil {
+		log.Printf("error adding context: %s", err)
+		return
+	}
+	defer func() {
+		if err := ctx.Delete(); err != nil {
+			log.Printf("error deleting context: %s", err)
+		}
+	}()
+
+	fmt.Println(ctx.Name)
+
+	current, err := context.Current()
+	if err != nil {
+		log.Printf("error getting current context: %s", err)
+		return
+	}
+	fmt.Println(current)
+
+	host, err := context.CurrentDockerHost()
+	if err != nil {
+		log.Printf("error getting current docker host: %s", err)
+		return
+	}
+
+	fmt.Println(host)
+
+	// Output:
+	// my-context
+	// my-context
+	// tcp://127.0.0.1:2375
+}
+
 func ExampleList() {
 	contexts, err := context.List()
 	if err != nil {

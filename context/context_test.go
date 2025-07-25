@@ -53,7 +53,7 @@ func TestCurrent(t *testing.T) {
 }
 
 func TestCurrentDockerHost(t *testing.T) {
-	t.Run("docker-context/override-host", func(tt *testing.T) {
+	t.Run("override-host", func(tt *testing.T) {
 		SetupTestDockerContexts(tt, 1, 3) // current context is context1
 		tt.Setenv(EnvOverrideHost, "tcp://127.0.0.1:123")
 
@@ -62,7 +62,7 @@ func TestCurrentDockerHost(t *testing.T) {
 		require.Equal(t, "tcp://127.0.0.1:123", host) // from context1
 	})
 
-	t.Run("docker-context/default", func(tt *testing.T) {
+	t.Run("default", func(tt *testing.T) {
 		tt.Setenv(EnvOverrideContext, DefaultContextName)
 
 		host, err := CurrentDockerHost()
@@ -84,6 +84,18 @@ func TestCurrentDockerHost(t *testing.T) {
 		host, err := CurrentDockerHost()
 		require.NoError(t, err)
 		require.Equal(t, "tcp://127.0.0.1:2", host) // from context2
+	})
+
+	t.Run("rootless", func(tt *testing.T) {
+		tmpDir := tt.TempDir()
+		t.Setenv("XDG_RUNTIME_DIR", tmpDir)
+
+		err := os.WriteFile(filepath.Join(tmpDir, "docker.sock"), []byte("synthetic docker socket"), 0o755)
+		require.NoError(tt, err)
+
+		host, err := CurrentDockerHost()
+		require.NoError(tt, err)
+		require.Equal(tt, DefaultSchema+filepath.Join(tmpDir, "docker.sock"), host)
 	})
 }
 

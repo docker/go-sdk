@@ -1,6 +1,8 @@
 package config
 
 import (
+	"os"
+	"path/filepath"
 	"sync"
 	"testing"
 
@@ -100,4 +102,29 @@ func TestConfig_CacheKeyGeneration(t *testing.T) {
 	stats2 := config2.cacheStats()
 
 	require.NotEqual(t, stats1.CacheKey, stats2.CacheKey)
+}
+
+func TestConfigSave(t *testing.T) {
+	tmpDir := t.TempDir()
+	setupHome(t, tmpDir)
+
+	dockerDir := filepath.Join(tmpDir, ".docker")
+
+	err := os.MkdirAll(dockerDir, 0o755)
+	require.NoError(t, err)
+
+	_, err = os.Create(filepath.Join(dockerDir, FileName))
+	require.NoError(t, err)
+
+	c := Config{
+		CurrentContext: "test",
+		AuthConfigs:    map[string]AuthConfig{},
+	}
+
+	require.NoError(t, c.Save())
+
+	cfg, err := Load()
+	require.NoError(t, err)
+	require.Equal(t, c.CurrentContext, cfg.CurrentContext)
+	require.Equal(t, c.AuthConfigs, cfg.AuthConfigs)
 }

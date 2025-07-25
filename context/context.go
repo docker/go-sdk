@@ -39,9 +39,18 @@ const (
 	metaFile = "meta.json"
 )
 
-// DefaultDockerHost is the default host to connect to the Docker socket.
-// The actual value is platform-specific and defined in host_unix.go and host_windows.go.
-var DefaultDockerHost = ""
+var (
+	// DefaultDockerHost is the default host to connect to the Docker socket.
+	// The actual value is platform-specific and defined in host_unix.go and host_windows.go.
+	DefaultDockerHost = ""
+
+	// DefaultSchema is the default schema to use for the Docker host.
+	// The actual value is platform-specific and defined in host_unix.go and host_windows.go.
+	DefaultSchema = ""
+
+	// TCPSchema is the schema to use for TCP connections.
+	TCPSchema = "tcp://"
+)
 
 // DockerHostFromContext returns the Docker host from the given context.
 func DockerHostFromContext(ctxName string) (string, error) {

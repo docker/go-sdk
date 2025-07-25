@@ -1,6 +1,7 @@
 package context
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -124,6 +125,53 @@ func BenchmarkCurrentNestedContext(b *testing.B) {
 			host, err := CurrentDockerHost()
 			require.NoError(b, err)
 			require.Equal(b, "tcp://127.0.0.1:5", host)
+		}
+	})
+}
+
+func BenchmarkContextAdd(b *testing.B) {
+	SetupTestDockerContexts(b, 1, 3) // Creates 3 contexts at root level
+
+	b.Run("success", func(b *testing.B) {
+		b.ResetTimer()
+		b.ReportAllocs()
+		for i := range b.N {
+			b.StartTimer()
+			ctx, err := New(fmt.Sprintf("benchmark-%d", i))
+			require.NoError(b, err)
+			b.StopTimer()
+
+			require.NoError(b, ctx.Delete())
+		}
+	})
+
+	b.Run("as-current", func(b *testing.B) {
+		b.ResetTimer()
+		b.ReportAllocs()
+		for i := range b.N {
+			b.StartTimer()
+			ctx, err := New(fmt.Sprintf("benchmark-current-%d", i), AsCurrent())
+			require.NoError(b, err)
+			b.StopTimer()
+
+			require.NoError(b, ctx.Delete())
+		}
+	})
+}
+
+func BenchmarkContextDelete(b *testing.B) {
+	SetupTestDockerContexts(b, 1, 3) // Creates 3 contexts at root level
+
+	b.Run("success", func(b *testing.B) {
+		b.ResetTimer()
+		b.ReportAllocs()
+		for i := range b.N {
+			ctx, err := New(fmt.Sprintf("benchmark-delete-%d", i))
+			require.NoError(b, err)
+
+			b.StartTimer()
+			require.NoError(b, ctx.Delete())
+			b.StopTimer()
 		}
 	})
 }
