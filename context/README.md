@@ -78,3 +78,46 @@ if err != nil {
 
 fmt.Printf("contexts: %v", contexts)
 ```
+
+### Add Context
+
+It adds a new context to the Docker configuration, identified by a name. It's possible to pass options to customize the context definition.
+
+```go
+ctx, err := context.New("my-context")
+if err != nil {
+    log.Printf("failed to add context: %v", err)
+    return
+}
+
+fmt.Printf("context added: %s", ctx.Name)
+```
+
+### Available Options
+
+The following options are available to customize the context definition:
+
+- `WithHost(host string) CreateContextOption` sets the host for the context.
+- `WithDescription(description string) CreateContextOption` sets the description for the context.
+- `WithAdditionalFields(fields map[string]any) CreateContextOption` sets the additional fields for the context.
+- `WithSkipTLSVerify() CreateContextOption` sets the skipTLSVerify flag to true.
+- `AsCurrent() CreateContextOption` sets the context as the current context, saving the current context to the Docker configuration.
+
+### Delete Context
+
+It deletes a context from the Docker configuration.
+
+```go
+ctx, err := context.New("my-context")
+if err != nil {
+    log.Printf("error adding context: %s", err)
+    return
+}
+
+if err := ctx.Delete(); err != nil {
+    log.Printf("failed to delete context: %v", err)
+    return
+}
+
+fmt.Printf("context deleted: %s", ctx.Name)
+```
