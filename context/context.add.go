@@ -73,6 +73,8 @@ func New(name string, opts ...CreateContextOption) (*Context, error) {
 		if err := cfg.Save(); err != nil {
 			return nil, fmt.Errorf("save config: %w", err)
 		}
+
+		ctx.isDefault = true
 	}
 
 	return ctx, nil

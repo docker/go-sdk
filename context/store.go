@@ -9,6 +9,8 @@ import (
 	"path/filepath"
 
 	"github.com/opencontainers/go-digest"
+
+	"github.com/docker/go-sdk/config"
 )
 
 // Context represents a Docker context
@@ -18,6 +20,9 @@ type Context struct {
 
 	// encodedName is the digest of the context name
 	encodedName string `json:"-"`
+
+	// isDefault is true if the context is the default context
+	isDefault bool `json:"-"`
 
 	// Metadata is the metadata stored for a context
 	Metadata *Metadata `json:"Metadata,omitempty"`
@@ -133,6 +138,12 @@ func (s *store) inspect(ctxName string) (Context, error) {
 			if !ok || ep == nil || ep.Host == "" {
 				return Context{}, ErrDockerHostNotSet
 			}
+
+			cfg, err := config.Load()
+			if err != nil {
+				return Context{}, fmt.Errorf("load config: %w", err)
+			}
+			ctx.isDefault = cfg.CurrentContext == ctx.Name
 
 			ctx.encodedName = digest.FromString(ctx.Name).Encoded()
 
