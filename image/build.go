@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"os"
 	"path/filepath"
 	"time"
 
@@ -14,6 +15,8 @@ import (
 	"github.com/moby/term"
 
 	"github.com/docker/docker/api/types/build"
+	"github.com/docker/docker/builder/remotecontext/git"
+	"github.com/docker/docker/builder/remotecontext/urlutil"
 	"github.com/docker/docker/pkg/jsonmessage"
 	"github.com/docker/go-sdk/client"
 )
@@ -23,13 +26,25 @@ import (
 // This function is useful for creating a build context to build an image.
 // The dockerfile path needs to be relative to the build context.
 func ArchiveBuildContext(dir string, dockerfile string) (r io.ReadCloser, err error) {
-	// always pass context as absolute path
-	abs, err := filepath.Abs(dir)
-	if err != nil {
-		return nil, fmt.Errorf("absolute path: %w", err)
+	switch {
+	case isLocalDir(dir):
+		// always pass context as absolute path
+		dir, err = filepath.Abs(dir)
+		if err != nil {
+			return nil, fmt.Errorf("absolute path: %w", err)
+		}
+	case urlutil.IsGitURL(dir):
+		clone, err := git.Clone(dir)
+		if err != nil {
+			return nil, fmt.Errorf("unable to clone git build context: %w", err)
+		}
+		dir = clone
+	// TODO case urlutil.IsURL(dir):
+	default:
+		return nil, fmt.Errorf("unable to prepare context: path %q not found", dir)
 	}
 
-	dockerIgnoreExists, excluded, err := ParseDockerIgnore(abs)
+	dockerIgnoreExists, excluded, err := ParseDockerIgnore(dir)
 	if err != nil {
 		return nil, fmt.Errorf("parse docker ignore: %w", err)
 	}
@@ -41,7 +56,7 @@ func ArchiveBuildContext(dir string, dockerfile string) (r io.ReadCloser, err er
 	}
 
 	buildContext, err := archive.TarWithOptions(
-		abs,
+		dir,
 		&archive.TarOptions{
 			ExcludePatterns: excluded,
 			IncludeFiles:    includes,
@@ -53,6 +68,11 @@ func ArchiveBuildContext(dir string, dockerfile string) (r io.ReadCloser, err er
 	}
 
 	return buildContext, nil
+}
+
+func isLocalDir(c string) bool {
+	_, err := os.Stat(c)
+	return err == nil
 }
 
 // ImageBuildClient is a client that can build images.
