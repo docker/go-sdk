@@ -28,8 +28,11 @@ type SDKClient interface {
 	Pull(ctx context.Context, imageID string, opts ...image.PullOption) (string, error)
 }
 
-func NewSDKClient() (SDKClient, error) {
+func NewSDKClient(opts ...func(*Client)) (SDKClient, error) {
 	c := &Client{}
+	for _, opt := range opts {
+		opt(c)
+	}
 	err := c.init(context.Background())
 	return c, err
 }
