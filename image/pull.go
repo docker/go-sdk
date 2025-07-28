@@ -54,37 +54,39 @@ func Pull(ctx context.Context, imageName string, opts ...PullOption) error {
 		defer pullOpts.pullClient.Close()
 	}
 
+	if pullOpts.credentialsFn == nil {
+		if err := WithCredentialsFromConfig()(pullOpts); err != nil {
+			return fmt.Errorf("set credentials for pull option: %w", err)
+		}
+	}
+
 	if imageName == "" {
 		return errors.New("image name is not set")
 	}
 
-	authConfigs, err := config.AuthConfigs(imageName)
-	if err != nil {
-		pullOpts.pullClient.Logger().Warn("failed to get image auth, setting empty credentials for the image", "image", imageName, "error", err)
-	} else {
-		// there must be only one auth config for the image
-		if len(authConfigs) > 1 {
-			return fmt.Errorf("multiple auth configs found for image %s, expected only one", imageName)
-		}
-
-		var tmp config.AuthConfig
-		for _, ac := range authConfigs {
-			tmp = ac
-		}
-
-		authConfig := config.AuthConfig{
-			Username: tmp.Username,
-			Password: tmp.Password,
-		}
-		encodedJSON, err := json.Marshal(authConfig)
+	if pullOpts.credentialsFn == nil {
+		username, password, err := pullOpts.credentialsFn(imageName)
 		if err != nil {
-			pullOpts.pullClient.Logger().Warn("failed to marshal image auth, setting empty credentials for the image", "image", imageName, "error", err)
-		} else {
-			pullOpts.pullOptions.RegistryAuth = base64.URLEncoding.EncodeToString(encodedJSON)
+			return fmt.Errorf("failed to retrieve credentials for image %s: %w", imageName, err)
+		}
+		if username != "" && password != "" {
+			authConfig := config.AuthConfig{
+				Username: username,
+				Password: password,
+			}
+			encodedJSON, err := json.Marshal(authConfig)
+			if err != nil {
+				pullOpts.pullClient.Logger().Warn("failed to marshal image auth, setting empty credentials for the image", "image", imageName, "error", err)
+			} else {
+				pullOpts.pullOptions.RegistryAuth = base64.URLEncoding.EncodeToString(encodedJSON)
+			}
 		}
 	}
 
-	var pull io.ReadCloser
+	var (
+		pull io.ReadCloser
+		err  error
+	)
 	err = backoff.RetryNotify(
 		func() error {
 			pull, err = pullOpts.pullClient.ImagePull(ctx, imageName, pullOpts.pullOptions)
