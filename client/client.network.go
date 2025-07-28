@@ -3,7 +3,7 @@ package client
 import (
 	"context"
 
-	"github.com/docker/docker/api/types/network"
+	"github.com/moby/moby/api/types/network"
 )
 
 // NetworkCreate creates a new network
@@ -11,5 +11,5 @@ func (c *Client) NetworkCreate(ctx context.Context, name string, options network
 	// Add the labels that identify this as a network created by the SDK.
 	AddSDKLabels(options.Labels)
 
-	return c.Client.NetworkCreate(ctx, name, options)
+	return c.NetworkCreate(ctx, name, options)
 }

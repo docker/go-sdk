@@ -6,8 +6,8 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	dockerclient "github.com/docker/docker/client"
 	"github.com/docker/go-sdk/client"
+	dockerclient "github.com/moby/moby/client"
 )
 
 func BenchmarkNew(b *testing.B) {

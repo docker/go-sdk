@@ -6,7 +6,7 @@ import (
 	"net/url"
 	"os"
 
-	"github.com/docker/docker/api/types/network"
+	"github.com/moby/moby/api/types/network"
 )
 
 // dockerEnvFile is the file that is created when running inside a container.

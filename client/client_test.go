@@ -8,9 +8,9 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	dockerclient "github.com/docker/docker/client"
 	"github.com/docker/go-sdk/client"
 	dockercontext "github.com/docker/go-sdk/context"
+	dockerclient "github.com/moby/moby/client"
 )
 
 var noopHealthCheck = func(_ context.Context) func(c *client.Client) error {

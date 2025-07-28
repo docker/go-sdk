@@ -4,7 +4,7 @@ import (
 	"context"
 	"io"
 
-	"github.com/docker/docker/api/types/build"
+	"github.com/moby/moby/api/types/build"
 )
 
 // ImageBuild builds an image from a build context and options.

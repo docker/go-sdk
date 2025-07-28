@@ -9,8 +9,8 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/docker/docker/api/types/container"
 	"github.com/docker/go-sdk/client"
+	"github.com/moby/moby/api/types/container"
 )
 
 func BenchmarkContainerList(b *testing.B) {
