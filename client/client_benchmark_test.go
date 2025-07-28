@@ -4,10 +4,10 @@ import (
 	"context"
 	"testing"
 
+	dockerclient "github.com/moby/moby/client"
 	"github.com/stretchr/testify/require"
 
 	"github.com/docker/go-sdk/client"
-	dockerclient "github.com/moby/moby/client"
 )
 
 func BenchmarkNew(b *testing.B) {
@@ -87,8 +87,7 @@ func BenchmarkClientConcurrentCreation(b *testing.B) {
 		b.RunParallel(func(pb *testing.PB) {
 			for pb.Next() {
 				// Just access the client to test concurrent access
-				_, err := cli.Client()
-				require.NoError(b, err)
+				require.NotNil(b, cli.APIClient)
 			}
 		})
 	})
@@ -101,8 +100,7 @@ func BenchmarkClientConcurrentCreation(b *testing.B) {
 		b.RunParallel(func(pb *testing.PB) {
 			for pb.Next() {
 				// Just access the client to test concurrent access
-				_, err := cli.Client()
-				require.NoError(b, err)
+				require.NotNil(b, cli.APIClient)
 			}
 		})
 	})

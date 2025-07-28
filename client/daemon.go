@@ -24,7 +24,7 @@ func (c *Client) DaemonHostWithContext(ctx context.Context) (string, error) {
 
 func (c *Client) daemonHostLocked(ctx context.Context) (string, error) {
 	// infer from Docker host
-	daemonURL, err := url.Parse(c.APIClient.DaemonHost())
+	daemonURL, err := url.Parse(c.DaemonHost())
 	if err != nil {
 		return "", err
 	}

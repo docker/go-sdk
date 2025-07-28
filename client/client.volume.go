@@ -11,5 +11,5 @@ func (c *Client) VolumeCreate(ctx context.Context, options volume.CreateOptions)
 	// Add the labels that identify this as a volume created by the SDK.
 	AddSDKLabels(options.Labels)
 
-	return c.VolumeCreate(ctx, options)
+	return c.APIClient.VolumeCreate(ctx, options)
 }

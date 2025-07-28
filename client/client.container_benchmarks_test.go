@@ -7,10 +7,10 @@ import (
 	"sync"
 	"testing"
 
+	"github.com/moby/moby/api/types/container"
 	"github.com/stretchr/testify/require"
 
 	"github.com/docker/go-sdk/client"
-	"github.com/moby/moby/api/types/container"
 )
 
 func BenchmarkContainerList(b *testing.B) {

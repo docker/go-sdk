@@ -9,9 +9,10 @@ import (
 	"path/filepath"
 	"time"
 
-	dockercontext "github.com/docker/go-sdk/context"
 	"github.com/moby/moby/api/types/system"
 	"github.com/moby/moby/client"
+
+	dockercontext "github.com/docker/go-sdk/context"
 )
 
 const (

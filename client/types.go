@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"sync"
 
+	"github.com/docker/go-sdk/image"
 	"github.com/moby/moby/api/types/system"
 	"github.com/moby/moby/client"
 )
@@ -21,7 +22,10 @@ var DefaultClient = &Client{
 
 type SDKClient interface {
 	client.APIClient
+
 	// TODO declare SDK higher-order functions
+	// Pull image from registry with selected credentials reporting pull event a JSON progress messages
+	Pull(ctx context.Context, imageID string, opts ...image.PullOption) (string, error)
 }
 
 func NewSDKClient() (SDKClient, error) {

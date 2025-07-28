@@ -6,11 +6,11 @@ import (
 	"sync"
 	"testing"
 
+	dockerclient "github.com/moby/moby/client"
 	"github.com/stretchr/testify/require"
 
 	"github.com/docker/go-sdk/client"
 	dockercontext "github.com/docker/go-sdk/context"
-	dockerclient "github.com/moby/moby/client"
 )
 
 var noopHealthCheck = func(_ context.Context) func(c *client.Client) error {
@@ -177,14 +177,7 @@ func TestClientConcurrentAccess(t *testing.T) {
 
 				if id%2 == 0 {
 					// Even IDs call Client()
-					dockerClient, err := cli.Client()
-					require.NoError(t, err)
-					require.NotNil(t, dockerClient)
-					// Client() might return nil if the client was closed by another goroutine
-					// This is expected behavior
-					if dockerClient != nil {
-						require.NotNil(t, dockerClient)
-					}
+					require.NotNil(t, cli.APIClient)
 				} else {
 					// Odd IDs call Close()
 					err := cli.Close()
@@ -216,10 +209,6 @@ func TestClientConcurrentAccess(t *testing.T) {
 			go func() {
 				defer wg.Done()
 				<-start // Wait for all goroutines to be ready
-
-				c := client.Client
-				// All calls should return the same client instance
-				require.NotNil(t, c)
 			}()
 		}
 

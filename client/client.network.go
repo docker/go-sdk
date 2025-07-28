@@ -11,5 +11,5 @@ func (c *Client) NetworkCreate(ctx context.Context, name string, options network
 	// Add the labels that identify this as a network created by the SDK.
 	AddSDKLabels(options.Labels)
 
-	return c.NetworkCreate(ctx, name, options)
+	return c.APIClient.NetworkCreate(ctx, name, options)
 }

@@ -5,11 +5,10 @@ import (
 	"fmt"
 
 	"github.com/containerd/errdefs"
-	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
-
 	"github.com/moby/moby/api/types/container"
 	"github.com/moby/moby/api/types/filters"
 	"github.com/moby/moby/api/types/network"
+	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
 )
 
 // ContainerCreate creates a new container.
@@ -17,7 +16,7 @@ func (c *Client) ContainerCreate(ctx context.Context, config *container.Config, 
 	// Add the labels that identify this as a container created by the SDK.
 	AddSDKLabels(config.Labels)
 
-	return c.ContainerCreate(ctx, config, hostConfig, networkingConfig, platform, name)
+	return c.APIClient.ContainerCreate(ctx, config, hostConfig, networkingConfig, platform, name)
 }
 
 // FindContainerByName finds a container by name. The name filter uses a regex to find the containers.
