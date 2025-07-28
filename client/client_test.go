@@ -46,16 +46,6 @@ func TestNew(t *testing.T) {
 		require.Equal(t, info1, info2)
 	})
 
-	t.Run("client", func(t *testing.T) {
-		cli, err := client.New(context.Background())
-		require.NoError(t, err)
-		require.NotNil(t, cli)
-
-		dockerClient, err := cli.Client()
-		require.NoError(t, err)
-		require.NotNil(t, dockerClient)
-	})
-
 	t.Run("close", func(t *testing.T) {
 		cli, err := client.New(context.Background())
 		require.NoError(t, err)
@@ -157,12 +147,6 @@ func TestDefaultClient(t *testing.T) {
 		require.NotNil(t, info2)
 
 		require.Equal(t, info1, info2)
-	})
-
-	t.Run("client", func(t *testing.T) {
-		dockerClient, err := cli.Client()
-		require.NoError(t, err)
-		require.NotNil(t, dockerClient)
 	})
 
 	t.Run("close", func(t *testing.T) {

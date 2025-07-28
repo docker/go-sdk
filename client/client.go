@@ -33,13 +33,9 @@ var (
 
 	defaultHealthCheck = func(ctx context.Context) func(c *Client) error {
 		return func(c *Client) error {
-			dockerClient, err := c.Client()
-			if err != nil {
-				return fmt.Errorf("docker client: %w", err)
-			}
 			var pingErr error
 			for i := range 3 {
-				if _, pingErr = dockerClient.Ping(ctx); pingErr == nil {
+				if _, pingErr = c.Ping(ctx); pingErr == nil {
 					return nil
 				}
 				select {
@@ -107,7 +103,7 @@ func (c *Client) init(ctx context.Context) error {
 // initOnce initializes the client once.
 // This method is safe for concurrent use by multiple goroutines.
 func (c *Client) initOnce(_ context.Context) error {
-	if c.dockerClient != nil || c.err != nil {
+	if c.APIClient != nil || c.err != nil {
 		return c.err
 	}
 
@@ -151,7 +147,7 @@ func (c *Client) initOnce(_ context.Context) error {
 
 	opts = append(opts, client.WithHTTPHeaders(httpHeaders))
 
-	if c.dockerClient, c.err = client.NewClientWithOpts(opts...); c.err != nil {
+	if c.APIClient, c.err = client.NewClientWithOpts(opts...); c.err != nil {
 		c.err = fmt.Errorf("new client: %w", c.err)
 		return c.err
 	}
@@ -205,21 +201,16 @@ func (c *Client) Close() error {
 	c.mtx.Lock()
 	defer c.mtx.Unlock()
 
-	if c.dockerClient == nil {
+	if c.APIClient == nil {
 		return nil
 	}
 
 	// Store the error before clearing the client
-	err := c.dockerClient.Close()
+	err := c.APIClient.Close()
 
 	// Clear the client after closing to prevent use-after-close issues
 	c.dockerInfo = system.Info{}
 	c.dockerInfoSet = false
 
 	return err
-}
-
-// ClientVersion returns the API version used by this client.
-func (c *Client) ClientVersion() string {
-	return c.dockerClient.ClientVersion()
 }

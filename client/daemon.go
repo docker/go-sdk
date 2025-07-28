@@ -3,7 +3,6 @@ package client
 import (
 	"context"
 	"errors"
-	"fmt"
 	"net/url"
 	"os"
 
@@ -16,7 +15,7 @@ var dockerEnvFile = "/.dockerenv"
 
 // DaemonHost gets the host or ip of the Docker daemon where ports are exposed on
 // Warning: this is based on your Docker host setting. Will fail if using an SSH tunnel
-func (c *Client) DaemonHost(ctx context.Context) (string, error) {
+func (c *Client) DaemonHostWithContext(ctx context.Context) (string, error) {
 	c.mtx.Lock()
 	defer c.mtx.Unlock()
 
@@ -24,13 +23,8 @@ func (c *Client) DaemonHost(ctx context.Context) (string, error) {
 }
 
 func (c *Client) daemonHostLocked(ctx context.Context) (string, error) {
-	dockerClient, err := c.Client()
-	if err != nil {
-		return "", fmt.Errorf("docker client: %w", err)
-	}
-
 	// infer from Docker host
-	daemonURL, err := url.Parse(dockerClient.DaemonHost())
+	daemonURL, err := url.Parse(c.APIClient.DaemonHost())
 	if err != nil {
 		return "", err
 	}
