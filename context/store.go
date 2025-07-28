@@ -162,7 +162,7 @@ func (s *store) add(ctx *Context) error {
 	}
 
 	if err := fileExists(filepath.Join(s.root, ctx.encodedName)); err == nil {
-		return fmt.Errorf("context already exists: %s", ctx.encodedName)
+		return fmt.Errorf("context already exists: %s", ctx.Name)
 	}
 
 	err := os.MkdirAll(filepath.Join(s.root, ctx.encodedName), 0o755)
