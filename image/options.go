@@ -2,6 +2,7 @@ package image
 
 import (
 	"errors"
+	"fmt"
 	"io"
 
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
@@ -9,6 +10,7 @@ import (
 	"github.com/docker/docker/api/types/build"
 	"github.com/docker/docker/api/types/image"
 	"github.com/docker/go-sdk/client"
+	"github.com/docker/go-sdk/config"
 )
 
 // BuildOption is a function that configures the build options.
@@ -40,9 +42,39 @@ func WithBuildOptions(options build.ImageBuildOptions) BuildOption {
 type PullOption func(*pullOptions) error
 
 type pullOptions struct {
-	client      client.SDKClient
-	pullOptions image.PullOptions
-	pullHandler func(r io.ReadCloser) error
+	client        client.SDKClient
+	pullOptions   image.PullOptions
+	pullHandler   func(r io.ReadCloser) error
+	credentialsFn func(string) (string, string, error)
+}
+
+// WithCredentialsFn sets the function to retrieve credentials for an image to be pulled
+func WithCredentialsFn(credentialsFn func(string) (string, string, error)) PullOption {
+	return func(opts *pullOptions) error {
+		opts.credentialsFn = credentialsFn
+		return nil
+	}
+}
+
+// WithCredentialsFromConfig configures pull to retrieve credentials from the CLI config
+func WithCredentialsFromConfig(opts *pullOptions) error {
+	opts.credentialsFn = func(imageName string) (string, string, error) {
+		authConfigs, err := config.AuthConfigs(imageName)
+		if err != nil {
+			return "", "", err
+		}
+
+		// there must be only one auth config for the image
+		if len(authConfigs) > 1 {
+			return "", "", fmt.Errorf("multiple auth configs found for image %s, expected only one", imageName)
+		}
+
+		for _, ac := range authConfigs {
+			return ac.Username, ac.Password, nil
+		}
+		return "", "", nil
+	}
+	return nil
 }
 
 // WithPullClient sets the pull client used to pull the image.

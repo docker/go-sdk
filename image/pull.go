@@ -46,34 +46,30 @@ func Pull(ctx context.Context, imageName string, opts ...PullOption) error {
 		pullOpts.client = sdk
 	}
 
+	if pullOpts.credentialsFn == nil {
+		if err := WithCredentialsFromConfig(pullOpts); err != nil {
+			return fmt.Errorf("set credentials for pull option: %w", err)
+		}
+	}
+
 	if imageName == "" {
 		return errors.New("image name is not set")
 	}
 
-	authConfigs, err := config.AuthConfigs(imageName)
+	username, password, err := pullOpts.credentialsFn(imageName)
 	if err != nil {
-		pullOpts.client.Logger().Warn("failed to get image auth, setting empty credentials for the image", "image", imageName, "error", err)
+		return fmt.Errorf("failed to retrieve registry credentials for %s: %w", imageName, err)
+	}
+
+	authConfig := config.AuthConfig{
+		Username: username,
+		Password: password,
+	}
+	encodedJSON, err := json.Marshal(authConfig)
+	if err != nil {
+		pullOpts.client.Logger().Warn("failed to marshal image auth, setting empty credentials for the image", "image", imageName, "error", err)
 	} else {
-		// there must be only one auth config for the image
-		if len(authConfigs) > 1 {
-			return fmt.Errorf("multiple auth configs found for image %s, expected only one", imageName)
-		}
-
-		var tmp config.AuthConfig
-		for _, ac := range authConfigs {
-			tmp = ac
-		}
-
-		authConfig := config.AuthConfig{
-			Username: tmp.Username,
-			Password: tmp.Password,
-		}
-		encodedJSON, err := json.Marshal(authConfig)
-		if err != nil {
-			pullOpts.client.Logger().Warn("failed to marshal image auth, setting empty credentials for the image", "image", imageName, "error", err)
-		} else {
-			pullOpts.pullOptions.RegistryAuth = base64.URLEncoding.EncodeToString(encodedJSON)
-		}
+		pullOpts.pullOptions.RegistryAuth = base64.URLEncoding.EncodeToString(encodedJSON)
 	}
 
 	var pull io.ReadCloser

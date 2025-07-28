@@ -58,27 +58,27 @@ func TestPull(t *testing.T) {
 	})
 
 	t.Run("success/no-retry", func(t *testing.T) {
-		testPull(t, "someTag", defaultPullOpts, &errMockCli{err: nil}, false)
+		testPull(t, "some_tag", defaultPullOpts, &errMockCli{err: nil}, false)
 	})
 
 	t.Run("not-available/no-retry", func(t *testing.T) {
-		testPull(t, "someTag", defaultPullOpts, &errMockCli{err: errdefs.ErrNotFound.WithMessage("not available")}, false)
+		testPull(t, "some_tag", defaultPullOpts, &errMockCli{err: errdefs.ErrNotFound.WithMessage("not available")}, false)
 	})
 
 	t.Run("invalid-parameters/no-retry", func(t *testing.T) {
-		testPull(t, "someTag", defaultPullOpts, &errMockCli{err: errdefs.ErrInvalidArgument.WithMessage("invalid")}, false)
+		testPull(t, "some_tag", defaultPullOpts, &errMockCli{err: errdefs.ErrInvalidArgument.WithMessage("invalid")}, false)
 	})
 
 	t.Run("unauthorized/retry", func(t *testing.T) {
-		testPull(t, "someTag", defaultPullOpts, &errMockCli{err: errdefs.ErrUnauthenticated.WithMessage("not authorized")}, false)
+		testPull(t, "some_tag", defaultPullOpts, &errMockCli{err: errdefs.ErrUnauthenticated.WithMessage("not authorized")}, false)
 	})
 
 	t.Run("forbidden/retry", func(t *testing.T) {
-		testPull(t, "someTag", defaultPullOpts, &errMockCli{err: errdefs.ErrPermissionDenied.WithMessage("forbidden")}, false)
+		testPull(t, "some_tag", defaultPullOpts, &errMockCli{err: errdefs.ErrPermissionDenied.WithMessage("forbidden")}, false)
 	})
 
 	t.Run("not-implemented/retry", func(t *testing.T) {
-		testPull(t, "someTag", defaultPullOpts, &errMockCli{err: errdefs.ErrNotImplemented.WithMessage("unknown method")}, false)
+		testPull(t, "some_tag", defaultPullOpts, &errMockCli{err: errdefs.ErrNotImplemented.WithMessage("unknown method")}, false)
 	})
 
 	t.Run("non-permanent-error/retry", func(t *testing.T) {
@@ -86,7 +86,7 @@ func TestPull(t *testing.T) {
 			err: errors.New("whoops"),
 		}
 
-		out := testPull(t, "someTag", defaultPullOpts, mockCliWithLogger, true)
+		out := testPull(t, "some_tag", defaultPullOpts, mockCliWithLogger, true)
 		require.Contains(t, out, "failed to pull image, will retry")
 	})
 }
