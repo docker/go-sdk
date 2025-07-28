@@ -20,7 +20,8 @@ var DefaultClient = &Client{
 	healthCheck: defaultHealthCheck,
 }
 
-type SDKClient interface {
+// SDKCLient is a moby APIClient with high-level functions
+type SDKCLient interface {
 	client.APIClient
 
 	// TODO declare SDK higher-order functions
@@ -28,7 +29,8 @@ type SDKClient interface {
 	Pull(ctx context.Context, imageID string, opts ...image.PullOption) (string, error)
 }
 
-func NewSDKClient(opts ...func(*Client)) (SDKClient, error) {
+// NewSDKClient builds a SDKCLient
+func NewSDKClient(opts ...func(*Client)) (SDKCLient, error) {
 	c := &Client{}
 	for _, opt := range opts {
 		opt(c)
@@ -37,7 +39,14 @@ func NewSDKClient(opts ...func(*Client)) (SDKClient, error) {
 	return c, err
 }
 
-var _ SDKClient = &Client{}
+// WithAPIClient set SDKCLient to use an existing client.APIClient to access the moby API
+func WithAPIClient(apiClient client.APIClient) func(*Client) {
+	return func(c *Client) {
+		c.APIClient = apiClient
+	}
+}
+
+var _ SDKCLient = &Client{}
 
 // Client is a type that represents a client for interacting with containers.
 type Client struct {
