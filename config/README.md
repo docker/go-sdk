@@ -16,7 +16,7 @@ go get github.com/docker/go-sdk/config
 
 #### Directory
 
-It will return the current Docker config directory.
+It returns the current Docker config directory.
 
 ```go
 dir, err := config.Dir()
@@ -29,7 +29,7 @@ fmt.Printf("current docker config directory: %s", dir)
 
 #### Filepath
 
-It will return the path to the Docker config file.
+It returns the path to the Docker config file.
 
 ```go
 filepath, err := config.Filepath()
@@ -42,7 +42,7 @@ fmt.Printf("current docker config file path: %s", filepath)
 
 #### Load
 
-It will return the Docker config.
+It returns the Docker config.
 
 ```go
 cfg, err := config.Load()
@@ -53,11 +53,21 @@ if err != nil {
 fmt.Printf("docker config: %+v", cfg)
 ```
 
+#### Save
+
+Once you have loaded a config, you can save it back to the file system.
+
+```go
+if err := cfg.Save(); err != nil {
+    log.Fatalf("failed to save docker config: %v", err)
+}
+```
+
 ### Auth
 
 #### AuthConfigs
 
-It will return a maps of the registry credentials for the given Docker images, indexed by the registry hostname.
+It returns a maps of the registry credentials for the given Docker images, indexed by the registry hostname.
 
 ```go
 authConfigs, err := config.AuthConfigs("nginx:latest")
@@ -70,7 +80,7 @@ fmt.Printf("registry credentials: %+v", authConfigs)
 
 #### Auth Configs For Hostname
 
-It will return the registry credentials for the given Docker registry.
+It returns the registry credentials for the given Docker registry.
 
 ```go
 authConfig, err := config.AuthConfigForHostname("https://index.docker.io/v1/")
