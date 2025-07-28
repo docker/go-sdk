@@ -14,13 +14,15 @@ import (
 var dockerConfig string
 
 func TestLoad(t *testing.T) {
-	var expectedConfig Config
-	err := json.Unmarshal([]byte(dockerConfig), &expectedConfig)
-	require.NoError(t, err)
-
 	t.Run("HOME", func(t *testing.T) {
 		t.Run("valid", func(t *testing.T) {
 			setupHome(t, "testdata")
+
+			var expectedConfig Config
+			err := json.Unmarshal([]byte(dockerConfig), &expectedConfig)
+			require.NoError(t, err)
+
+			expectedConfig.filepath = filepath.Join("testdata", ".docker", FileName)
 
 			cfg, err := Load()
 			require.NoError(t, err)
@@ -49,6 +51,10 @@ func TestLoad(t *testing.T) {
 			setupHome(t, "testdata", "not-found")
 			t.Setenv("DOCKER_AUTH_CONFIG", dockerConfig)
 
+			var expectedConfig Config
+			err := json.Unmarshal([]byte(dockerConfig), &expectedConfig)
+			require.NoError(t, err)
+
 			cfg, err := Load()
 			require.NoError(t, err)
 			require.Equal(t, expectedConfig, cfg)
@@ -68,6 +74,12 @@ func TestLoad(t *testing.T) {
 		t.Run("valid", func(t *testing.T) {
 			setupHome(t, "testdata", "not-found")
 			t.Setenv(EnvOverrideDir, filepath.Join("testdata", ".docker"))
+
+			var expectedConfig Config
+			err := json.Unmarshal([]byte(dockerConfig), &expectedConfig)
+			require.NoError(t, err)
+
+			expectedConfig.filepath = filepath.Join("testdata", ".docker", FileName)
 
 			cfg, err := Load()
 			require.NoError(t, err)

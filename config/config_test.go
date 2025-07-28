@@ -117,6 +117,7 @@ func TestConfigSave(t *testing.T) {
 	require.NoError(t, err)
 
 	c := Config{
+		filepath:       filepath.Join(dockerDir, FileName),
 		CurrentContext: "test",
 		AuthConfigs:    map[string]AuthConfig{},
 	}

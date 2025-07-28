@@ -113,6 +113,9 @@ func Load() (Config, error) {
 		return cfg, fmt.Errorf("load config: %w", err)
 	}
 
+	// store the location of the config file into the config, for future use
+	cfg.filepath = p
+
 	return cfg, nil
 }
 

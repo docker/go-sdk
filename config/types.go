@@ -19,6 +19,7 @@ const (
 
 // Config represents the on disk format of the docker CLI's config file.
 type Config struct {
+	filepath             string                 `json:"-"`
 	AuthConfigs          map[string]AuthConfig  `json:"auths"`
 	HTTPHeaders          map[string]string      `json:"HttpHeaders,omitempty"`
 	PsFormat             string                 `json:"psFormat,omitempty"`
