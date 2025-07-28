@@ -87,7 +87,11 @@ func validateAuthForHostname(t *testing.T, hostname, expectedUser, expectedPass 
 	t.Helper()
 
 	creds, err := AuthConfigForHostname(hostname)
-	require.ErrorIs(t, err, expectedErr)
+	if expectedErr != nil {
+		require.ErrorContains(t, err, expectedErr.Error())
+	} else {
+		require.NoError(t, err)
+	}
 	require.Equal(t, expectedUser, creds.Username)
 	require.Equal(t, expectedPass, creds.Password)
 	if creds.ServerAddress != "" {
@@ -100,7 +104,11 @@ func validateAuthForImage(t *testing.T, imageRef, expectedUser, expectedPass, ex
 	t.Helper()
 
 	authConfigs, err := AuthConfigs(imageRef)
-	require.ErrorIs(t, err, expectedErr)
+	if expectedErr != nil {
+		require.ErrorContains(t, err, expectedErr.Error())
+	} else {
+		require.NoError(t, err)
+	}
 
 	creds, ok := authConfigs[expectedRegistry]
 	require.Equal(t, (expectedErr == nil), ok)
@@ -194,7 +202,7 @@ func TestRegistryCredentialsForImage(t *testing.T) {
 
 	t.Run("config/not-found", func(t *testing.T) {
 		t.Setenv(EnvOverrideDir, filepath.Join("testdata", "missing"))
-		validateAuthForImage(t, "userpass.io/repo/image:tag", "", "", "", os.ErrNotExist)
+		validateAuthForImage(t, "userpass.io/repo/image:tag", "", "", "", errors.New("file does not exist"))
 	})
 }
 
@@ -258,7 +266,7 @@ func TestRegistryCredentialsForHostname(t *testing.T) {
 
 	t.Run("config/not-found", func(t *testing.T) {
 		t.Setenv(EnvOverrideDir, filepath.Join("testdata", "missing"))
-		validateAuthForHostname(t, "userpass.io", "", "", os.ErrNotExist)
+		validateAuthForHostname(t, "userpass.io", "", "", errors.New("file does not exist"))
 	})
 }
 

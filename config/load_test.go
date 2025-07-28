@@ -33,7 +33,7 @@ func TestLoad(t *testing.T) {
 			setupHome(t, "testdata", "not-found")
 
 			cfg, err := Load()
-			require.ErrorIs(t, err, os.ErrNotExist)
+			require.ErrorContains(t, err, "file does not exist")
 			require.Empty(t, cfg)
 		})
 
@@ -117,7 +117,7 @@ func TestDir(t *testing.T) {
 			setupHome(t, "testdata", "not-found")
 
 			dir, err := Dir()
-			require.ErrorIs(t, err, os.ErrNotExist)
+			require.ErrorContains(t, err, "file does not exist")
 			require.Empty(t, dir)
 		})
 	})
@@ -136,7 +136,7 @@ func TestDir(t *testing.T) {
 			setupDockerConfigs(t, "testdata", "not-found")
 
 			dir, err := Dir()
-			require.ErrorIs(t, err, os.ErrNotExist)
+			require.ErrorContains(t, err, "file does not exist")
 			require.Empty(t, dir)
 		})
 	})

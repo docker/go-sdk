@@ -46,8 +46,8 @@ func getHomeDir() (string, error) {
 func Dir() (string, error) {
 	dir := os.Getenv(EnvOverrideDir)
 	if dir != "" {
-		if err := fileExists(dir); err != nil {
-			return "", fmt.Errorf("file exists: %w", err)
+		if !fileExists(dir) {
+			return "", fmt.Errorf("file does not exist (%s)", dir)
 		}
 		return dir, nil
 	}
@@ -58,19 +58,19 @@ func Dir() (string, error) {
 	}
 
 	configDir := filepath.Join(home, configFileDir)
-	if err := fileExists(configDir); err != nil {
-		return "", fmt.Errorf("file exists: %w", err)
+	if !fileExists(configDir) {
+		return "", fmt.Errorf("file does not exist (%s)", configDir)
 	}
 
 	return configDir, nil
 }
 
-func fileExists(path string) error {
+func fileExists(path string) bool {
 	if _, err := os.Stat(path); os.IsNotExist(err) {
-		return fmt.Errorf("file does not exist: %w", err)
+		return false
 	}
 
-	return nil
+	return true
 }
 
 // Filepath returns the path to the docker cli config file,
@@ -82,8 +82,8 @@ func Filepath() (string, error) {
 	}
 
 	configFilePath := filepath.Join(dir, FileName)
-	if err := fileExists(configFilePath); err != nil {
-		return "", fmt.Errorf("config file: %w", err)
+	if !fileExists(configFilePath) {
+		return "", fmt.Errorf("config file does not exist (%s)", configFilePath)
 	}
 
 	return configFilePath, nil

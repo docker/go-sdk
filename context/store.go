@@ -161,7 +161,7 @@ func (s *store) add(ctx *Context) error {
 		ctx.encodedName = digest.FromString(ctx.Name).Encoded()
 	}
 
-	if err := fileExists(filepath.Join(s.root, ctx.encodedName)); err == nil {
+	if fileExists(filepath.Join(s.root, ctx.encodedName)) {
 		return fmt.Errorf("context already exists: %s", ctx.Name)
 	}
 

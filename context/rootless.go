@@ -2,7 +2,6 @@ package context
 
 import (
 	"errors"
-	"fmt"
 	"os"
 	"path/filepath"
 )
@@ -19,7 +18,7 @@ func rootlessSocketPathFromEnv() (string, error) {
 	xdgRuntimeDir, exists := os.LookupEnv("XDG_RUNTIME_DIR")
 	if exists && xdgRuntimeDir != "" {
 		f := filepath.Join(xdgRuntimeDir, "docker.sock")
-		if err := fileExists(f); err == nil {
+		if fileExists(f) {
 			return DefaultSchema + f, nil
 		}
 
@@ -30,10 +29,10 @@ func rootlessSocketPathFromEnv() (string, error) {
 }
 
 // fileExists checks if a file exists.
-func fileExists(path string) error {
+func fileExists(path string) bool {
 	if _, err := os.Stat(path); os.IsNotExist(err) {
-		return fmt.Errorf("file does not exist: %w", err)
+		return false
 	}
 
-	return nil
+	return true
 }
