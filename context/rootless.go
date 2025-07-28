@@ -8,7 +8,7 @@ import (
 )
 
 var (
-	ErrRootlessDockerNotFoundXDGRuntimeDir = errors.New("$XDG_RUNTIME_DIR does not exist")
+	ErrRootlessDockerNotFoundXDGRuntimeDir = errors.New("docker.sock not found in $XDG_RUNTIME_DIR")
 	ErrXDGRuntimeDirNotSet                 = errors.New("$XDG_RUNTIME_DIR is not set")
 	ErrInvalidSchema                       = errors.New("URL schema is not " + DefaultSchema + " or tcp")
 )
