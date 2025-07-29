@@ -19,16 +19,16 @@ const (
 )
 
 type listOptions struct {
-	dockerClient *client.Client
-	filters      filters.Args
+	client  client.SDKClient
+	filters filters.Args
 }
 
 type ListOptions func(opts *listOptions) error
 
 // WithDockerClient sets the docker client to be used to list the networks.
-func WithDockerClient(client *client.Client) ListOptions {
+func WithDockerClient(client client.SDKClient) ListOptions {
 	return func(opts *listOptions) error {
-		opts.dockerClient = client
+		opts.client = client
 		return nil
 	}
 }
@@ -87,11 +87,15 @@ func list(ctx context.Context, opts ...ListOptions) ([]network.Inspect, error) {
 		nwOpts.Filters = initialOpts.filters
 	}
 
-	if initialOpts.dockerClient == nil {
-		initialOpts.dockerClient = client.DefaultClient
+	if initialOpts.client == nil {
+		sdk, err := client.New(ctx)
+		if err != nil {
+			return nil, err
+		}
+		initialOpts.client = sdk
 	}
 
-	list, err := initialOpts.dockerClient.NetworkList(ctx, nwOpts)
+	list, err := initialOpts.client.NetworkList(ctx, nwOpts)
 	if err != nil {
 		return nws, fmt.Errorf("failed to list networks: %w", err)
 	}

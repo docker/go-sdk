@@ -34,7 +34,7 @@ func (opt CustomizeDefinitionOption) Customize(def *Definition) error {
 }
 
 // WithDockerClient sets the docker client for a container
-func WithDockerClient(dockerClient *client.Client) CustomizeDefinitionOption {
+func WithDockerClient(dockerClient client.SDKClient) CustomizeDefinitionOption {
 	return func(def *Definition) error {
 		def.dockerClient = dockerClient
 

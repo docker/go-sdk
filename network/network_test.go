@@ -12,7 +12,7 @@ import (
 	"github.com/docker/go-sdk/network"
 )
 
-func newNetworkSuite(t *testing.T, dockerClient *client.Client) {
+func newNetworkSuite(t *testing.T, dockerClient client.SDKClient) {
 	t.Helper()
 
 	t.Run("no-name", func(t *testing.T) {
@@ -147,10 +147,6 @@ func TestNew(t *testing.T) {
 		defer dockerClient.Close()
 
 		newNetworkSuite(t, dockerClient)
-	})
-
-	t.Run("default-client", func(t *testing.T) {
-		newNetworkSuite(t, client.DefaultClient)
 	})
 }
 

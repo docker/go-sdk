@@ -13,6 +13,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/docker/docker/api/types/build"
+	"github.com/docker/go-sdk/client"
 )
 
 func TestBuild_withRetries(t *testing.T) {
@@ -20,7 +21,11 @@ func TestBuild_withRetries(t *testing.T) {
 		t.Helper()
 
 		buf := &bytes.Buffer{}
-		m := &errMockCli{err: errReturned, logger: slog.New(slog.NewTextHandler(buf, nil))}
+		logger := slog.New(slog.NewTextHandler(buf, nil))
+		m := &errMockCli{err: errReturned}
+
+		sdk, err := client.New(context.TODO(), client.WithDockerAPI(m), client.WithLogger(logger))
+		require.NoError(t, err)
 
 		contextArchive, err := ArchiveBuildContext("testdata/retry", "Dockerfile")
 		require.NoError(t, err)
@@ -30,7 +35,7 @@ func TestBuild_withRetries(t *testing.T) {
 		defer cancel()
 		tag, err := Build(
 			ctx, contextArchive, "test",
-			WithBuildClient(m),
+			WithBuildClient(sdk),
 			WithBuildOptions(build.ImageBuildOptions{
 				Dockerfile: "Dockerfile",
 			}),
@@ -45,7 +50,8 @@ func TestBuild_withRetries(t *testing.T) {
 		require.Positive(t, m.imageBuildCount)
 		require.Equal(t, shouldRetry, m.imageBuildCount > 1)
 
-		require.Equal(t, shouldRetry, strings.Contains(buf.String(), "Failed to build image, will retry"))
+		s := buf.String()
+		require.Equal(t, shouldRetry, strings.Contains(s, "Failed to build image, will retry"))
 	}
 
 	t.Run("success/no-retry", func(t *testing.T) {

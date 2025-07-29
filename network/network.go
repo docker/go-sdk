@@ -27,7 +27,11 @@ func New(ctx context.Context, opts ...Option) (*Network, error) {
 	}
 
 	if networkOptions.client == nil {
-		networkOptions.client = client.DefaultClient
+		sdk, err := client.New(ctx)
+		if err != nil {
+			return nil, err
+		}
+		networkOptions.client = sdk
 	}
 
 	networkOptions.labels[moduleLabel] = Version()

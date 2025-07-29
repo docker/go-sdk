@@ -8,20 +8,21 @@ import (
 
 	"github.com/docker/docker/api/types/build"
 	"github.com/docker/docker/api/types/image"
+	"github.com/docker/go-sdk/client"
 )
 
 // BuildOption is a function that configures the build options.
 type BuildOption func(*buildOptions) error
 
 type buildOptions struct {
-	buildClient ImageBuildClient
-	opts        build.ImageBuildOptions
+	client client.SDKClient
+	opts   build.ImageBuildOptions
 }
 
 // WithBuildClient sets the build client used to build the image.
-func WithBuildClient(buildClient ImageBuildClient) BuildOption {
+func WithBuildClient(buildClient client.SDKClient) BuildOption {
 	return func(opts *buildOptions) error {
-		opts.buildClient = buildClient
+		opts.client = buildClient
 		return nil
 	}
 }
@@ -39,15 +40,15 @@ func WithBuildOptions(options build.ImageBuildOptions) BuildOption {
 type PullOption func(*pullOptions) error
 
 type pullOptions struct {
-	pullClient  ImagePullClient
+	client      client.SDKClient
 	pullOptions image.PullOptions
 	pullHandler func(r io.ReadCloser) error
 }
 
 // WithPullClient sets the pull client used to pull the image.
-func WithPullClient(pullClient ImagePullClient) PullOption {
+func WithPullClient(pullClient client.SDKClient) PullOption {
 	return func(opts *pullOptions) error {
-		opts.pullClient = pullClient
+		opts.client = pullClient
 		return nil
 	}
 }
@@ -77,14 +78,14 @@ func WithPullHandler(pullHandler func(r io.ReadCloser) error) PullOption {
 type RemoveOption func(*removeOptions) error
 
 type removeOptions struct {
-	removeClient  ImageRemoveClient
+	client        client.SDKClient
 	removeOptions image.RemoveOptions
 }
 
 // WithRemoveClient sets the remove client used to remove the image.
-func WithRemoveClient(removeClient ImageRemoveClient) RemoveOption {
+func WithRemoveClient(removeClient client.SDKClient) RemoveOption {
 	return func(opts *removeOptions) error {
-		opts.removeClient = removeClient
+		opts.client = removeClient
 		return nil
 	}
 }
@@ -101,14 +102,14 @@ func WithRemoveOptions(options image.RemoveOptions) RemoveOption {
 type SaveOption func(*saveOptions) error
 
 type saveOptions struct {
-	saveClient ImageSaveClient
-	platforms  []ocispec.Platform
+	client    client.SDKClient
+	platforms []ocispec.Platform
 }
 
 // WithSaveClient sets the save client used to save the image.
-func WithSaveClient(saveClient ImageSaveClient) SaveOption {
+func WithSaveClient(saveClient client.SDKClient) SaveOption {
 	return func(opts *saveOptions) error {
-		opts.saveClient = saveClient
+		opts.client = saveClient
 		return nil
 	}
 }

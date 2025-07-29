@@ -24,7 +24,7 @@ var (
 // Definition is the definition of a container.
 type Definition struct {
 	// dockerClient the docker client to use for the container.
-	dockerClient *client.Client
+	dockerClient client.SDKClient
 
 	// configModifier the modifier for the config before container creation
 	configModifier func(*container.Config)
@@ -104,7 +104,7 @@ func (d *Definition) validate() error {
 }
 
 // DockerClient returns the docker client used by the definition.
-func (d *Definition) DockerClient() *client.Client {
+func (d *Definition) DockerClient() client.SDKClient {
 	return d.dockerClient
 }
 

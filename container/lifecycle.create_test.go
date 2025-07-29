@@ -110,7 +110,8 @@ func TestMergePortBindings(t *testing.T) {
 func TestPreCreateModifierHook(t *testing.T) {
 	ctx := context.Background()
 
-	dockerClient := client.DefaultClient
+	dockerClient, err := client.New(context.TODO())
+	require.NoError(t, err)
 	t.Cleanup(func() {
 		require.NoError(t, dockerClient.Close())
 	})
@@ -419,7 +420,8 @@ func TestLifecycleHooks_WithMultipleHooks(t *testing.T) {
 func testCreateNetwork(t *testing.T, networkName string) network.CreateResponse {
 	t.Helper()
 
-	dockerClient := client.DefaultClient
+	dockerClient, err := client.New(context.TODO())
+	require.NoError(t, err)
 	t.Cleanup(func() {
 		require.NoError(t, dockerClient.Close())
 	})
