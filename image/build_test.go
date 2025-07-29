@@ -137,7 +137,9 @@ func TestBuild_addSDKLabels(t *testing.T) {
 		cleanup(t, tag)
 	})
 
-	inspect, err := client.DefaultClient.ImageInspect(context.Background(), tag)
+	sdk, err := client.New(context.TODO())
+	require.NoError(t, err)
+	inspect, err := sdk.ImageInspect(context.Background(), tag)
 	require.NoError(t, err)
 
 	require.Contains(t, inspect.Config.Labels, client.LabelBase)

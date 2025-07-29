@@ -19,7 +19,7 @@ var noopShowProgress = func(_ io.ReadCloser) error {
 }
 
 func TestPull(t *testing.T) {
-	pull := func(t *testing.T, dockerClient *client.Client, expectedErr error, opts ...image.PullOption) {
+	pull := func(t *testing.T, dockerClient client.SDKClient, expectedErr error, opts ...image.PullOption) {
 		t.Helper()
 
 		opts = append(opts, image.WithPullClient(dockerClient))
@@ -41,10 +41,6 @@ func TestPull(t *testing.T) {
 		defer dockerClient.Close()
 
 		pull(t, dockerClient, nil)
-	})
-
-	t.Run("default-client", func(t *testing.T) {
-		pull(t, client.DefaultClient, nil)
 	})
 
 	t.Run("pull-handler/nil", func(t *testing.T) {

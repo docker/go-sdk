@@ -17,18 +17,22 @@ func FindByID(ctx context.Context, volumeID string, opts ...FindOptions) (Volume
 		}
 	}
 
-	if findOpts.dockerClient == nil {
-		findOpts.dockerClient = client.DefaultClient
+	if findOpts.client == nil {
+		sdk, err := client.New(ctx)
+		if err != nil {
+			return Volume{}, err
+		}
+		findOpts.client = sdk
 	}
 
-	v, err := findOpts.dockerClient.VolumeInspect(ctx, volumeID)
+	v, err := findOpts.client.VolumeInspect(ctx, volumeID)
 	if err != nil {
 		return Volume{}, err
 	}
 
 	return Volume{
 		Volume:       &v,
-		dockerClient: findOpts.dockerClient,
+		dockerClient: findOpts.client,
 	}, nil
 }
 
@@ -43,11 +47,15 @@ func List(ctx context.Context, opts ...FindOptions) ([]Volume, error) {
 		}
 	}
 
-	if findOpts.dockerClient == nil {
-		findOpts.dockerClient = client.DefaultClient
+	if findOpts.client == nil {
+		sdk, err := client.New(ctx)
+		if err != nil {
+			return nil, err
+		}
+		findOpts.client = sdk
 	}
 
-	response, err := findOpts.dockerClient.VolumeList(ctx, volume.ListOptions{
+	response, err := findOpts.client.VolumeList(ctx, volume.ListOptions{
 		Filters: findOpts.filters,
 	})
 	if err != nil {
@@ -58,12 +66,12 @@ func List(ctx context.Context, opts ...FindOptions) ([]Volume, error) {
 	for i, v := range response.Volumes {
 		volumes[i] = Volume{
 			Volume:       v,
-			dockerClient: findOpts.dockerClient,
+			dockerClient: findOpts.client,
 		}
 	}
 
 	for _, w := range response.Warnings {
-		findOpts.dockerClient.Logger().Warn(w)
+		findOpts.client.Logger().Warn(w)
 	}
 
 	return volumes, nil

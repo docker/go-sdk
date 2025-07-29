@@ -6,7 +6,7 @@ import (
 )
 
 type options struct {
-	client *client.Client
+	client client.SDKClient
 	labels map[string]string
 	name   string
 }
@@ -15,7 +15,7 @@ type options struct {
 type Option func(*options) error
 
 // WithClient sets the docker client.
-func WithClient(client *client.Client) Option {
+func WithClient(client client.SDKClient) Option {
 	return func(o *options) error {
 		o.client = client
 		return nil
@@ -53,8 +53,8 @@ func WithForce() TerminateOption {
 }
 
 type findOptions struct {
-	dockerClient *client.Client
-	filters      filters.Args
+	client  client.SDKClient
+	filters filters.Args
 }
 
 // FindOptions is a function that modifies the find options
@@ -62,9 +62,9 @@ type findOptions struct {
 type FindOptions func(opts *findOptions) error
 
 // WithFindClient returns an [FindOptions] that sets the find client.
-func WithFindClient(dockerClient *client.Client) FindOptions {
+func WithFindClient(dockerClient client.SDKClient) FindOptions {
 	return func(o *findOptions) error {
-		o.dockerClient = dockerClient
+		o.client = dockerClient
 		return nil
 	}
 }

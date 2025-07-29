@@ -41,8 +41,12 @@ func Run(ctx context.Context, opts ...ContainerCustomizer) (*Container, error) {
 	}
 
 	if def.dockerClient == nil {
+		sdk, err := client.New(ctx)
+		if err != nil {
+			return nil, err
+		}
 		// use the default docker client
-		def.dockerClient = client.DefaultClient
+		def.dockerClient = sdk
 	}
 
 	env := []string{}
@@ -64,7 +68,7 @@ func Run(ctx context.Context, opts ...ContainerCustomizer) (*Container, error) {
 		Entrypoint: def.entrypoint,
 		Image:      def.image,
 		Env:        env,
-		Labels:     def.labels, // the Client will add the SDK labels automatically
+		Labels:     def.labels, // the sdkClient will add the SDK labels automatically
 		Cmd:        def.cmd,
 	}
 

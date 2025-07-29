@@ -38,7 +38,7 @@ func NewTerminateOptions(ctx context.Context, opts ...TerminateOption) *Terminat
 }
 
 // Cleanup performs any clean up needed
-func (o *TerminateOptions) Cleanup(cli *client.Client) error {
+func (o *TerminateOptions) Cleanup(cli client.SDKClient) error {
 	if len(o.volumes) == 0 {
 		return nil
 	}

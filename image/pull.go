@@ -11,7 +11,6 @@ import (
 
 	"github.com/cenkalti/backoff/v4"
 
-	"github.com/docker/docker/api/types/image"
 	"github.com/docker/go-sdk/client"
 	"github.com/docker/go-sdk/config"
 )
@@ -22,14 +21,6 @@ import (
 var defaultPullHandler = func(r io.ReadCloser) error {
 	_, err := io.ReadAll(r)
 	return err
-}
-
-// ImagePullClient is a client that can pull images.
-type ImagePullClient interface {
-	ImageClient
-
-	// ImagePull pulls an image from a remote registry.
-	ImagePull(ctx context.Context, image string, options image.PullOptions) (io.ReadCloser, error)
 }
 
 // Pull pulls an image from a remote registry, retrying on non-permanent errors.
@@ -48,10 +39,11 @@ func Pull(ctx context.Context, imageName string, opts ...PullOption) error {
 	}
 
 	if pullOpts.pullClient == nil {
-		pullOpts.pullClient = client.DefaultClient
-		// In case there is no pull client set, we use the default docker client
-		// to pull the image. We need to close it when done.
-		defer pullOpts.pullClient.Close()
+		sdk, err := client.New(ctx)
+		if err != nil {
+			return err
+		}
+		pullOpts.pullClient = sdk
 	}
 
 	if imageName == "" {

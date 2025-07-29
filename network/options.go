@@ -8,7 +8,7 @@ import (
 )
 
 type options struct {
-	client     *client.Client
+	client     client.SDKClient
 	ipam       *network.IPAM
 	labels     map[string]string
 	driver     string
@@ -22,7 +22,7 @@ type options struct {
 type Option func(*options) error
 
 // WithClient sets the docker client.
-func WithClient(client *client.Client) Option {
+func WithClient(client client.SDKClient) Option {
 	return func(o *options) error {
 		o.client = client
 		return nil

@@ -23,7 +23,11 @@ func New(ctx context.Context, opts ...Option) (*Volume, error) {
 	}
 
 	if volumeOptions.client == nil {
-		volumeOptions.client = client.DefaultClient
+		sdk, err := client.New(ctx)
+		if err != nil {
+			return nil, err
+		}
+		volumeOptions.client = sdk
 	}
 
 	volumeOptions.labels[moduleLabel] = Version()

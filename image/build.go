@@ -55,14 +55,6 @@ func ArchiveBuildContext(dir string, dockerfile string) (r io.ReadCloser, err er
 	return buildContext, nil
 }
 
-// ImageBuildClient is a client that can build images.
-type ImageBuildClient interface {
-	ImageClient
-
-	// ImageBuild builds an image from a build context and options.
-	ImageBuild(ctx context.Context, options build.ImageBuildOptions) (build.ImageBuildResponse, error)
-}
-
 // BuildFromDir builds an image from a directory and the path to the Dockerfile in the directory, then returns the tag.
 // It uses [ArchiveBuildContext] to create a archive reader from the directory.
 func BuildFromDir(ctx context.Context, dir string, dockerfile string, tag string, opts ...BuildOption) (string, error) {
@@ -117,10 +109,11 @@ func Build(ctx context.Context, contextReader io.Reader, tag string, opts ...Bui
 	buildOpts.opts.Context = contextReader
 
 	if buildOpts.buildClient == nil {
-		buildOpts.buildClient = client.DefaultClient
-		// In case there is no build client set, use the default docker client
-		// to build the image. Needs to be closed when done.
-		defer buildOpts.buildClient.Close()
+		sdk, err := client.New(ctx)
+		if err != nil {
+			return "", err
+		}
+		buildOpts.buildClient = sdk
 	}
 
 	if buildOpts.opts.Labels == nil {
@@ -137,7 +130,7 @@ func Build(ctx context.Context, contextReader io.Reader, tag string, opts ...Bui
 		func() (build.ImageBuildResponse, error) {
 			var err error
 
-			resp, err := buildOpts.buildClient.ImageBuild(ctx, buildOpts.opts)
+			resp, err := buildOpts.buildClient.ImageBuild(ctx, contextReader, buildOpts.opts)
 			if err != nil {
 				if client.IsPermanentClientError(err) {
 					return build.ImageBuildResponse{}, backoff.Permanent(fmt.Errorf("build image: %w", err))

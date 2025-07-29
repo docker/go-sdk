@@ -387,7 +387,8 @@ echo "done"
 }
 
 func TestRun_addSDKLabels(t *testing.T) {
-	dockerClient := client.DefaultClient
+	dockerClient, err := client.New(context.TODO())
+	require.NoError(t, err)
 	t.Cleanup(func() {
 		require.NoError(t, dockerClient.Close())
 	})
@@ -643,7 +644,7 @@ func TestRunWithLifecycleHooks(t *testing.T) {
 }
 
 func TestRunWithNetworks(t *testing.T) {
-	testRun := func(t *testing.T, dockerClient *client.Client, networkOptions []container.ContainerCustomizer) (*container.Container, error) {
+	testRun := func(t *testing.T, dockerClient client.SDKClient, networkOptions []container.ContainerCustomizer) (*container.Container, error) {
 		t.Helper()
 
 		opts := []container.ContainerCustomizer{
@@ -667,7 +668,8 @@ func TestRunWithNetworks(t *testing.T) {
 	}
 
 	t.Run("with-network", func(t *testing.T) {
-		dockerClient := client.DefaultClient
+		dockerClient, err := client.New(context.TODO())
+		require.NoError(t, err)
 		t.Cleanup(func() {
 			require.NoError(t, dockerClient.Close())
 		})
@@ -688,7 +690,8 @@ func TestRunWithNetworks(t *testing.T) {
 	})
 
 	t.Run("with-bridge-network", func(t *testing.T) {
-		dockerClient := client.DefaultClient
+		dockerClient, err := client.New(context.TODO())
+		require.NoError(t, err)
 
 		nw, err := network.New(context.Background(), network.WithClient(dockerClient))
 		network.Cleanup(t, nw)
@@ -706,7 +709,8 @@ func TestRunWithNetworks(t *testing.T) {
 	})
 
 	t.Run("with-new-network", func(t *testing.T) {
-		dockerClient := client.DefaultClient
+		dockerClient, err := client.New(context.TODO())
+		require.NoError(t, err)
 
 		ctr, runErr := testRun(t, dockerClient, []container.ContainerCustomizer{
 			// the network is going to be created using the same docker client
@@ -730,7 +734,8 @@ func TestRunWithNetworks(t *testing.T) {
 	})
 
 	t.Run("with-network-name", func(t *testing.T) {
-		dockerClient := client.DefaultClient
+		dockerClient, err := client.New(context.TODO())
+		require.NoError(t, err)
 
 		newNetwork, err := network.New(context.Background(), network.WithClient(dockerClient))
 		network.Cleanup(t, newNetwork)
@@ -750,7 +755,8 @@ func TestRunWithNetworks(t *testing.T) {
 	})
 
 	t.Run("with-multiple-networks", func(t *testing.T) {
-		dockerClient := client.DefaultClient
+		dockerClient, err := client.New(context.TODO())
+		require.NoError(t, err)
 
 		nw1, err := network.New(context.Background(), network.WithClient(dockerClient))
 		network.Cleanup(t, nw1)
@@ -778,7 +784,8 @@ func TestRunWithWaitStrategy(t *testing.T) {
 	testRun := func(t *testing.T, img string, strategy wait.Strategy, expectError bool) {
 		t.Helper()
 
-		dockerClient := client.DefaultClient
+		dockerClient, err := client.New(context.TODO())
+		require.NoError(t, err)
 
 		opts := []container.ContainerCustomizer{
 			container.WithDockerClient(dockerClient),
@@ -870,7 +877,8 @@ func TestRunWithWaitStrategy(t *testing.T) {
 func testCreateNetwork(t *testing.T, networkName string) apinetwork.CreateResponse {
 	t.Helper()
 
-	dockerClient := client.DefaultClient
+	dockerClient, err := client.New(context.TODO())
+	require.NoError(t, err)
 	t.Cleanup(func() {
 		require.NoError(t, dockerClient.Close())
 	})

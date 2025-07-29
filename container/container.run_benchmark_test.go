@@ -7,6 +7,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/docker/go-sdk/client"
 	"github.com/docker/go-sdk/container"
 )
 
@@ -15,14 +16,22 @@ func BenchmarkRun(b *testing.B) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
 	defer cancel()
 
+	dockerClient, err := client.New(ctx)
+	require.NoError(b, err)
+	b.Cleanup(func() {
+		require.NoError(b, dockerClient.Close())
+	})
+
 	b.Run("minimal", func(b *testing.B) {
 		benchmarkContainerRun(b, ctx, []container.ContainerCustomizer{
+			container.WithDockerClient(dockerClient),
 			container.WithImage(nginxAlpineImage),
 		})
 	})
 
 	b.Run("with-env", func(b *testing.B) {
 		benchmarkContainerRun(b, ctx, []container.ContainerCustomizer{
+			container.WithDockerClient(dockerClient),
 			container.WithImage(nginxAlpineImage),
 			container.WithEnv(map[string]string{
 				"ENV1": "value1",
@@ -33,6 +42,7 @@ func BenchmarkRun(b *testing.B) {
 
 	b.Run("with-ports", func(b *testing.B) {
 		benchmarkContainerRun(b, ctx, []container.ContainerCustomizer{
+			container.WithDockerClient(dockerClient),
 			container.WithImage(nginxAlpineImage),
 			container.WithExposedPorts("80/tcp", "443/tcp"),
 		})
@@ -40,6 +50,7 @@ func BenchmarkRun(b *testing.B) {
 
 	b.Run("with-lifecycle-hooks", func(b *testing.B) {
 		benchmarkContainerRun(b, ctx, []container.ContainerCustomizer{
+			container.WithDockerClient(dockerClient),
 			container.WithImage(nginxAlpineImage),
 			container.WithLifecycleHooks(container.LifecycleHooks{
 				PreCreates: []container.DefinitionHook{
@@ -97,14 +108,22 @@ func BenchmarkRunCleanup(b *testing.B) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
 	defer cancel()
 
+	dockerClient, err := client.New(ctx)
+	require.NoError(b, err)
+	b.Cleanup(func() {
+		require.NoError(b, dockerClient.Close())
+	})
+
 	b.Run("minimal", func(b *testing.B) {
 		benchmarkRunCleanup(b, ctx, []container.ContainerCustomizer{
+			container.WithDockerClient(dockerClient),
 			container.WithImage(nginxAlpineImage),
 		})
 	})
 
 	b.Run("with-env", func(b *testing.B) {
 		benchmarkRunCleanup(b, ctx, []container.ContainerCustomizer{
+			container.WithDockerClient(dockerClient),
 			container.WithImage(nginxAlpineImage),
 			container.WithEnv(map[string]string{
 				"ENV1": "value1",
@@ -115,6 +134,7 @@ func BenchmarkRunCleanup(b *testing.B) {
 
 	b.Run("with-ports", func(b *testing.B) {
 		benchmarkRunCleanup(b, ctx, []container.ContainerCustomizer{
+			container.WithDockerClient(dockerClient),
 			container.WithImage(nginxAlpineImage),
 			container.WithExposedPorts("80/tcp", "443/tcp"),
 		})
