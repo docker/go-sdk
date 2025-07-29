@@ -6,11 +6,21 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/docker/go-sdk/client"
 	"github.com/docker/go-sdk/container"
 )
 
 func BenchmarkPortEndpoint(b *testing.B) {
-	ctr, err := container.Run(context.Background(),
+	ctx := context.Background()
+
+	dockerClient, err := client.New(ctx)
+	require.NoError(b, err)
+	b.Cleanup(func() {
+		require.NoError(b, dockerClient.Close())
+	})
+
+	ctr, err := container.Run(ctx,
+		container.WithDockerClient(dockerClient),
 		container.WithImage(nginxAlpineImage),
 	)
 	container.Cleanup(b, ctr)
