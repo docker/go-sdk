@@ -8,7 +8,7 @@ import (
 // Volume represents a Docker volume.
 type Volume struct {
 	*volume.Volume
-	dockerClient *client.Client
+	dockerClient client.SDKClient
 }
 
 // ID is an alias for the Name field, as it coincides with the Name of the volume.

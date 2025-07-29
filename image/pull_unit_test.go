@@ -12,16 +12,23 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/docker/docker/api/types/image"
+	sdkclient "github.com/docker/go-sdk/client"
 )
 
 func TestPull(t *testing.T) {
 	defaultPullOpts := []PullOption{WithPullOptions(image.PullOptions{})}
 
-	testPull := func(t *testing.T, imageName string, pullOpts []PullOption, mockCli *errMockCli, shouldRetry bool) {
+	testPull := func(t *testing.T, imageName string, pullOpts []PullOption, mockCli *errMockCli, shouldRetry bool) string {
 		t.Helper()
+		buf := &bytes.Buffer{}
 
 		if len(pullOpts) > 0 && mockCli != nil {
-			pullOpts = append(pullOpts, WithPullClient(mockCli))
+			sdk, err := sdkclient.New(context.TODO(),
+				sdkclient.WithDockerAPI(mockCli),
+				sdkclient.WithLogger(slog.New(slog.NewTextHandler(buf, nil))))
+			require.NoError(t, err)
+
+			pullOpts = append(pullOpts, WithPullClient(sdk))
 		}
 
 		ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
@@ -39,6 +46,7 @@ func TestPull(t *testing.T) {
 			require.Positive(t, mockCli.imagePullCount)
 			require.Equal(t, shouldRetry, mockCli.imagePullCount > 1)
 		}
+		return buf.String()
 	}
 
 	t.Run("error/no-image", func(t *testing.T) {
@@ -74,14 +82,11 @@ func TestPull(t *testing.T) {
 	})
 
 	t.Run("non-permanent-error/retry", func(t *testing.T) {
-		buf := &bytes.Buffer{}
 		mockCliWithLogger := &errMockCli{
-			err:    errors.New("whoops"),
-			logger: slog.New(slog.NewTextHandler(buf, nil)),
+			err: errors.New("whoops"),
 		}
 
-		testPull(t, "someTag", defaultPullOpts, mockCliWithLogger, true)
-
-		require.Contains(t, buf.String(), "failed to pull image, will retry")
+		out := testPull(t, "someTag", defaultPullOpts, mockCliWithLogger, true)
+		require.Contains(t, out, "failed to pull image, will retry")
 	})
 }

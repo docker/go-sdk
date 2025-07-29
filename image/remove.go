@@ -9,14 +9,6 @@ import (
 	"github.com/docker/go-sdk/client"
 )
 
-// ImageRemoveClient is a client that can remove images.
-type ImageRemoveClient interface {
-	ImageClient
-
-	// ImageRemove removes an image from the local repository.
-	ImageRemove(context.Context, string, image.RemoveOptions) ([]image.DeleteResponse, error)
-}
-
 // Remove removes an image from the local repository.
 func Remove(ctx context.Context, image string, opts ...RemoveOption) ([]image.DeleteResponse, error) {
 	removeOpts := &removeOptions{}
@@ -30,11 +22,15 @@ func Remove(ctx context.Context, image string, opts ...RemoveOption) ([]image.De
 		return nil, errors.New("image is required")
 	}
 
-	if removeOpts.removeClient == nil {
-		removeOpts.removeClient = client.DefaultClient
+	if removeOpts.client == nil {
+		sdk, err := client.New(ctx)
+		if err != nil {
+			return nil, err
+		}
+		removeOpts.client = sdk
 	}
 
-	resp, err := removeOpts.removeClient.ImageRemove(ctx, image, removeOpts.removeOptions)
+	resp, err := removeOpts.client.ImageRemove(ctx, image, removeOpts.removeOptions)
 	if err != nil {
 		return nil, fmt.Errorf("remove image: %w", err)
 	}

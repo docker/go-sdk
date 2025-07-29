@@ -102,7 +102,7 @@ func TestInspect(t *testing.T) {
 	})
 }
 
-func testClientWithLogger(t *testing.T) (*client.Client, *bytes.Buffer) {
+func testClientWithLogger(t *testing.T) (client.SDKClient, *bytes.Buffer) {
 	t.Helper()
 
 	buf := &bytes.Buffer{}

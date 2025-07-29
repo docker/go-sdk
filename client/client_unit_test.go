@@ -15,13 +15,13 @@ import (
 
 func TestNew_internal_state(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
-		client, err := New(context.Background())
+		sdk, err := New(context.Background())
 		require.NoError(t, err)
-		require.NotNil(t, client)
+		require.NotNil(t, sdk)
+		client := sdk.(*sdkClient)
 
 		require.Empty(t, client.extraHeaders)
 		require.NotNil(t, client.cfg)
-		require.NotNil(t, client.dockerClient)
 		require.NotNil(t, client.log)
 		require.Equal(t, slog.New(slog.NewTextHandler(io.Discard, nil)), client.log)
 		require.False(t, client.dockerInfoSet)
@@ -30,9 +30,10 @@ func TestNew_internal_state(t *testing.T) {
 	})
 
 	t.Run("with-headers", func(t *testing.T) {
-		client, err := New(context.Background(), WithExtraHeaders(map[string]string{"X-Test": "test"}))
+		sdk, err := New(context.Background(), WithExtraHeaders(map[string]string{"X-Test": "test"}))
 		require.NoError(t, err)
-		require.NotNil(t, client)
+		require.NotNil(t, sdk)
+		client := sdk.(*sdkClient)
 
 		require.Equal(t, map[string]string{"X-Test": "test"}, client.extraHeaders)
 	})
@@ -40,9 +41,11 @@ func TestNew_internal_state(t *testing.T) {
 	t.Run("with-logger", func(t *testing.T) {
 		logger := slog.New(slog.NewTextHandler(io.Discard, nil))
 
-		client, err := New(context.Background(), WithLogger(logger))
+		sdk, err := New(context.Background(), WithLogger(logger))
 		require.NoError(t, err)
-		require.NotNil(t, client)
+		require.NotNil(t, sdk)
+		client := sdk.(*sdkClient)
+
 		require.Equal(t, logger, client.log)
 	})
 
@@ -50,23 +53,25 @@ func TestNew_internal_state(t *testing.T) {
 		buf := bytes.NewBuffer(nil)
 		logger := slog.New(slog.NewTextHandler(buf, nil))
 
-		healthcheck := func(_ context.Context) func(*Client) error {
-			return func(c *Client) error {
-				c.Logger().Info("healthcheck")
+		healthcheck := func(_ context.Context) func(SDKClient) error {
+			return func(_ SDKClient) error {
+				logger.Info("healthcheck")
 				return nil
 			}
 		}
 
-		client, err := New(context.Background(), WithHealthCheck(healthcheck), WithLogger(logger))
+		sdk, err := New(context.Background(), WithHealthCheck(healthcheck), WithLogger(logger))
 		require.NoError(t, err)
-		require.NotNil(t, client)
+		require.NotNil(t, sdk)
+		client := sdk.(*sdkClient)
+
 		require.Equal(t, logger, client.log)
 		require.Contains(t, buf.String(), "healthcheck")
 	})
 
 	t.Run("with-healthcheck-error", func(t *testing.T) {
-		healthcheck := func(_ context.Context) func(*Client) error {
-			return func(_ *Client) error {
+		healthcheck := func(_ context.Context) func(SDKClient) error {
+			return func(_ SDKClient) error {
 				return errors.New("healthcheck error")
 			}
 		}
@@ -77,22 +82,24 @@ func TestNew_internal_state(t *testing.T) {
 	})
 
 	t.Run("with-dockerhost", func(t *testing.T) {
-		noopHealthCheck := func(_ context.Context) func(*Client) error {
-			return func(_ *Client) error {
+		noopHealthCheck := func(_ context.Context) func(SDKClient) error {
+			return func(_ SDKClient) error {
 				// NOOP for testing
 				return nil
 			}
 		}
 
-		client, err := New(context.Background(), WithHealthCheck(noopHealthCheck), WithDockerHost("unix:///var/run/docker.sock"))
+		sdk, err := New(context.Background(), WithHealthCheck(noopHealthCheck), WithDockerHost("unix:///var/run/docker.sock"))
 		require.NoError(t, err)
-		require.NotNil(t, client)
+		require.NotNil(t, sdk)
+		client := sdk.(*sdkClient)
+
 		require.Equal(t, "unix:///var/run/docker.sock", client.cfg.Host)
 	})
 
 	t.Run("with-dockerhost-and-dockercontext", func(t *testing.T) {
-		noopHealthCheck := func(_ context.Context) func(*Client) error {
-			return func(_ *Client) error {
+		noopHealthCheck := func(_ context.Context) func(SDKClient) error {
+			return func(_ SDKClient) error {
 				// NOOP for testing
 				return nil
 			}
@@ -101,22 +108,23 @@ func TestNew_internal_state(t *testing.T) {
 		// current context is context1
 		dockercontext.SetupTestDockerContexts(t, 1, 1)
 
-		client, err := New(
+		sdk, err := New(
 			context.Background(),
 			WithHealthCheck(noopHealthCheck),
 			WithDockerHost("wont-be-used"),
 			WithDockerContext("context1"),
 		)
 		require.NoError(t, err)
-		require.NotNil(t, client)
+		require.NotNil(t, sdk)
+		client := sdk.(*sdkClient)
 
 		// the docker host from the context takes precedence over the one set with WithDockerHost
 		require.Equal(t, "tcp://127.0.0.1:1", client.cfg.Host)
 	})
 
 	t.Run("with-dockercontext", func(t *testing.T) {
-		noopHealthCheck := func(_ context.Context) func(*Client) error {
-			return func(_ *Client) error {
+		noopHealthCheck := func(_ context.Context) func(SDKClient) error {
+			return func(_ SDKClient) error {
 				// NOOP for testing
 				return nil
 			}
@@ -125,21 +133,22 @@ func TestNew_internal_state(t *testing.T) {
 		// current context is context1
 		dockercontext.SetupTestDockerContexts(t, 1, 1)
 
-		client, err := New(
+		sdk, err := New(
 			context.Background(),
 			WithHealthCheck(noopHealthCheck),
 			WithDockerContext("context1"),
 		)
 		require.NoError(t, err)
-		require.NotNil(t, client)
+		require.NotNil(t, sdk)
+		client := sdk.(*sdkClient)
 
 		// the docker host from the context is used
 		require.Equal(t, "tcp://127.0.0.1:1", client.cfg.Host)
 	})
 
 	t.Run("with-docker-context/not-existing", func(t *testing.T) {
-		noopHealthCheck := func(_ context.Context) func(*Client) error {
-			return func(_ *Client) error {
+		noopHealthCheck := func(_ context.Context) func(SDKClient) error {
+			return func(_ SDKClient) error {
 				// NOOP for testing
 				return nil
 			}
@@ -149,18 +158,5 @@ func TestNew_internal_state(t *testing.T) {
 		client, err := New(context.Background(), WithHealthCheck(noopHealthCheck), WithDockerContext("test"))
 		require.ErrorContains(t, err, "docker host from context")
 		require.Nil(t, client)
-	})
-
-	t.Run("error/apply-option", func(t *testing.T) {
-		// custom option that always fails to apply
-		customOpt := func() ClientOption {
-			return newClientOption(func(_ *Client) error {
-				return errors.New("apply option")
-			})
-		}
-
-		cli, err := New(context.Background(), customOpt())
-		require.ErrorContains(t, err, "apply option")
-		require.Nil(t, cli)
 	})
 }
