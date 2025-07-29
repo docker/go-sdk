@@ -8,17 +8,24 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/docker/docker/api/types/filters"
+	"github.com/docker/go-sdk/client"
 	"github.com/docker/go-sdk/volume"
 )
 
 func BenchmarkVolumeOperations(b *testing.B) {
 	ctx := context.Background()
 
+	dockerClient, err := client.New(ctx)
+	require.NoError(b, err)
+	b.Cleanup(func() {
+		require.NoError(b, dockerClient.Close())
+	})
+
 	b.Run("create-volume", func(b *testing.B) {
 		b.ReportAllocs()
 		b.ResetTimer()
 		for range b.N {
-			v, err := volume.New(ctx)
+			v, err := volume.New(ctx, volume.WithClient(dockerClient))
 			volume.Cleanup(b, v)
 			require.NoError(b, err)
 		}
@@ -30,6 +37,7 @@ func BenchmarkVolumeOperations(b *testing.B) {
 		for range b.N {
 			v, err := volume.New(
 				ctx,
+				volume.WithClient(dockerClient),
 				volume.WithName("test-volume"),
 				volume.WithLabels(map[string]string{
 					"test": "benchmark",
@@ -43,7 +51,7 @@ func BenchmarkVolumeOperations(b *testing.B) {
 
 	b.Run("find-by-id", func(b *testing.B) {
 		for i := range 10 {
-			v, err := volume.New(ctx, volume.WithName(fmt.Sprintf("test-volume-%d", i)))
+			v, err := volume.New(ctx, volume.WithClient(dockerClient), volume.WithName(fmt.Sprintf("test-volume-%d", i)))
 			volume.Cleanup(b, v)
 			require.NoError(b, err)
 		}
@@ -52,14 +60,14 @@ func BenchmarkVolumeOperations(b *testing.B) {
 		b.ResetTimer()
 		for range b.N {
 			// always retrieve the first volume by name
-			_, err := volume.FindByID(context.Background(), "test-volume-0")
+			_, err := volume.FindByID(context.Background(), "test-volume-0", volume.WithFindClient(dockerClient))
 			require.NoError(b, err)
 		}
 	})
 
 	b.Run("list-volumes", func(b *testing.B) {
 		for i := range 10 {
-			v, err := volume.New(ctx, volume.WithName(fmt.Sprintf("test-volume-%d", i)))
+			v, err := volume.New(ctx, volume.WithClient(dockerClient), volume.WithName(fmt.Sprintf("test-volume-%d", i)))
 			volume.Cleanup(b, v)
 			require.NoError(b, err)
 		}
@@ -67,14 +75,14 @@ func BenchmarkVolumeOperations(b *testing.B) {
 		b.ReportAllocs()
 		b.ResetTimer()
 		for range b.N {
-			_, err := volume.List(context.Background())
+			_, err := volume.List(context.Background(), volume.WithFindClient(dockerClient))
 			require.NoError(b, err)
 		}
 	})
 
 	b.Run("list-volumes/filters", func(b *testing.B) {
 		for range 10 {
-			v, err := volume.New(ctx, volume.WithLabels(map[string]string{"volume.type": "test"}))
+			v, err := volume.New(ctx, volume.WithClient(dockerClient), volume.WithLabels(map[string]string{"volume.type": "test"}))
 			volume.Cleanup(b, v)
 			require.NoError(b, err)
 		}
@@ -82,20 +90,28 @@ func BenchmarkVolumeOperations(b *testing.B) {
 		b.ReportAllocs()
 		b.ResetTimer()
 		for range b.N {
-			_, err := volume.List(context.Background(), volume.WithFilters(filters.NewArgs(filters.Arg("label", "volume.type=test"))))
+			_, err := volume.List(context.Background(), volume.WithFindClient(dockerClient), volume.WithFilters(filters.NewArgs(filters.Arg("label", "volume.type=test"))))
 			require.NoError(b, err)
 		}
 	})
 }
 
 func BenchmarkVolumeConcurrent(b *testing.B) {
+	ctx := context.Background()
+
+	dockerClient, err := client.New(ctx)
+	require.NoError(b, err)
+	b.Cleanup(func() {
+		require.NoError(b, dockerClient.Close())
+	})
+
 	b.Run("concurrent-volume-creation", func(b *testing.B) {
 		b.ReportAllocs()
 		b.ResetTimer()
 
 		b.RunParallel(func(pb *testing.PB) {
 			for pb.Next() {
-				v, err := volume.New(context.Background())
+				v, err := volume.New(context.Background(), volume.WithClient(dockerClient))
 				volume.Cleanup(b, v)
 				require.NoError(b, err)
 			}
@@ -103,7 +119,7 @@ func BenchmarkVolumeConcurrent(b *testing.B) {
 	})
 
 	b.Run("concurrent-volume-by-id", func(b *testing.B) {
-		v, err := volume.New(context.Background())
+		v, err := volume.New(context.Background(), volume.WithClient(dockerClient))
 		volume.Cleanup(b, v)
 		require.NoError(b, err)
 
@@ -111,7 +127,7 @@ func BenchmarkVolumeConcurrent(b *testing.B) {
 		b.ResetTimer()
 		b.RunParallel(func(pb *testing.PB) {
 			for pb.Next() {
-				_, err := volume.FindByID(context.Background(), v.Name)
+				_, err := volume.FindByID(context.Background(), v.Name, volume.WithFindClient(dockerClient))
 				require.NoError(b, err)
 			}
 		})
@@ -123,7 +139,7 @@ func BenchmarkVolumeConcurrent(b *testing.B) {
 
 		b.RunParallel(func(pb *testing.PB) {
 			for pb.Next() {
-				v, err := volume.New(context.Background())
+				v, err := volume.New(context.Background(), volume.WithClient(dockerClient))
 				require.NoError(b, err)
 
 				b.StartTimer()
