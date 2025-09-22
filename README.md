@@ -18,9 +18,9 @@ This project is designed to be:
 
 ### Why should I use this SDK instead of the moby/moby/client package?
 
-The [`moby/moby/client`](https://github.com/moby/moby/tree/master/client) package is a low-level client that provides a direct interface to the Docker daemon. On the other hand, the `go-sdk` is a higher-level client that provides a more convenient interface to the Docker daemon, simpifying the interactions in operations like pulling images with authentication or running containers. It's simpler because it aggregates the most used operations into a single API call, which results in less code to read, write and maintain.
+The [`moby/moby/client`](https://github.com/moby/moby/tree/master/client) package is a low-level client that provides a direct interface to the Docker daemon. On the other hand, the `go-sdk` is a higher-level client that provides a more convenient interface to the Docker daemon, simplifying the interactions in operations like pulling images with authentication or running containers. It's simpler because it aggregates the most used operations into a single API call, which results in less code to read, write and maintain.
 
-At the same time, the `go-sdk` expose the low-level Moby client, allowing you to use it in more complex scenarios when you need to interact with the Docker daemon in a more advanced low-level way.
+At the same time, the `go-sdk` exposes the low-level Moby client, allowing you to use it in more complex scenarios when you need to interact with the Docker daemon in a more advanced low-level way.
 
 This Go project contains lots of testable examples, so feel free to use it as a reference for comparing with your current usage of the `moby/moby/client` package. To name a few:
 
