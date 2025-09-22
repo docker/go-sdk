@@ -16,6 +16,19 @@ This project is designed to be:
 - **Lightweight**: No unnecessary dependencies; only what's needed to manage Docker configurations.
 - **Go-native**: Idiomatic Go modules for clean integration in CLI tools and backend services.
 
+### Why should I use this SDK instead of the moby/moby/client package?
+
+The [`moby/moby/client`](https://github.com/moby/moby/tree/master/client) package is a low-level client that provides a direct interface to the Docker daemon. On the other hand, the `go-sdk` is a higher-level client that provides a more convenient interface to the Docker daemon, simpifying the interactions in operations like pulling images with authentication or running containers. It's simpler because it aggregates the most used operations into a single API call, which results in less code to read, write and maintain.
+
+At the same time, the `go-sdk` expose the low-level Moby client, allowing you to use it in more complex scenarios when you need to interact with the Docker daemon in a more advanced low-level way.
+
+This Go project contains lots of testable examples, so feel free to use it as a reference for comparing with your current usage of the `moby/moby/client` package. To name a few:
+
+- Running a container: https://pkg.go.dev/github.com/docker/go-sdk/container#example-Run
+- Pulling an image: https://pkg.go.dev/github.com/docker/go-sdk/image#example-Pull
+- Creating a network: https://pkg.go.dev/github.com/docker/go-sdk/network#example-New
+- Reading the current Docker context: https://pkg.go.dev/github.com/docker/go-sdk/context#example-Current
+
 ## Features
 
 - Initialize a Docker client, using the current Docker context to resolve the Docker host and socket
