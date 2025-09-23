@@ -24,10 +24,202 @@ At the same time, the `go-sdk` exposes the low-level Moby client, allowing you t
 
 This Go project contains lots of testable examples, so feel free to use it as a reference for comparing with your current usage of the `moby/moby/client` package. To name a few:
 
-- Running a container: https://pkg.go.dev/github.com/docker/go-sdk/container#example-Run
-- Pulling an image: https://pkg.go.dev/github.com/docker/go-sdk/image#example-Pull
-- Creating a network: https://pkg.go.dev/github.com/docker/go-sdk/network#example-New
-- Reading the current Docker context: https://pkg.go.dev/github.com/docker/go-sdk/context#example-Current
+#### Running a container
+
+With the `moby/moby/client` package, you would need to:
+
+```go
+package main
+
+import (
+	"context"
+	"io"
+	"os"
+
+	"github.com/docker/docker/api/types/container"
+	"github.com/docker/docker/api/types/image"
+	"github.com/docker/docker/client"
+	"github.com/docker/docker/pkg/stdcopy"
+)
+
+func main() {
+	ctx := context.Background()
+	cli, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
+	if err != nil {
+		panic(err)
+	}
+	defer cli.Close()
+
+	reader, err := cli.ImagePull(ctx, "docker.io/library/alpine", image.PullOptions{})
+	if err != nil {
+		panic(err)
+	}
+
+	defer reader.Close()
+	// cli.ImagePull is asynchronous.
+	// The reader needs to be read completely for the pull operation to complete.
+	// If stdout is not required, consider using io.Discard instead of os.Stdout.
+	io.Copy(os.Stdout, reader)
+
+	resp, err := cli.ContainerCreate(ctx, &container.Config{
+		Image: "alpine",
+		Cmd:   []string{"echo", "hello world"},
+		Tty:   false,
+	}, nil, nil, nil, "")
+	if err != nil {
+		panic(err)
+	}
+
+	if err := cli.ContainerStart(ctx, resp.ID, container.StartOptions{}); err != nil {
+		panic(err)
+	}
+
+	statusCh, errCh := cli.ContainerWait(ctx, resp.ID, container.WaitConditionNotRunning)
+	select {
+	case err := <-errCh:
+		if err != nil {
+			panic(err)
+		}
+	case <-statusCh:
+	}
+
+	out, err := cli.ContainerLogs(ctx, resp.ID, container.LogsOptions{ShowStdout: true})
+	if err != nil {
+		panic(err)
+	}
+
+	stdcopy.StdCopy(os.Stdout, os.Stderr, out)
+}
+```
+
+With the `go-sdk`, you can do:
+
+```go
+package main
+
+import (
+	"context"
+	"os"
+
+    "github.com/docker/docker/pkg/stdcopy"
+	"github.com/docker/go-sdk/container"
+	"github.com/docker/go-sdk/container/wait"
+)
+
+func main() {
+	ctr, err := container.Run(
+        context.Background(),
+        container.WithImage("alpine:latest"),
+        container.WithCmd("echo", "hello world"),
+        container.WithWaitStrategy(wait.ForLog("hello world")),
+    )
+	if err != nil {
+		panic(err)
+	}
+
+    logs, err := ctr.Logs(context.Background())
+	if err != nil {
+		panic(err)
+	}
+
+	stdcopy.StdCopy(os.Stdout, os.Stderr, logs)
+
+    err = ctr.Terminate(context.Background())
+	if err != nil {
+		panic(err)
+	}
+}
+```
+
+#### Pulling an image
+
+With the `moby/moby/client` package, you would need to:
+
+```go
+package main
+
+import (
+	"context"
+	"encoding/base64"
+	"encoding/json"
+	"io"
+	"os"
+
+	"github.com/docker/docker/api/types/image"
+	"github.com/docker/docker/api/types/registry"
+	"github.com/docker/docker/client"
+)
+
+func main() {
+	ctx := context.Background()
+	cli, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
+	if err != nil {
+		panic(err)
+	}
+	defer cli.Close()
+
+	authConfig := registry.AuthConfig{
+		Username: "username",
+		Password: "password",
+	}
+	encodedJSON, err := json.Marshal(authConfig)
+	if err != nil {
+		panic(err)
+	}
+	authStr := base64.URLEncoding.EncodeToString(encodedJSON)
+
+	out, err := cli.ImagePull(ctx, "my-registry.com/alpine", image.PullOptions{RegistryAuth: authStr})
+	if err != nil {
+		panic(err)
+	}
+
+	defer out.Close()
+	io.Copy(os.Stdout, out)
+}
+```
+
+With the `go-sdk`, as soon the current Docker config has an entry for the private registry, you can do:
+
+```go
+package main
+
+import (
+	"context"
+	"fmt"
+
+	"github.com/docker/go-sdk/image"
+)
+
+func main() {
+	err := image.Pull(context.Background(), "my-registry.com/alpine")
+
+	fmt.Println(err)
+
+}
+```
+
+#### Reading the current Docker context
+
+With the `moby/moby/client` package, you basically can't do it, as this functionality is part of the client code of the Docker CLI.
+
+With the `go-sdk`, you can do:
+
+```go
+package main
+
+import (
+	"fmt"
+
+	"github.com/docker/go-sdk/context"
+)
+
+func main() {
+	ctx, err := context.Current()
+	fmt.Println(err)
+	fmt.Println(ctx != "")
+
+}
+```
 
 ## Features
 
