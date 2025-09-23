@@ -218,6 +218,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+	fmt.Println("Current Docker context name:", ctx)
 }
 ```
 
