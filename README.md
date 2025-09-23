@@ -33,10 +33,10 @@ Here's a table that summarizes the differences between the two Docker clients:
 |------------------------|-------------------|----------|
 | **Interface Level** | Low-level | High-level |
 | **Direct Docker Daemon Access** | ✅ | ✅ (by exposing the low-level `moby/moby/client`) |
-| **Simplified Operations, by aggregating API call** | | ✅ |
+| **Simplified Operations, by aggregating API calls** | | ✅ |
 | **Less Code to Maintain** | | ✅ |
 | **Complex Scenario Support** | ✅ | ✅ |
-| **Discover Authentication for Pulling images** | | ✅ |
+| **Discovers Authentication for Pulling Images** | | ✅ |
 | **Functional Options** | | ✅ |
 | **Random Port Assignment** | | ✅ |
 | **Wait Strategies** | | ✅ |
@@ -197,7 +197,7 @@ func main() {
 }
 ```
 
-With the `go-sdk`, as soon the current Docker config has an entry for the private registry, you can do:
+With the `go-sdk`, as soon as the current Docker config has an entry for the private registry, you can do:
 
 ```go
 package main
