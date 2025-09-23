@@ -22,7 +22,26 @@ The [`moby/moby/client`](https://github.com/moby/moby/tree/master/client) packag
 
 At the same time, the `go-sdk` exposes the low-level Moby client, allowing you to use it in more complex scenarios when you need to interact with the Docker daemon in a more advanced low-level way.
 
-This Go project contains lots of testable examples, so feel free to use it as a reference for comparing with your current usage of the `moby/moby/client` package. To name a few:
+Also, the `go-sdk` provides the following features that enhances the experience of running containers:
+
+- **Random ports** for exposed ports, so you don't need to worry about port conflicts
+- **Wait strategies**, so you don't need to worry about waiting for the container to be ready. The readiness can be defined by using the existing wait strategies, such as for a given port to be listening, a given log happening in the container logs, an HTTP request, a command to exit, etc.
+
+Here's a table that summarizes the differences between the two Docker clients:
+
+| Feature/Characteristic | `moby/moby/client` | `docker/go-sdk` |
+|------------------------|-------------------|----------|
+| **Interface Level** | Low-level | High-level |
+| **Direct Docker Daemon Access** | ✅ | ✅ (by exposing the low-level `moby/moby/client`) |
+| **Simplified Operations, by aggregating API call** | | ✅ |
+| **Less Code to Maintain** | | ✅ |
+| **Complex Scenario Support** | ✅ | ✅ |
+| **Discover Authentication for Pulling images** | | ✅ |
+| **Functional Options** | | ✅ |
+| **Random Port Assignment** | | ✅ |
+| **Wait Strategies** | | ✅ |
+
+The `go-sdk` project contains lots of testable examples, so feel free to use it as a reference for comparing with your current usage of the `moby/moby/client` package. To name a few:
 
 #### Running a container
 
