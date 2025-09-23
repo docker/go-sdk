@@ -47,6 +47,9 @@ The `go-sdk` project contains lots of testable examples, so feel free to use it 
 
 With the `moby/moby/client` package, you would need to:
 
+<details>
+  <summary>See the code</summary>
+
 ```go
 package main
 
@@ -111,7 +114,12 @@ func main() {
 }
 ```
 
+</details>
+
 With the `go-sdk`, you can do:
+
+<details>
+  <summary>See the code</summary>
 
 ```go
 package main
@@ -150,9 +158,14 @@ func main() {
 }
 ```
 
+</details>
+
 #### Pulling an image
 
 With the `moby/moby/client` package, you would need to:
+
+<details>
+  <summary>See the code</summary>
 
 ```go
 package main
@@ -197,7 +210,12 @@ func main() {
 }
 ```
 
+</details>
+
 With the `go-sdk`, as soon as the current Docker config has an entry for the private registry, you can do:
+
+<details>
+  <summary>See the code</summary>
 
 ```go
 package main
@@ -217,11 +235,16 @@ func main() {
 }
 ```
 
+</details>
+
 #### Reading the current Docker context
 
 With the `moby/moby/client` package, you basically can't do it, as this functionality is part of the client code of the Docker CLI.
 
 With the `go-sdk`, you can do:
+
+<details>
+  <summary>See the code</summary>
 
 ```go
 package main
@@ -240,6 +263,8 @@ func main() {
 	fmt.Println("Current Docker context name:", ctx)
 }
 ```
+
+</details>
 
 ## Features
 
