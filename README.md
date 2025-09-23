@@ -192,9 +192,9 @@ import (
 
 func main() {
 	err := image.Pull(context.Background(), "my-registry.com/alpine")
-
-	fmt.Println(err)
-
+	if err != nil {
+		panic(err)
+	}
 }
 ```
 
@@ -215,9 +215,9 @@ import (
 
 func main() {
 	ctx, err := context.Current()
-	fmt.Println(err)
-	fmt.Println(ctx != "")
-
+	if err != nil {
+		panic(err)
+	}
 }
 ```
 
