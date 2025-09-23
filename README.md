@@ -101,30 +101,30 @@ import (
 	"context"
 	"os"
 
-    "github.com/docker/docker/pkg/stdcopy"
+	"github.com/docker/docker/pkg/stdcopy"
 	"github.com/docker/go-sdk/container"
 	"github.com/docker/go-sdk/container/wait"
 )
 
 func main() {
 	ctr, err := container.Run(
-        context.Background(),
-        container.WithImage("alpine:latest"),
-        container.WithCmd("echo", "hello world"),
-        container.WithWaitStrategy(wait.ForLog("hello world")),
-    )
+		context.Background(),
+		container.WithImage("alpine:latest"),
+		container.WithCmd("echo", "hello world"),
+		container.WithWaitStrategy(wait.ForLog("hello world")),
+	)
 	if err != nil {
 		panic(err)
 	}
 
-    logs, err := ctr.Logs(context.Background())
+	logs, err := ctr.Logs(context.Background())
 	if err != nil {
 		panic(err)
 	}
 
 	stdcopy.StdCopy(os.Stdout, os.Stderr, logs)
 
-    err = ctr.Terminate(context.Background())
+	err = ctr.Terminate(context.Background())
 	if err != nil {
 		panic(err)
 	}
@@ -256,7 +256,7 @@ Creating a new client, with optional configuration:
 ```go
 cli, err := client.New(context.Background(), client.WithDockerContext("my-docker-context"))
 if err != nil {
-    log.Fatalf("failed to create docker client: %v", err)
+	log.Fatalf("failed to create docker client: %v", err)
 }
 
 // Close the docker client when done
@@ -270,12 +270,12 @@ Please refer to the [client](./client/README.md) package for more information.
 ```go
 cfg, err := config.Load()
 if err != nil {
-    log.Fatalf("failed to load config: %v", err)
+	log.Fatalf("failed to load config: %v", err)
 }
 
 auth, ok := cfg.AuthConfigs["https://index.docker.io/v1/"]
 if ok {
-    fmt.Println("Username:", auth.Username)
+	fmt.Println("Username:", auth.Username)
 }
 ```
 
@@ -283,14 +283,14 @@ if ok {
 
 ```go
 ctr, err := container.Run(context.Background(),
-    container.WithImage("nginx:alpine"),
-    container.WithImagePlatform("linux/amd64"),
-    container.WithAlwaysPull(),
-    container.WithExposedPorts("80/tcp"),
-    container.WithWaitStrategy(wait.ForListeningPort("80/tcp")),
+	container.WithImage("nginx:alpine"),
+	container.WithImagePlatform("linux/amd64"),
+	container.WithAlwaysPull(),
+	container.WithExposedPorts("80/tcp"),
+	container.WithWaitStrategy(wait.ForListeningPort("80/tcp")),
 )
 if err != nil {
-    log.Fatalf("failed to run container: %v", err)
+	log.Fatalf("failed to run container: %v", err)
 }
 
 container.Terminate(ctr)
@@ -301,14 +301,14 @@ container.Terminate(ctr)
 ```go
 current, err := context.Current()
 if err != nil {
-    log.Fatalf("failed to get current docker context: %v", err)
+	log.Fatalf("failed to get current docker context: %v", err)
 }
 
 fmt.Printf("current docker context: %s", current)
 
 dockerHost, err := context.CurrentDockerHost()
 if err != nil {
-    log.Fatalf("failed to get current docker host: %v", err)
+	log.Fatalf("failed to get current docker host: %v", err)
 }
 fmt.Printf("current docker host: %s", dockerHost)
 ```
@@ -319,7 +319,7 @@ fmt.Printf("current docker host: %s", dockerHost)
 import (
 	"context"
 
-    apiimage "github.com/docker/docker/api/types/image"
+	apiimage "github.com/docker/docker/api/types/image"
 	"github.com/docker/go-sdk/client"
 	"github.com/docker/go-sdk/image"
 )
@@ -327,17 +327,17 @@ import (
 ctx := context.Background()
 dockerClient, err := client.New(ctx)
 if err != nil {
-    log.Fatalf("failed to create docker client: %v", err)
+	log.Fatalf("failed to create docker client: %v", err)
 }
 defer dockerClient.Close()
 
 err = image.Pull(ctx,
-    "nginx:alpine",
-    image.WithPullClient(dockerClient),
-    image.WithPullOptions(apiimage.PullOptions{}),
+	"nginx:alpine",
+	image.WithPullClient(dockerClient),
+	image.WithPullOptions(apiimage.PullOptions{}),
 )
 if err != nil {
-    log.Fatalf("failed to pull image: %v", err)
+	log.Fatalf("failed to pull image: %v", err)
 }
 
 ```
@@ -347,17 +347,17 @@ if err != nil {
 ```go
 nw, err := network.New(ctx)
 if err != nil {
-    log.Fatalf("failed to create network: %v", err)
+	log.Fatalf("failed to create network: %v", err)
 }
 
 resp, err := nw.Inspect(ctx)
 if err != nil {
-    log.Fatalf("failed to inspect network: %v", err)
+	log.Fatalf("failed to inspect network: %v", err)
 }
 
 err = nw.Terminate(ctx)
 if err != nil {
-    log.Fatalf("failed to terminate network: %v", err)
+	log.Fatalf("failed to terminate network: %v", err)
 }
 ```
 
@@ -366,18 +366,18 @@ if err != nil {
 ```go
 v, err := volume.New(ctx)
 if err != nil {
-    log.Fatalf("failed to create volume: %v", err)
+	log.Fatalf("failed to create volume: %v", err)
 }
 
 vol, err := volume.FindByID(ctx, v.ID())
 if err != nil {
-    log.Println(err)
-    return
+	log.Println(err)
+	return
 }
 
 err = v.Terminate(ctx)
 if err != nil {
-    log.Fatalf("failed to terminate volume: %v", err)
+	log.Fatalf("failed to terminate volume: %v", err)
 }
 ```
 
