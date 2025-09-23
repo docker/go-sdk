@@ -33,7 +33,7 @@ Here's a table that summarizes the differences between the two Docker clients:
 |------------------------|-------------------|----------|
 | **Interface Level** | Low-level | High-level |
 | **Direct Docker Daemon Access** | ✅ | ✅ (by exposing the low-level `moby/moby/client`) |
-| **Simplified Operations, by aggregating API calls** | | ✅ |
+| **Simplified Operations by Aggregating API Calls** | | ✅ |
 | **Less Code to Maintain** | | ✅ |
 | **Complex Scenario Support** | ✅ | ✅ |
 | **Discovers Authentication for Pulling Images** | | ✅ |
