@@ -2,6 +2,7 @@ package auth
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/distribution/reference"
 )
@@ -57,8 +58,15 @@ func ParseImageRef(imageRef string) (ImageReference, error) {
 // This is useful for using with containerd authorizers.
 // Naturally this only transforms docker hub URLs.
 func resolveRegistryHost(host string) string {
+	// Strip http:// and https:// prefixes if present
+	if strings.HasPrefix(host, "https://") {
+		host = strings.TrimPrefix(host, "https://")
+	} else if strings.HasPrefix(host, "http://") {
+		host = strings.TrimPrefix(host, "http://")
+	}
+
 	switch host {
-	case "index.docker.io", "docker.io", IndexDockerIO, "registry-1.docker.io":
+	case "index.docker.io", "docker.io", "index.docker.io/v1/", "registry-1.docker.io":
 		return IndexDockerIO
 	}
 	return host

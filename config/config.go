@@ -207,23 +207,53 @@ func (c *Config) Save() error {
 
 // resolveAuthConfigForHostname performs the actual auth config resolution
 func (c *Config) resolveAuthConfigForHostname(hostname string) (AuthConfig, error) {
-	// Check credential helpers first
-	if helper, exists := c.CredentialHelpers[hostname]; exists {
-		return c.resolveFromCredentialHelper(helper, hostname)
+	// Generate possible hostname variants for lookup
+	hostVariants := []string{hostname}
+
+	// Strip http:// and https:// prefixes for hostname normalization
+	normalizedHostname := hostname
+	switch {
+	case strings.HasPrefix(hostname, "https://"):
+		normalizedHostname = strings.TrimPrefix(hostname, "https://")
+		hostVariants = append(hostVariants, normalizedHostname)
+	case strings.HasPrefix(hostname, "http://"):
+		normalizedHostname = strings.TrimPrefix(hostname, "http://")
+		hostVariants = append(hostVariants, normalizedHostname)
+	default:
+		// If hostname doesn't have a prefix, also try with prefixes
+		hostVariants = append(hostVariants, "https://"+hostname, "http://"+hostname)
+	}
+
+	// Normalize Docker Hub registry hosts
+	switch normalizedHostname {
+	case "index.docker.io", "docker.io", "index.docker.io/v1/", "registry-1.docker.io":
+		normalizedHostname = auth.IndexDockerIO
+		hostVariants = append(hostVariants, normalizedHostname)
+	}
+
+	// Check credential helpers first (try all variants)
+	for _, variant := range hostVariants {
+		if helper, exists := c.CredentialHelpers[variant]; exists {
+			return c.resolveFromCredentialHelper(helper, variant)
+		}
 	}
 
 	// Check global credential store
 	if c.CredentialsStore != "" {
-		if authConfig, err := c.resolveFromCredentialHelper(c.CredentialsStore, hostname); err == nil {
-			if authConfig.Username != "" || authConfig.Password != "" {
-				return authConfig, nil
+		for _, variant := range hostVariants {
+			if authConfig, err := c.resolveFromCredentialHelper(c.CredentialsStore, variant); err == nil {
+				if authConfig.Username != "" || authConfig.Password != "" {
+					return authConfig, nil
+				}
 			}
 		}
 	}
 
-	// Check stored auth configs
-	if authConfig, exists := c.AuthConfigs[hostname]; exists {
-		return c.processStoredAuthConfig(authConfig, hostname)
+	// Check stored auth configs (try all variants)
+	for _, variant := range hostVariants {
+		if authConfig, exists := c.AuthConfigs[variant]; exists {
+			return c.processStoredAuthConfig(authConfig, variant)
+		}
 	}
 
 	// Fallback to default credential helper
