@@ -7,12 +7,12 @@ import (
 )
 
 func TestResolveRegistryHost(t *testing.T) {
-	require.Equal(t, IndexDockerIO, resolveRegistryHost("index.docker.io"))
-	require.Equal(t, IndexDockerIO, resolveRegistryHost("docker.io"))
-	require.Equal(t, IndexDockerIO, resolveRegistryHost("registry-1.docker.io"))
-	require.Equal(t, "foobar.com", resolveRegistryHost("foobar.com"))
-	require.Equal(t, "http://foobar.com", resolveRegistryHost("http://foobar.com"))
-	require.Equal(t, "https://foobar.com", resolveRegistryHost("https://foobar.com"))
-	require.Equal(t, "http://foobar.com:8080", resolveRegistryHost("http://foobar.com:8080"))
-	require.Equal(t, "https://foobar.com:8080", resolveRegistryHost("https://foobar.com:8080"))
+	require.Equal(t, IndexDockerIO, ResolveRegistryHost("index.docker.io"))
+	require.Equal(t, IndexDockerIO, ResolveRegistryHost("docker.io"))
+	require.Equal(t, IndexDockerIO, ResolveRegistryHost("registry-1.docker.io"))
+	require.Equal(t, "foobar.com", ResolveRegistryHost("foobar.com"))
+	require.Equal(t, "http://foobar.com", ResolveRegistryHost("http://foobar.com"))
+	require.Equal(t, "https://foobar.com", ResolveRegistryHost("https://foobar.com"))
+	require.Equal(t, "http://foobar.com:8080", ResolveRegistryHost("http://foobar.com:8080"))
+	require.Equal(t, "https://foobar.com:8080", ResolveRegistryHost("https://foobar.com:8080"))
 }
