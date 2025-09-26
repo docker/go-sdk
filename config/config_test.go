@@ -146,14 +146,14 @@ func TestConfig_AuthConfigForHostname_URLPrefixes(t *testing.T) {
 		require.Equal(t, "dockerpass", authConfig.Password)
 	})
 
-	t.Run("https prefix should be stripped and found", func(t *testing.T) {
+	t.Run("https prefix should match stored config with https prefix", func(t *testing.T) {
 		authConfig, err := config.AuthConfigForHostname("https://registry.example.com")
 		require.NoError(t, err)
 		require.Equal(t, "exampleuser", authConfig.Username)
 		require.Equal(t, "examplepass", authConfig.Password)
 	})
 
-	t.Run("http prefix should be stripped and found", func(t *testing.T) {
+	t.Run("http prefix should match stored config with http prefix", func(t *testing.T) {
 		authConfig, err := config.AuthConfigForHostname("http://unsecure.registry.com")
 		require.NoError(t, err)
 		require.Equal(t, "unsecureuser", authConfig.Username)

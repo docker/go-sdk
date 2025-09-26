@@ -210,20 +210,30 @@ func (c *Config) resolveAuthConfigForHostname(hostname string) (AuthConfig, erro
 	// Generate possible hostname variants for lookup
 	hostVariants := []string{hostname}
 
-	// Strip http:// and https:// prefixes for hostname normalization
+	// Normalize hostname by stripping prefixes if present
 	normalizedHostname := hostname
-	switch {
-	case strings.HasPrefix(hostname, "https://"):
+	if strings.HasPrefix(hostname, "https://") {
 		normalizedHostname = strings.TrimPrefix(hostname, "https://")
-	case strings.HasPrefix(hostname, "http://"):
+	} else if strings.HasPrefix(hostname, "http://") {
 		normalizedHostname = strings.TrimPrefix(hostname, "http://")
 	}
 
-	// Always append both stripped hostname and both scheme variants for cross-scheme lookups
+	// Add normalized hostname (without prefix) if different from original
 	if normalizedHostname != hostname {
 		hostVariants = append(hostVariants, normalizedHostname)
 	}
-	hostVariants = append(hostVariants, "https://"+normalizedHostname, "http://"+normalizedHostname)
+
+	// Always add both scheme variants for cross-scheme lookups
+	httpsVariant := "https://" + normalizedHostname
+	httpVariant := "http://" + normalizedHostname
+
+	// Avoid duplicates by checking if variants are already in the list
+	if httpsVariant != hostname {
+		hostVariants = append(hostVariants, httpsVariant)
+	}
+	if httpVariant != hostname {
+		hostVariants = append(hostVariants, httpVariant)
+	}
 
 	// Normalize Docker Hub registry hosts
 	switch normalizedHostname {
