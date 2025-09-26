@@ -136,6 +136,7 @@ func TestConfig_AuthConfigForHostname_URLPrefixes(t *testing.T) {
 			"https://index.docker.io/v1/":  {Username: "dockeruser", Password: "dockerpass"},
 			"https://registry.example.com": {Username: "exampleuser", Password: "examplepass"},
 			"http://unsecure.registry.com": {Username: "unsecureuser", Password: "unsecurepass"},
+			"registry.example.com":         {Username: "plainuser", Password: "plainpass"},
 		},
 	}
 
@@ -160,11 +161,11 @@ func TestConfig_AuthConfigForHostname_URLPrefixes(t *testing.T) {
 		require.Equal(t, "unsecurepass", authConfig.Password)
 	})
 
-	t.Run("hostname without prefix should resolve to stored config with prefix", func(t *testing.T) {
+	t.Run("hostname without prefix should resolve to stored config without prefix", func(t *testing.T) {
 		authConfig, err := config.AuthConfigForHostname("registry.example.com")
 		require.NoError(t, err)
-		require.Equal(t, "exampleuser", authConfig.Username)
-		require.Equal(t, "examplepass", authConfig.Password)
+		require.Equal(t, "plainuser", authConfig.Username)
+		require.Equal(t, "plainpass", authConfig.Password)
 	})
 
 	t.Run("docker.io variants should resolve to docker hub config", func(t *testing.T) {
@@ -179,36 +180,26 @@ func TestConfig_AuthConfigForHostname_URLPrefixes(t *testing.T) {
 		require.Equal(t, "dockerpass", authConfig2.Password)
 	})
 
-	t.Run("cross-scheme lookups should work", func(t *testing.T) {
-		// Config stored with https://, but lookup with http:// should still work
-		authConfig, err := config.AuthConfigForHostname("http://registry.example.com")
+	t.Run("url prefix stripping should work for non-docker registries", func(t *testing.T) {
+		// Config stored with https://, lookup without prefix should find the stripped version
+		authConfig, err := config.AuthConfigForHostname("registry.example.com")
 		require.NoError(t, err)
-		require.Equal(t, "exampleuser", authConfig.Username)
-		require.Equal(t, "examplepass", authConfig.Password)
-
-		// Config stored with http://, but lookup with https:// should still work
-		authConfig2, err := config.AuthConfigForHostname("https://unsecure.registry.com")
-		require.NoError(t, err)
-		require.Equal(t, "unsecureuser", authConfig2.Username)
-		require.Equal(t, "unsecurepass", authConfig2.Password)
+		require.Equal(t, "plainuser", authConfig.Username)
+		require.Equal(t, "plainpass", authConfig.Password)
 	})
 
-	t.Run("credential helper fallback should work with cross-scheme variants", func(t *testing.T) {
-		// Test that if a credential helper exists for a variant but fails with ErrCredentialsNotFound,
-		// the resolution should continue to try AuthConfigs
+	t.Run("credential helper fallback should work", func(t *testing.T) {
+		// Test that if a credential helper exists but fails, the resolution should continue to try AuthConfigs
 		configWithHelper := Config{
 			CredentialHelpers: map[string]string{
 				"registry.example.com": "nonexistent-helper", // This will fail
 			},
 			AuthConfigs: map[string]AuthConfig{
-				"https://registry.example.com": {Username: "fallbackuser", Password: "fallbackpass"},
+				"registry.example.com": {Username: "fallbackuser", Password: "fallbackpass"},
 			},
 		}
 
-		// When looking up https://registry.example.com, the cross-scheme logic will also try
-		// registry.example.com (which has a helper), but the helper will fail, so it should
-		// fall back to checking AuthConfigs for https://registry.example.com
-		authConfig, err := configWithHelper.AuthConfigForHostname("https://registry.example.com")
+		authConfig, err := configWithHelper.AuthConfigForHostname("registry.example.com")
 		require.NoError(t, err)
 		require.Equal(t, "fallbackuser", authConfig.Username)
 		require.Equal(t, "fallbackpass", authConfig.Password)

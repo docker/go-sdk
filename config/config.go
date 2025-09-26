@@ -210,36 +210,35 @@ func (c *Config) resolveAuthConfigForHostname(hostname string) (AuthConfig, erro
 	// Generate possible hostname variants for lookup
 	hostVariants := []string{hostname}
 
-	// Normalize hostname by stripping prefixes if present
-	normalizedHostname := hostname
-	if strings.HasPrefix(hostname, "https://") {
-		normalizedHostname = strings.TrimPrefix(hostname, "https://")
-	} else if strings.HasPrefix(hostname, "http://") {
-		normalizedHostname = strings.TrimPrefix(hostname, "http://")
-	}
+	// Handle the special case of https://index.docker.io/v1/ which is the only registry
+	// that commonly appears with a scheme in auth configs
+	if hostname == "https://index.docker.io/v1/" {
+		// Add all Docker Hub hostname variants
+		hostVariants = append(hostVariants,
+			"index.docker.io/v1/",
+			"index.docker.io",
+			"docker.io",
+			"registry-1.docker.io",
+			auth.IndexDockerIO)
+	} else {
+		// For other registries, normalize by stripping any scheme prefix if present
+		normalizedHostname := hostname
+		if strings.HasPrefix(hostname, "https://") {
+			normalizedHostname = strings.TrimPrefix(hostname, "https://")
+		} else if strings.HasPrefix(hostname, "http://") {
+			normalizedHostname = strings.TrimPrefix(hostname, "http://")
+		}
 
-	// Add normalized hostname (without prefix) if different from original
-	if normalizedHostname != hostname {
-		hostVariants = append(hostVariants, normalizedHostname)
-	}
+		// Add normalized hostname (without prefix) if different from original
+		if normalizedHostname != hostname {
+			hostVariants = append(hostVariants, normalizedHostname)
+		}
 
-	// Always add both scheme variants for cross-scheme lookups
-	httpsVariant := "https://" + normalizedHostname
-	httpVariant := "http://" + normalizedHostname
-
-	// Avoid duplicates by checking if variants are already in the list
-	if httpsVariant != hostname {
-		hostVariants = append(hostVariants, httpsVariant)
-	}
-	if httpVariant != hostname {
-		hostVariants = append(hostVariants, httpVariant)
-	}
-
-	// Normalize Docker Hub registry hosts
-	switch normalizedHostname {
-	case "index.docker.io", "docker.io", "index.docker.io/v1/", "registry-1.docker.io":
-		normalizedHostname = auth.IndexDockerIO
-		hostVariants = append(hostVariants, normalizedHostname)
+		// Check if this is a Docker Hub registry and add the special Docker Hub key
+		switch normalizedHostname {
+		case "index.docker.io", "docker.io", "index.docker.io/v1/", "registry-1.docker.io":
+			hostVariants = append(hostVariants, auth.IndexDockerIO)
+		}
 	}
 
 	// Check credential helpers first (try all variants)
