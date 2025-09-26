@@ -178,4 +178,18 @@ func TestConfig_AuthConfigForHostname_URLPrefixes(t *testing.T) {
 		require.Equal(t, "dockeruser", authConfig2.Username)
 		require.Equal(t, "dockerpass", authConfig2.Password)
 	})
+
+	t.Run("cross-scheme lookups should work", func(t *testing.T) {
+		// Config stored with https://, but lookup with http:// should still work
+		authConfig, err := config.AuthConfigForHostname("http://registry.example.com")
+		require.NoError(t, err)
+		require.Equal(t, "exampleuser", authConfig.Username)
+		require.Equal(t, "examplepass", authConfig.Password)
+
+		// Config stored with http://, but lookup with https:// should still work
+		authConfig2, err := config.AuthConfigForHostname("https://unsecure.registry.com")
+		require.NoError(t, err)
+		require.Equal(t, "unsecureuser", authConfig2.Username)
+		require.Equal(t, "unsecurepass", authConfig2.Password)
+	})
 }
