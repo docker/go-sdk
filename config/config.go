@@ -235,7 +235,15 @@ func (c *Config) resolveAuthConfigForHostname(hostname string) (AuthConfig, erro
 	// Check credential helpers first (try all variants)
 	for _, variant := range hostVariants {
 		if helper, exists := c.CredentialHelpers[variant]; exists {
-			return c.resolveFromCredentialHelper(helper, variant)
+			authConfig, err := c.resolveFromCredentialHelper(helper, variant)
+			if err != nil {
+				// If there's an actual error (not just "credentials not found"), return it
+				return AuthConfig{}, err
+			}
+			if authConfig.Username != "" || authConfig.Password != "" {
+				return authConfig, nil
+			}
+			// If credentials are empty, continue to try other variants
 		}
 	}
 

@@ -192,4 +192,25 @@ func TestConfig_AuthConfigForHostname_URLPrefixes(t *testing.T) {
 		require.Equal(t, "unsecureuser", authConfig2.Username)
 		require.Equal(t, "unsecurepass", authConfig2.Password)
 	})
+
+	t.Run("credential helper fallback should work with cross-scheme variants", func(t *testing.T) {
+		// Test that if a credential helper exists for a variant but fails with ErrCredentialsNotFound,
+		// the resolution should continue to try AuthConfigs
+		configWithHelper := Config{
+			CredentialHelpers: map[string]string{
+				"registry.example.com": "nonexistent-helper", // This will fail
+			},
+			AuthConfigs: map[string]AuthConfig{
+				"https://registry.example.com": {Username: "fallbackuser", Password: "fallbackpass"},
+			},
+		}
+
+		// When looking up https://registry.example.com, the cross-scheme logic will also try
+		// registry.example.com (which has a helper), but the helper will fail, so it should
+		// fall back to checking AuthConfigs for https://registry.example.com
+		authConfig, err := configWithHelper.AuthConfigForHostname("https://registry.example.com")
+		require.NoError(t, err)
+		require.Equal(t, "fallbackuser", authConfig.Username)
+		require.Equal(t, "fallbackpass", authConfig.Password)
+	})
 }
