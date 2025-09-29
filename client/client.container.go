@@ -27,7 +27,10 @@ func (c *Client) ContainerCreate(ctx context.Context, config *container.Config, 
 	return dockerClient.ContainerCreate(ctx, config, hostConfig, networkingConfig, platform, name)
 }
 
-// ContainerExecStart starts a new exec instance.
+// ContainerExecAttach attaches a connection to an exec process in the server.
+// It returns a types.HijackedConnection with the hijacked connection
+// and the a reader to get output. It's up to the called to close
+// the hijacked connection by calling types.HijackedResponse.Close.
 func (c *Client) ContainerExecAttach(ctx context.Context, execID string, config container.ExecAttachOptions) (types.HijackedResponse, error) {
 	dockerClient, err := c.Client()
 	if err != nil {
@@ -45,6 +48,16 @@ func (c *Client) ContainerExecCreate(ctx context.Context, containerID string, op
 	}
 
 	return dockerClient.ContainerExecCreate(ctx, containerID, options)
+}
+
+// ContainerExecStart starts an exec instance.
+func (c *Client) ContainerExecStart(ctx context.Context, execID string, config container.ExecStartOptions) error {
+	dockerClient, err := c.Client()
+	if err != nil {
+		return fmt.Errorf("docker client: %w", err)
+	}
+
+	return dockerClient.ContainerExecStart(ctx, execID, config)
 }
 
 // ContainerExecInspect inspects a exec instance.
