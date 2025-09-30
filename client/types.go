@@ -6,8 +6,9 @@ import (
 	"log/slog"
 	"sync"
 
-	"github.com/docker/docker/api/types/system"
-	"github.com/docker/docker/client"
+	"github.com/docker/go-sdk/image"
+	"github.com/moby/moby/api/types/system"
+	"github.com/moby/moby/client"
 )
 
 // packagePath is the package path for the docker-go-sdk package.
@@ -19,8 +20,40 @@ var DefaultClient = &Client{
 	healthCheck: defaultHealthCheck,
 }
 
+// SDKCLient is a moby APIClient with high-level functions
+type SDKCLient interface {
+	client.APIClient
+
+	// TODO declare SDK higher-order functions
+	// Pull image from registry with selected credentials reporting pull event a JSON progress messages
+	Pull(ctx context.Context, imageID string, opts ...image.PullOption) (string, error)
+}
+
+// NewSDKClient builds a SDKCLient
+func NewSDKClient(opts ...func(*Client)) (SDKCLient, error) {
+	c := &Client{}
+	for _, opt := range opts {
+		opt(c)
+	}
+	err := c.init(context.Background())
+	return c, err
+}
+
+// WithAPIClient set SDKCLient to use an existing client.APIClient to access the moby API
+func WithAPIClient(apiClient client.APIClient) func(*Client) {
+	return func(c *Client) {
+		c.APIClient = apiClient
+	}
+}
+
+var _ SDKCLient = &Client{}
+
 // Client is a type that represents a client for interacting with containers.
 type Client struct {
+	// client is the underlying docker client, embedded to avoid
+	// having to re-implement all the methods.
+	client.APIClient
+
 	// log is the logger for the client.
 	log *slog.Logger
 
@@ -29,10 +62,6 @@ type Client struct {
 
 	// once is used to initialize the client once.
 	once sync.Once
-
-	// client is the underlying docker client, embedded to avoid
-	// having to re-implement all the methods.
-	dockerClient *client.Client
 
 	// cfg is the configuration for the client, obtained from the environment variables.
 	cfg *config
@@ -61,19 +90,6 @@ type Client struct {
 	healthCheck func(ctx context.Context) func(c *Client) error
 }
 
-// Client returns the underlying docker client.
-// It verifies that the client is initialized.
-// It is safe to call this method concurrently.
-func (c *Client) Client() (*client.Client, error) {
-	ctx := context.Background()
-
-	if err := c.init(ctx); err != nil {
-		return nil, fmt.Errorf("init client: %w", err)
-	}
-
-	return c.dockerClient, nil
-}
-
 // Logger returns the logger for the client.
 func (c *Client) Logger() *slog.Logger {
 	return c.log
@@ -92,12 +108,7 @@ func (c *Client) Info(ctx context.Context) (system.Info, error) {
 
 	var info system.Info
 
-	cli, err := c.Client()
-	if err != nil {
-		return info, fmt.Errorf("docker client: %w", err)
-	}
-
-	info, err = cli.Info(ctx)
+	info, err := c.Info(ctx)
 	if err != nil {
 		return info, fmt.Errorf("docker info: %w", err)
 	}
@@ -116,7 +127,7 @@ func (c *Client) Info(ctx context.Context) (system.Info, error) {
 	c.log.Info("Connected to docker",
 		"package", packagePath,
 		"server_version", c.dockerInfo.ServerVersion,
-		"client_version", cli.ClientVersion(),
+		"client_version", c.ClientVersion(),
 		"operating_system", c.dockerInfo.OperatingSystem,
 		"mem_total", c.dockerInfo.MemTotal/1024/1024,
 		"labels", infoLabels,
