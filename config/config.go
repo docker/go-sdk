@@ -91,12 +91,19 @@ func (c *Config) generateCacheKey() string {
 // AuthConfigForHostname returns the auth config for the given hostname with caching
 func (c *Config) AuthConfigForHostname(hostname string) (AuthConfig, error) {
 	cache := c.getCache()
+	normalized := auth.ResolveRegistryHost(hostname)
 
-	// Try cache first
+	// Try cache first, with either key
 	cache.mutex.RLock()
 	if authConfig, exists := cache.entries[hostname]; exists {
 		cache.mutex.RUnlock()
 		return authConfig, nil
+	}
+	if normalized != hostname {
+		if authConfig, exists := cache.entries[normalized]; exists {
+			cache.mutex.RUnlock()
+			return authConfig, nil
+		}
 	}
 	cache.mutex.RUnlock()
 
@@ -106,9 +113,12 @@ func (c *Config) AuthConfigForHostname(hostname string) (AuthConfig, error) {
 		return AuthConfig{}, err
 	}
 
-	// Cache the result
+	// Cache the result (under both keys to avoid duplicate helper calls)
 	cache.mutex.Lock()
 	cache.entries[hostname] = authConfig
+	if normalized != hostname {
+		cache.entries[normalized] = authConfig
+	}
 	cache.mutex.Unlock()
 
 	return authConfig, nil
@@ -207,30 +217,64 @@ func (c *Config) Save() error {
 
 // resolveAuthConfigForHostname performs the actual auth config resolution
 func (c *Config) resolveAuthConfigForHostname(hostname string) (AuthConfig, error) {
-	// Normalize Docker registry hostnames
-	hostname = auth.ResolveRegistryHost(hostname)
+	// Compute normalized host (scheme stripped, Hub aliases -> IndexDockerIO)
+	normalized := auth.ResolveRegistryHost(hostname)
 
-	// Check credential helpers first
-	if helper, exists := c.CredentialHelpers[hostname]; exists {
-		return c.resolveFromCredentialHelper(helper, hostname)
+	// Build ordered, deduped variants for map lookups
+	sanitizedHost := hostname
+	if v, ok := strings.CutPrefix(sanitizedHost, "https://"); ok {
+		sanitizedHost = v
+	}
+	if v, ok := strings.CutPrefix(sanitizedHost, "http://"); ok {
+		sanitizedHost = v
 	}
 
-	// Check global credential store
+	seen := make(map[string]struct{}, 5)
+	var variants []string
+	add := func(v string) {
+		if v == "" {
+			return
+		}
+		if _, ok := seen[v]; ok {
+			return
+		}
+		seen[v] = struct{}{}
+		variants = append(variants, v)
+	}
+
+	add(hostname)
+	add(sanitizedHost)
+	add("https://" + sanitizedHost)
+	add("http://" + sanitizedHost)
+	if normalized == auth.IndexDockerIO {
+		add(auth.IndexDockerIO)
+	}
+
+	// 1) per-registry credHelpers (invoke helper with normalized)
+	for _, v := range variants {
+		if helper, exists := c.CredentialHelpers[v]; exists {
+			return c.resolveFromCredentialHelper(helper, normalized)
+		}
+	}
+
+	// 2) global credsStore (invoke helper with normalized)
 	if c.CredentialsStore != "" {
-		if authConfig, err := c.resolveFromCredentialHelper(c.CredentialsStore, hostname); err == nil {
+		if authConfig, err := c.resolveFromCredentialHelper(c.CredentialsStore, normalized); err == nil {
 			if authConfig.Username != "" || authConfig.Password != "" {
 				return authConfig, nil
 			}
 		}
 	}
 
-	// Check stored auth configs
-	if authConfig, exists := c.AuthConfigs[hostname]; exists {
-		return c.processStoredAuthConfig(authConfig, hostname)
+	// 3) stored auths (preserve caller’s hostname)
+	for _, v := range variants {
+		if stored, ok := c.AuthConfigs[v]; ok {
+			return c.processStoredAuthConfig(stored, hostname)
+		}
 	}
 
-	// Fallback to default credential helper
-	return c.resolveFromCredentialHelper("", hostname)
+	// 4) fallback: default helper with normalized key
+	return c.resolveFromCredentialHelper("", normalized)
 }
 
 // resolveFromCredentialHelper resolves credentials from a credential helper
@@ -275,8 +319,8 @@ func (c *Config) processStoredAuthConfig(stored AuthConfig, hostname string) (Au
 		authConfig.Password = pass
 
 	default:
-		// No stored credentials, try credential helper
-		return c.resolveFromCredentialHelper("", hostname)
+		// No stored credentials, try credential helper with normalized host
+		return c.resolveFromCredentialHelper("", auth.ResolveRegistryHost(hostname))
 	}
 
 	return authConfig, nil

@@ -2,6 +2,7 @@ package auth
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/distribution/reference"
 )
@@ -52,14 +53,23 @@ func ParseImageRef(imageRef string) (ImageReference, error) {
 	return imgRef, nil
 }
 
-// ResolveRegistryHost can be used to transform a docker registry host name into what is used for the docker config/cred helpers
+// ResolveRegistryHost can be used to transform a docker registry host name into what is used for the docker config/cred helpers.
+// The returned string should be used as the key for the docker config/cred helpers, not containing any scheme information.
 //
 // This is useful for using with containerd authorizers.
 // Naturally this only transforms docker hub URLs.
 func ResolveRegistryHost(host string) string {
-	switch host {
-	case "index.docker.io", "docker.io", IndexDockerIO, "registry-1.docker.io":
+	sanitizedHost := host
+	if v, ok := strings.CutPrefix(sanitizedHost, "https://"); ok {
+		sanitizedHost = v
+	}
+	if v, ok := strings.CutPrefix(sanitizedHost, "http://"); ok {
+		sanitizedHost = v
+	}
+
+	switch sanitizedHost {
+	case "index.docker.io", "docker.io", IndexDockerIO, "registry-1.docker.io", "index.docker.io/v1", "index.docker.io/v1/":
 		return IndexDockerIO
 	}
-	return host
+	return sanitizedHost
 }
