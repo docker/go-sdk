@@ -215,6 +215,15 @@ func (c *Config) Save() error {
 	return os.WriteFile(c.filepath, data, 0o644)
 }
 
+// lookupVariantsCapacity documents the expected upper-bound of variants we build
+// when resolving auth for a hostname:
+//  1. raw input
+//  2. scheme-stripped host
+//  3. https:// + stripped
+//  4. http:// + stripped
+//  5. normalized host (Hub → canonical IndexDockerIO; others → same as stripped)
+const lookupVariantsCapacity = 5
+
 // resolveAuthConfigForHostname performs the actual auth config resolution
 func (c *Config) resolveAuthConfigForHostname(hostname string) (AuthConfig, error) {
 	// Compute normalized host (scheme stripped, Hub aliases -> IndexDockerIO)
@@ -229,7 +238,7 @@ func (c *Config) resolveAuthConfigForHostname(hostname string) (AuthConfig, erro
 		sanitizedHost = v
 	}
 
-	seen := make(map[string]struct{}, 5)
+	seen := make(map[string]struct{}, lookupVariantsCapacity)
 	var variants []string
 	add := func(v string) {
 		if v == "" {
@@ -246,9 +255,7 @@ func (c *Config) resolveAuthConfigForHostname(hostname string) (AuthConfig, erro
 	add(sanitizedHost)
 	add("https://" + sanitizedHost)
 	add("http://" + sanitizedHost)
-	if normalized == auth.IndexDockerIO {
-		add(auth.IndexDockerIO)
-	}
+	add(normalized)
 
 	// 1) per-registry credHelpers (invoke helper with normalized)
 	for _, v := range variants {
