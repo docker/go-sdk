@@ -58,7 +58,7 @@ func ParseImageRef(imageRef string) (ImageReference, error) {
 // Naturally this only transforms docker hub URLs.
 func ResolveRegistryHost(host string) string {
 	switch host {
-	case "index.docker.io", "docker.io", IndexDockerIO, "registry-1.docker.io":
+	case "index.docker.io", "docker.io", IndexDockerIO, "registry-1.docker.io", "index.docker.io/v1", "index.docker.io/v1/":
 		return IndexDockerIO
 	}
 	return host
