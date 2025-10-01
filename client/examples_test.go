@@ -26,18 +26,3 @@ func ExampleNew() {
 	// Output:
 	// true
 }
-
-func ExampleDefaultClient() {
-	cli := client.DefaultClient
-
-	info, err := cli.Info(context.Background())
-	if err != nil {
-		log.Printf("error getting info: %s", err)
-		return
-	}
-
-	fmt.Println(info.OperatingSystem != "")
-
-	// Output:
-	// true
-}

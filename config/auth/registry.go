@@ -52,11 +52,11 @@ func ParseImageRef(imageRef string) (ImageReference, error) {
 	return imgRef, nil
 }
 
-// resolveRegistryHost can be used to transform a docker registry host name into what is used for the docker config/cred helpers
+// ResolveRegistryHost can be used to transform a docker registry host name into what is used for the docker config/cred helpers
 //
 // This is useful for using with containerd authorizers.
 // Naturally this only transforms docker hub URLs.
-func resolveRegistryHost(host string) string {
+func ResolveRegistryHost(host string) string {
 	switch host {
 	case "index.docker.io", "docker.io", IndexDockerIO, "registry-1.docker.io":
 		return IndexDockerIO

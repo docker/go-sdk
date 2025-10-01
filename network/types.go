@@ -9,7 +9,7 @@ import (
 type Network struct {
 	response     network.CreateResponse
 	inspect      network.Inspect
-	dockerClient *client.Client
+	dockerClient client.SDKClient
 	opts         *options
 	name         string
 }

@@ -207,6 +207,9 @@ func (c *Config) Save() error {
 
 // resolveAuthConfigForHostname performs the actual auth config resolution
 func (c *Config) resolveAuthConfigForHostname(hostname string) (AuthConfig, error) {
+	// Normalize Docker registry hostnames
+	hostname = auth.ResolveRegistryHost(hostname)
+
 	// Check credential helpers first
 	if helper, exists := c.CredentialHelpers[hostname]; exists {
 		return c.resolveFromCredentialHelper(helper, hostname)

@@ -11,7 +11,6 @@ import (
 
 	"github.com/cenkalti/backoff/v4"
 
-	"github.com/docker/docker/api/types/image"
 	"github.com/docker/go-sdk/client"
 	"github.com/docker/go-sdk/config"
 )
@@ -22,14 +21,6 @@ import (
 var defaultPullHandler = func(r io.ReadCloser) error {
 	_, err := io.ReadAll(r)
 	return err
-}
-
-// ImagePullClient is a client that can pull images.
-type ImagePullClient interface {
-	ImageClient
-
-	// ImagePull pulls an image from a remote registry.
-	ImagePull(ctx context.Context, image string, options image.PullOptions) (io.ReadCloser, error)
 }
 
 // Pull pulls an image from a remote registry, retrying on non-permanent errors.
@@ -47,11 +38,12 @@ func Pull(ctx context.Context, imageName string, opts ...PullOption) error {
 		}
 	}
 
-	if pullOpts.pullClient == nil {
-		pullOpts.pullClient = client.DefaultClient
-		// In case there is no pull client set, we use the default docker client
-		// to pull the image. We need to close it when done.
-		defer pullOpts.pullClient.Close()
+	if pullOpts.client == nil {
+		sdk, err := client.New(ctx)
+		if err != nil {
+			return err
+		}
+		pullOpts.client = sdk
 	}
 
 	if imageName == "" {
@@ -60,7 +52,7 @@ func Pull(ctx context.Context, imageName string, opts ...PullOption) error {
 
 	authConfigs, err := config.AuthConfigs(imageName)
 	if err != nil {
-		pullOpts.pullClient.Logger().Warn("failed to get image auth, setting empty credentials for the image", "image", imageName, "error", err)
+		pullOpts.client.Logger().Warn("failed to get image auth, setting empty credentials for the image", "image", imageName, "error", err)
 	} else {
 		// there must be only one auth config for the image
 		if len(authConfigs) > 1 {
@@ -78,7 +70,7 @@ func Pull(ctx context.Context, imageName string, opts ...PullOption) error {
 		}
 		encodedJSON, err := json.Marshal(authConfig)
 		if err != nil {
-			pullOpts.pullClient.Logger().Warn("failed to marshal image auth, setting empty credentials for the image", "image", imageName, "error", err)
+			pullOpts.client.Logger().Warn("failed to marshal image auth, setting empty credentials for the image", "image", imageName, "error", err)
 		} else {
 			pullOpts.pullOptions.RegistryAuth = base64.URLEncoding.EncodeToString(encodedJSON)
 		}
@@ -87,7 +79,7 @@ func Pull(ctx context.Context, imageName string, opts ...PullOption) error {
 	var pull io.ReadCloser
 	err = backoff.RetryNotify(
 		func() error {
-			pull, err = pullOpts.pullClient.ImagePull(ctx, imageName, pullOpts.pullOptions)
+			pull, err = pullOpts.client.ImagePull(ctx, imageName, pullOpts.pullOptions)
 			if err != nil {
 				if client.IsPermanentClientError(err) {
 					return backoff.Permanent(err)
@@ -99,7 +91,7 @@ func Pull(ctx context.Context, imageName string, opts ...PullOption) error {
 		},
 		backoff.WithContext(backoff.NewExponentialBackOff(), ctx),
 		func(err error, _ time.Duration) {
-			pullOpts.pullClient.Logger().Warn("failed to pull image, will retry", "error", err)
+			pullOpts.client.Logger().Warn("failed to pull image, will retry", "error", err)
 		},
 	)
 	if err != nil {

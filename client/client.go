@@ -9,7 +9,6 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/docker/docker/api/types/system"
 	"github.com/docker/docker/client"
 	dockercontext "github.com/docker/go-sdk/context"
 )
@@ -31,15 +30,11 @@ var (
 
 	defaultOpts = []client.Opt{client.FromEnv, client.WithAPIVersionNegotiation()}
 
-	defaultHealthCheck = func(ctx context.Context) func(c *Client) error {
-		return func(c *Client) error {
-			dockerClient, err := c.Client()
-			if err != nil {
-				return fmt.Errorf("docker client: %w", err)
-			}
+	defaultHealthCheck = func(ctx context.Context) func(c SDKClient) error {
+		return func(c SDKClient) error {
 			var pingErr error
 			for i := range 3 {
-				if _, pingErr = dockerClient.Ping(ctx); pingErr == nil {
+				if _, pingErr = c.Ping(ctx); pingErr == nil {
 					return nil
 				}
 				select {
@@ -71,8 +66,9 @@ var (
 //	cli, err := client.New(context.Background(), client.WithLogger(slog.Default()))
 //
 // The client is safe for concurrent use by multiple goroutines.
-func New(ctx context.Context, options ...ClientOption) (*Client, error) {
-	c := &Client{
+func New(ctx context.Context, options ...ClientOption) (SDKClient, error) {
+	c := &sdkClient{
+		log:         defaultLogger,
 		healthCheck: defaultHealthCheck,
 	}
 	for _, opt := range options {
@@ -81,7 +77,7 @@ func New(ctx context.Context, options ...ClientOption) (*Client, error) {
 		}
 	}
 
-	if err := c.init(ctx); err != nil {
+	if err := c.init(); err != nil {
 		return nil, fmt.Errorf("load config: %w", err)
 	}
 
@@ -94,20 +90,8 @@ func New(ctx context.Context, options ...ClientOption) (*Client, error) {
 
 // init initializes the client.
 // This method is safe for concurrent use by multiple goroutines.
-func (c *Client) init(ctx context.Context) error {
-	c.once.Do(func() {
-		err := c.initOnce(ctx)
-		if err != nil {
-			c.err = err
-		}
-	})
-	return c.err
-}
-
-// initOnce initializes the client once.
-// This method is safe for concurrent use by multiple goroutines.
-func (c *Client) initOnce(_ context.Context) error {
-	if c.dockerClient != nil || c.err != nil {
+func (c *sdkClient) init() error {
+	if c.APIClient != nil || c.err != nil {
 		return c.err
 	}
 
@@ -151,13 +135,11 @@ func (c *Client) initOnce(_ context.Context) error {
 
 	opts = append(opts, client.WithHTTPHeaders(httpHeaders))
 
-	if c.dockerClient, c.err = client.NewClientWithOpts(opts...); c.err != nil {
-		c.err = fmt.Errorf("new client: %w", c.err)
-		return c.err
+	api, err := client.NewClientWithOpts(opts...)
+	if err != nil {
+		return fmt.Errorf("new client: %w", err)
 	}
-
-	// Because each encountered error is immediately returned, it's safe to set the error to nil.
-	c.err = nil
+	c.APIClient = api
 	return nil
 }
 
@@ -166,7 +148,7 @@ func (c *Client) initOnce(_ context.Context) error {
 // If no docker host is provided and no docker context is provided, the current docker host and context are used.
 // If no docker host is provided but a docker context is provided, the docker host from the context is used.
 // If a docker host is provided, it is used as is.
-func (c *Client) defaultValues() error {
+func (c *sdkClient) defaultValues() error {
 	if c.log == nil {
 		c.log = defaultLogger
 	}
@@ -197,29 +179,4 @@ func (c *Client) defaultValues() error {
 	}
 
 	return nil
-}
-
-// Close closes the client.
-// This method is safe for concurrent use by multiple goroutines.
-func (c *Client) Close() error {
-	c.mtx.Lock()
-	defer c.mtx.Unlock()
-
-	if c.dockerClient == nil {
-		return nil
-	}
-
-	// Store the error before clearing the client
-	err := c.dockerClient.Close()
-
-	// Clear the client after closing to prevent use-after-close issues
-	c.dockerInfo = system.Info{}
-	c.dockerInfoSet = false
-
-	return err
-}
-
-// ClientVersion returns the API version used by this client.
-func (c *Client) ClientVersion() string {
-	return c.dockerClient.ClientVersion()
 }

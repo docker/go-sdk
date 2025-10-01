@@ -3,7 +3,6 @@ package client
 import (
 	"context"
 	"errors"
-	"fmt"
 	"net/url"
 	"os"
 
@@ -16,21 +15,16 @@ var dockerEnvFile = "/.dockerenv"
 
 // DaemonHost gets the host or ip of the Docker daemon where ports are exposed on
 // Warning: this is based on your Docker host setting. Will fail if using an SSH tunnel
-func (c *Client) DaemonHost(ctx context.Context) (string, error) {
+func (c *sdkClient) DaemonHostWithContext(ctx context.Context) (string, error) {
 	c.mtx.Lock()
 	defer c.mtx.Unlock()
 
 	return c.daemonHostLocked(ctx)
 }
 
-func (c *Client) daemonHostLocked(ctx context.Context) (string, error) {
-	dockerClient, err := c.Client()
-	if err != nil {
-		return "", fmt.Errorf("docker client: %w", err)
-	}
-
+func (c *sdkClient) daemonHostLocked(ctx context.Context) (string, error) {
 	// infer from Docker host
-	daemonURL, err := url.Parse(dockerClient.DaemonHost())
+	daemonURL, err := url.Parse(c.DaemonHost())
 	if err != nil {
 		return "", err
 	}
@@ -57,7 +51,7 @@ func (c *Client) daemonHostLocked(ctx context.Context) (string, error) {
 	return host, nil
 }
 
-func (c *Client) getGatewayIP(ctx context.Context, defaultNetwork string) (string, error) {
+func (c *sdkClient) getGatewayIP(ctx context.Context, defaultNetwork string) (string, error) {
 	nw, err := c.NetworkInspect(ctx, defaultNetwork, network.InspectOptions{})
 	if err != nil {
 		return "", err

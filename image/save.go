@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io"
 	"os"
 
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
@@ -12,14 +11,6 @@ import (
 	dockerclient "github.com/docker/docker/client"
 	"github.com/docker/go-sdk/client"
 )
-
-// ImageSaveClient is a client that can save images.
-type ImageSaveClient interface {
-	ImageClient
-
-	// ImageSave saves an image to a file.
-	ImageSave(ctx context.Context, images []string, saveOptions ...dockerclient.ImageSaveOption) (io.ReadCloser, error)
-}
 
 // Save saves an image to a file.
 func Save(ctx context.Context, output string, img string, opts ...SaveOption) error {
@@ -39,8 +30,12 @@ func Save(ctx context.Context, output string, img string, opts ...SaveOption) er
 		return errors.New("image cannot be empty")
 	}
 
-	if saveOpts.saveClient == nil {
-		saveOpts.saveClient = client.DefaultClient
+	if saveOpts.client == nil {
+		sdk, err := client.New(ctx)
+		if err != nil {
+			return err
+		}
+		saveOpts.client = sdk
 	}
 
 	outputFile, err := os.Create(output)
@@ -53,7 +48,7 @@ func Save(ctx context.Context, output string, img string, opts ...SaveOption) er
 
 	imgSaveOpts := dockerclient.ImageSaveWithPlatforms(saveOpts.platforms...)
 
-	imageReader, err := saveOpts.saveClient.ImageSave(ctx, []string{img}, imgSaveOpts)
+	imageReader, err := saveOpts.client.ImageSave(ctx, []string{img}, imgSaveOpts)
 	if err != nil {
 		return fmt.Errorf("save images %w", err)
 	}

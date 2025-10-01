@@ -52,11 +52,14 @@ func TestCombineLifecycleHooks(t *testing.T) {
 
 	// call all the hooks in the right order, honouring the lifecycle
 
+	dockerClient, err := client.New(context.TODO())
+	require.NoError(t, err)
+
 	def := Definition{
 		image:          nginxAlpineImage,
 		lifecycleHooks: []LifecycleHooks{combineContainerHooks(defaultHooks, userDefinedHooks)},
 		// define a docker client to avoid the need to initialize the client
-		dockerClient: client.DefaultClient,
+		dockerClient: dockerClient,
 		// avoid validation errors
 		validateFuncs: []func() error{
 			func() error {
@@ -64,7 +67,7 @@ func TestCombineLifecycleHooks(t *testing.T) {
 			},
 		},
 	}
-	err := def.creatingHook(context.Background())
+	err = def.creatingHook(context.Background())
 	require.NoError(t, err)
 
 	c := &Container{
