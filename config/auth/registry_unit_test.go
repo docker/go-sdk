@@ -8,6 +8,8 @@ import (
 
 func TestResolveRegistryHost(t *testing.T) {
 	require.Equal(t, IndexDockerIO, ResolveRegistryHost("index.docker.io"))
+	require.Equal(t, IndexDockerIO, ResolveRegistryHost("index.docker.io/v1"))
+	require.Equal(t, IndexDockerIO, ResolveRegistryHost("index.docker.io/v1/"))
 	require.Equal(t, IndexDockerIO, ResolveRegistryHost("docker.io"))
 	require.Equal(t, IndexDockerIO, ResolveRegistryHost("registry-1.docker.io"))
 	require.Equal(t, "foobar.com", ResolveRegistryHost("foobar.com"))
