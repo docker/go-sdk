@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"runtime"
 
+	"github.com/docker/docker/api/types/filters"
 	apinetwork "github.com/docker/docker/api/types/network"
 	"github.com/docker/go-sdk/client"
 	"github.com/docker/go-sdk/network"
@@ -127,4 +128,46 @@ func ExampleNetwork_Terminate() {
 	// Output:
 	// <nil>
 	// <nil>
+}
+
+func ExampleNetwork_Client_networksPrune() {
+	nw, err := network.New(context.Background(), network.WithName("test-network-create"))
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	inspect, err := network.FindByID(context.Background(), nw.ID())
+	if err != nil {
+		fmt.Println(err)
+		err = nw.Terminate(context.Background())
+		if err != nil {
+			fmt.Println(err)
+		}
+		return
+	}
+
+	fmt.Println(inspect.Name)
+
+	sdkClient := nw.Client()
+
+	f := filters.NewArgs()
+	for k, v := range client.SDKLabels() {
+		f.Add("label", k+"="+v)
+	}
+
+	report, err := sdkClient.NetworksPrune(context.Background(), f)
+	if err != nil {
+		fmt.Println(err)
+		err = nw.Terminate(context.Background())
+		if err != nil {
+			fmt.Println(err)
+		}
+		return
+	}
+	fmt.Println(report.NetworksDeleted)
+
+	// Output:
+	// test-network-create
+	// [test-network-create]
 }
