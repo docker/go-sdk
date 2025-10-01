@@ -41,7 +41,12 @@ set -e
 readonly SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 source "${SCRIPT_DIR}/common.sh"
 
+# Collect and stage changes across modules, then create a single commit
 MODULES=$(go work edit -json | jq -r '.Use[] | "\(.DiskPath | ltrimstr("./"))"' | tr '\n' ' ' && echo)
+
+commit_title="chore(release): bump module versions"
+commit_body=""
+
 for m in $MODULES; do
   # if the module version file does not exist, skip it
   if [[ ! -f "${ROOT_DIR}/.github/scripts/.${m}-next-tag" ]]; then
@@ -51,12 +56,28 @@ for m in $MODULES; do
 
   execute_or_echo git add "${ROOT_DIR}/${m}/version.go"
   execute_or_echo git add "${ROOT_DIR}/${m}/go.mod"
+  if [[ -f "${ROOT_DIR}/${m}/go.sum" ]]; then
+    execute_or_echo git add "${ROOT_DIR}/${m}/go.sum"
+  fi
 
   nextTag=$(cat "${ROOT_DIR}/.github/scripts/.${m}-next-tag")
   echo "Next tag for ${m}: ${nextTag}"
-  execute_or_echo git commit -m "chore(${m}): bump version to ${nextTag}"
+  commit_body="${commit_body}\n - ${m}: ${nextTag}"
+done
 
-  execute_or_echo git tag "${m}/${nextTag}"
+# Create a single commit if there are staged changes
+if [[ -n "$(git diff --cached)" ]]; then
+  execute_or_echo git commit -m "${commit_title}" -m "$(echo -e "${commit_body}")"
+else
+  echo "No staged changes to commit"
+fi
+
+# Create all tags after the single commit
+for m in $MODULES; do
+  if [[ -f "${ROOT_DIR}/.github/scripts/.${m}-next-tag" ]]; then
+    nextTag=$(cat "${ROOT_DIR}/.github/scripts/.${m}-next-tag")
+    execute_or_echo git tag "${m}/${nextTag}"
+  fi
 done
 
 execute_or_echo git push origin main --tags
