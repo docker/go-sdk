@@ -15,3 +15,8 @@ type Volume struct {
 func (v *Volume) ID() string {
 	return v.Name
 }
+
+// Client returns the client used to create the volume.
+func (v *Volume) Client() client.SDKClient {
+	return v.dockerClient
+}

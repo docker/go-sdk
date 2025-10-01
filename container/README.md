@@ -87,7 +87,7 @@ The following options are available to customize the container definition:
 - `WithCmd(cmd ...string) CustomizeDefinitionOption`
 - `WithCmdArgs(cmdArgs ...string) CustomizeDefinitionOption`
 - `WithConfigModifier(modifier func(config *container.Config)) CustomizeDefinitionOption`
-- `WithDockerClient(dockerClient *client.Client) CustomizeDefinitionOption`
+- `WithClient(cli client.SDKClient) CustomizeDefinitionOption`
 - `WithEndpointSettingsModifier(modifier func(settings map[string]*apinetwork.EndpointSettings)) CustomizeDefinitionOption`
 - `WithEntrypoint(entrypoint ...string) CustomizeDefinitionOption`
 - `WithEntrypointArgs(entrypointArgs ...string) CustomizeDefinitionOption`

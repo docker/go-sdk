@@ -34,7 +34,7 @@ func TestContainer_ContainerIPs(t *testing.T) {
 	ctr, err := container.Run(
 		context.Background(),
 		container.WithImage(nginxAlpineImage),
-		container.WithDockerClient(dockerClient),
+		container.WithClient(dockerClient),
 		container.WithNetwork([]string{"ctr1"}, nw1),
 		container.WithNetwork([]string{"ctr2"}, nw2),
 	)
@@ -57,7 +57,7 @@ func TestContainer_ContainerIPs(t *testing.T) {
 		ctr3, err := container.Run(
 			context.Background(),
 			container.WithImage(nginxAlpineImage),
-			container.WithDockerClient(dockerClient),
+			container.WithClient(dockerClient),
 			container.WithNetwork([]string{"ctr3"}, nw1),
 		)
 		container.Cleanup(t, ctr3)
@@ -86,7 +86,7 @@ func TestContainer_Networks(t *testing.T) {
 	ctr, err := container.Run(
 		context.Background(),
 		container.WithImage(nginxAlpineImage),
-		container.WithDockerClient(dockerClient),
+		container.WithClient(dockerClient),
 		container.WithNetwork([]string{"ctr1-a", "ctr1-b", "ctr1-c"}, nw),
 	)
 	require.NoError(t, err)
@@ -114,7 +114,7 @@ func TestContainer_NetworkAliases(t *testing.T) {
 	ctr, err := container.Run(
 		context.Background(),
 		container.WithImage(nginxAlpineImage),
-		container.WithDockerClient(dockerClient),
+		container.WithClient(dockerClient),
 		container.WithNetwork([]string{"ctr1-a", "ctr1-b", "ctr1-c"}, nw),
 	)
 	require.NoError(t, err)

@@ -23,7 +23,7 @@ if err != nil {
 
 The Pull operation can be customized using functional options. The following options are available:
 
-- `WithPullClient(client *client.Client) image.PullOption`: The client to use to pull the image. If not provided, the default client will be used.
+- `WithPullClient(cli client.SDKClient) image.PullOption`: The client to use to pull the image. If not provided, the default client will be used.
 - `WithPullOptions(options apiimage.PullOptions) image.PullOption`: The options to use to pull the image. The type of the options is "github.com/docker/docker/api/types/image".
 - `WithPullHandler(pullHandler func(r io.ReadCloser) error) image.PullOption`: The handler to use to pull the image, which acts as a callback to the pull operation.
 
@@ -78,7 +78,7 @@ if err != nil {
 
 The Remove operation can be customized using functional options. The following options are available:
 
-- `WithRemoveClient(client *client.Client) image.RemoveOption`: The client to use to remove the image. If not provided, the default client will be used.
+- `WithRemoveClient(cli client.SDKClient) image.RemoveOption`: The client to use to remove the image. If not provided, the default client will be used.
 - `WithRemoveOptions(options dockerimage.RemoveOptions) image.RemoveOption`: The options to use to remove the image. The type of the options is "github.com/docker/docker/api/types/image".
 
 First, you need to import the following packages:
@@ -170,7 +170,7 @@ This function needs the relative path to the build context and the Dockerfile pa
 
 The Build operation can be customized using functional options. The following options are available:
 
-- `WithBuildClient(client *client.Client) image.BuildOption`: The client to use to build the image. If not provided, the default client will be used.
+- `WithBuildClient(cli client.SDKClient) image.BuildOption`: The client to use to build the image. If not provided, the default client will be used.
 - `WithLogWriter(writer io.Writer) image.BuildOption`: The writer to use to write the build output. If not provided, the build output will be written to the standard output.
 - `WithBuildOptions(options build.ImageBuildOptions) image.BuildOption`: The options to use to build the image. The type of the options is "github.com/docker/docker/api/types/build". If set, the tag and context reader will be overridden with the arguments passed to the `Build` function.
 

@@ -28,3 +28,8 @@ func (n *Network) Driver() string {
 func (n *Network) Name() string {
 	return n.name
 }
+
+// Client returns the client used to create the network.
+func (n *Network) Client() client.SDKClient {
+	return n.dockerClient
+}

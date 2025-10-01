@@ -39,8 +39,8 @@ type Container struct {
 	isRunning bool
 }
 
-// DockerClient returns the docker client used by the container.
-func (c *Container) DockerClient() client.SDKClient {
+// Client returns the client used by the container.
+func (c *Container) Client() client.SDKClient {
 	return c.dockerClient
 }
 

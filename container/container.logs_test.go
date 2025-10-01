@@ -99,7 +99,7 @@ func TestContainer_Logs_printOnError(t *testing.T) {
 	require.NoError(t, err)
 
 	ctr, err := container.Run(ctx,
-		container.WithDockerClient(cli),
+		container.WithClient(cli),
 		container.WithImage(alpineLatest),
 		container.WithCmd("echo", "-n", "I am expecting this"),
 		container.WithWaitStrategy(wait.ForLog("I was expecting that").WithTimeout(5*time.Second)),

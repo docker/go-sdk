@@ -25,7 +25,7 @@ type listOptions struct {
 
 type ListOptions func(opts *listOptions) error
 
-// WithDockerClient sets the docker client to be used to list the networks.
+// WithDockerClient sets the client to be used to list the networks.
 func WithDockerClient(client client.SDKClient) ListOptions {
 	return func(opts *listOptions) error {
 		opts.client = client

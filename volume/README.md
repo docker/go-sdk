@@ -51,7 +51,7 @@ if err != nil {
 
 The volume created with the `New` function can be customized using functional options. The following options are available:
 
-- `WithClient(client *client.Client) volume.Option`: The client to use to create the volume. If not provided, the default client will be used.
+- `WithClient(client client.SDKClient) volume.Option`: The client to use to create the volume. If not provided, the default client will be used.
 - `WithName(name string) volume.Option`: The name of the volume.
 - `WithLabels(labels map[string]string) volume.Option`: The labels of the volume.
 

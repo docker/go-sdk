@@ -53,7 +53,7 @@ if err != nil {
 
 The network created with the `New` function can be customized using functional options. The following options are available:
 
-- `WithClient(client *client.Client) network.Option`: The client to use to create the network. If not provided, the default client will be used.
+- `WithClient(client client.SDKClient) network.Option`: The client to use to create the network. If not provided, the default client will be used.
 - `WithName(name string) network.Option`: The name of the network.
 - `WithDriver(driver string) network.Option`: The driver of the network.
 - `WithInternal() network.Option`: Whether the network is internal.

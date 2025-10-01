@@ -359,7 +359,7 @@ func TestLifecycleHooks_withDefaultLogger(t *testing.T) {
 	require.NoError(t, err)
 
 	c, err := Run(ctx,
-		WithDockerClient(cli),
+		WithClient(cli),
 		WithImage(nginxAlpineImage),
 		WithLifecycleHooks(DefaultLoggingHook),
 	)
@@ -393,7 +393,7 @@ func TestLifecycleHooks_WithMultipleHooks(t *testing.T) {
 	require.NoError(t, err)
 
 	c, err := Run(ctx,
-		WithDockerClient(cli),
+		WithClient(cli),
 		WithImage(nginxAlpineImage),
 		WithLifecycleHooks(DefaultLoggingHook, DefaultLoggingHook),
 	)

@@ -72,7 +72,7 @@ func TestRun(t *testing.T) {
 		})
 
 		ctr, err := container.Run(context.Background(),
-			container.WithDockerClient(dockerClient),
+			container.WithClient(dockerClient),
 			container.WithImage(nginxAlpineImage),
 			container.WithExposedPorts("80/tcp"),
 		)
@@ -394,7 +394,7 @@ func TestRun_addSDKLabels(t *testing.T) {
 	})
 
 	ctr, err := container.Run(context.Background(),
-		container.WithDockerClient(dockerClient),
+		container.WithClient(dockerClient),
 		container.WithImage(nginxAlpineImage),
 	)
 	container.Cleanup(t, ctr)
@@ -540,7 +540,7 @@ func TestRunWithLifecycleHooks(t *testing.T) {
 		})
 
 		opts := []container.ContainerCustomizer{
-			container.WithDockerClient(dockerClient),
+			container.WithClient(dockerClient),
 			container.WithImage(nginxAlpineImage),
 			container.WithLifecycleHooks(
 				container.LifecycleHooks{
@@ -648,7 +648,7 @@ func TestRunWithNetworks(t *testing.T) {
 		t.Helper()
 
 		opts := []container.ContainerCustomizer{
-			container.WithDockerClient(dockerClient),
+			container.WithClient(dockerClient),
 			container.WithImage(nginxAlpineImage),
 		}
 
@@ -788,7 +788,7 @@ func TestRunWithWaitStrategy(t *testing.T) {
 		require.NoError(t, err)
 
 		opts := []container.ContainerCustomizer{
-			container.WithDockerClient(dockerClient),
+			container.WithClient(dockerClient),
 			container.WithImage(img),
 			container.WithFiles(container.File{
 				ContainerPath: "/tmp/hello.txt",
