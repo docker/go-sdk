@@ -7,6 +7,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/docker/docker/api/types/filters"
+	"github.com/docker/go-sdk/client"
 	"github.com/docker/go-sdk/network"
 )
 
@@ -60,5 +61,18 @@ func TestList(t *testing.T) {
 		nws, err = network.List(context.Background(), network.WithFilters(filters.NewArgs(filters.Arg("driver", "bridge"))))
 		require.NoError(t, err)
 		require.Len(t, nws, 1)
+	})
+
+	t.Run("with-list-client", func(t *testing.T) {
+		dockerClient, err := client.New(context.Background())
+		require.NoError(t, err)
+
+		nw, err := network.New(context.Background(), network.WithClient(dockerClient))
+		network.Cleanup(t, nw)
+		require.NoError(t, err)
+
+		nws, err = network.List(context.Background(), network.WithListClient(dockerClient))
+		require.NoError(t, err)
+		require.Len(t, nws, initialCount+1)
 	})
 }
