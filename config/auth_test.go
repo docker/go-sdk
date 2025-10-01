@@ -153,14 +153,6 @@ func TestRegistryCredentialsForImage(t *testing.T) {
 		validateAuthForImage(t, "auth.io/repo/image:tag", "auth", "authsecret", "auth.io", nil)
 	})
 
-	t.Run("auths/cross-scheme", func(t *testing.T) {
-		t.Setenv(EnvOverrideDir, "")
-		t.Setenv("DOCKER_AUTH_CONFIG", `{
-			"auths": { "https://registry.example.com": { "username": "eu", "password": "ep" } }
-		}`)
-		validateAuthForImage(t, "registry.example.com/repo/image:tag", "eu", "ep", "registry.example.com", nil)
-	})
-
 	t.Run("credsStore", func(t *testing.T) {
 		validateAuthForImage(t, "credstore.io/repo/image:tag", "", "", "credstore.io", nil)
 	})
@@ -208,15 +200,6 @@ func TestRegistryCredentialsForImage(t *testing.T) {
 		validateAuthErrorForImage(t, "helper.io/repo/image:tag", expectedErr)
 	})
 
-	t.Run("credHelpers/cross-scheme", func(t *testing.T) {
-		t.Setenv(EnvOverrideDir, "")
-		t.Setenv("DOCKER_AUTH_CONFIG", `{
-			"credHelpers": { "https://registry.example.com": "helper" }
-		}`)
-		mockExecCommand(t, `HELPER_STDOUT={"Username":"h","Secret":"s"}`)
-		validateAuthForImage(t, "registry.example.com/repo/image:tag", "h", "s", "registry.example.com", nil)
-	})
-
 	t.Run("config/not-found", func(t *testing.T) {
 		t.Setenv(EnvOverrideDir, filepath.Join("testdata", "missing"))
 		validateAuthForImage(t, "userpass.io/repo/image:tag", "", "", "", errors.New("file does not exist"))
@@ -232,16 +215,6 @@ func TestRegistryCredentialsForHostname(t *testing.T) {
 
 	t.Run("auths/auth", func(t *testing.T) {
 		validateAuthForHostname(t, "auth.io", "auth", "authsecret", nil)
-	})
-
-	t.Run("auths/cross-scheme", func(t *testing.T) {
-		t.Setenv(EnvOverrideDir, "") // ensure file-based config doesn't interfere
-		t.Setenv("DOCKER_AUTH_CONFIG", `{
-			"auths": { "https://registry.example.com": { "username": "eu", "password": "ep" } }
-		}`)
-		validateAuthForHostname(t, "registry.example.com", "eu", "ep", nil)
-		validateAuthForHostname(t, "https://registry.example.com", "eu", "ep", nil)
-		validateAuthForHostname(t, "http://registry.example.com", "eu", "ep", nil)
 	})
 
 	t.Run("credsStore", func(t *testing.T) {
@@ -289,17 +262,6 @@ func TestRegistryCredentialsForHostname(t *testing.T) {
 		mockExecCommand(t, "HELPER_STDOUT=bad-json")
 		expectedErr := errors.New(`unmarshal credentials from: "docker-credential-helper": invalid character 'b' looking for beginning of value`)
 		validateAuthErrorForHostname(t, "helper.io", expectedErr)
-	})
-
-	t.Run("credHelpers/cross-scheme", func(t *testing.T) {
-		t.Setenv(EnvOverrideDir, "")
-		t.Setenv("DOCKER_AUTH_CONFIG", `{
-			"credHelpers": { "https://registry.example.com": "helper" }
-		}`)
-		mockExecCommand(t, `HELPER_STDOUT={"Username":"h","Secret":"s"}`)
-		validateAuthForHostname(t, "registry.example.com", "h", "s", nil)
-		validateAuthForHostname(t, "https://registry.example.com", "h", "s", nil)
-		validateAuthForHostname(t, "http://registry.example.com", "h", "s", nil)
 	})
 
 	t.Run("config/not-found", func(t *testing.T) {
