@@ -215,7 +215,7 @@ func (c *Config) Save() error {
 	return os.WriteFile(c.filepath, data, 0o644)
 }
 
-// lookupVariantsCapacity is the expected upper-bound of variants we build
+// lookupVariantsCapacity documents the expected upper-bound of variants we build
 // when resolving auth for a hostname:
 //  1. raw input
 //  2. scheme-stripped host
