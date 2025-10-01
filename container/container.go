@@ -12,7 +12,7 @@ import (
 
 // Container represents a container
 type Container struct {
-	dockerClient *client.Client
+	dockerClient client.SDKClient
 
 	// containerID the Container ID
 	containerID string
@@ -40,7 +40,7 @@ type Container struct {
 }
 
 // DockerClient returns the docker client used by the container.
-func (c *Container) DockerClient() *client.Client {
+func (c *Container) DockerClient() client.SDKClient {
 	return c.dockerClient
 }
 
@@ -77,7 +77,7 @@ func (c *Container) WaitingFor() wait.Strategy {
 // Host gets host (ip or name) of the docker daemon where the container port is exposed
 // Warning: this is based on your Docker host setting. Will fail if using an SSH tunnel
 func (c *Container) Host(ctx context.Context) (string, error) {
-	host, err := c.dockerClient.DaemonHost(ctx)
+	host, err := c.dockerClient.DaemonHostWithContext(ctx)
 	if err != nil {
 		return "", err
 	}

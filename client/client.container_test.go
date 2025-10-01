@@ -94,7 +94,7 @@ func TestContainerPause(t *testing.T) {
 	require.NoError(t, err)
 }
 
-func createContainer(tb testing.TB, dockerClient *client.Client, img string, name string) {
+func createContainer(tb testing.TB, dockerClient client.SDKClient, img string, name string) {
 	tb.Helper()
 
 	resp, err := dockerClient.ContainerCreate(context.Background(), &container.Config{
@@ -113,7 +113,7 @@ func createContainer(tb testing.TB, dockerClient *client.Client, img string, nam
 	})
 }
 
-func pullImage(tb testing.TB, client *client.Client, img string) {
+func pullImage(tb testing.TB, client client.SDKClient, img string) {
 	tb.Helper()
 
 	r, err := client.ImagePull(context.Background(), img, image.PullOptions{})

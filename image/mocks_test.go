@@ -4,8 +4,8 @@ import (
 	"bytes"
 	"context"
 	"io"
-	"log/slog"
 
+	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/build"
 	"github.com/docker/docker/api/types/image"
 	"github.com/docker/docker/client"
@@ -19,10 +19,13 @@ type errMockCli struct {
 	err             error
 	imageBuildCount int
 	imagePullCount  int
-	logger          *slog.Logger
 }
 
-func (f *errMockCli) ImageBuild(_ context.Context, _ build.ImageBuildOptions) (build.ImageBuildResponse, error) {
+func (f *errMockCli) Ping(_ context.Context) (types.Ping, error) {
+	return types.Ping{}, nil
+}
+
+func (f *errMockCli) ImageBuild(_ context.Context, _ io.Reader, _ build.ImageBuildOptions) (build.ImageBuildResponse, error) {
 	f.imageBuildCount++
 
 	// In real Docker API, the response body contains JSON build messages, not the build context
@@ -41,12 +44,4 @@ func (f *errMockCli) ImagePull(_ context.Context, _ string, _ image.PullOptions)
 
 func (f *errMockCli) Close() error {
 	return nil
-}
-
-func (f *errMockCli) Logger() *slog.Logger {
-	if f.logger == nil {
-		f.logger = slog.New(slog.NewTextHandler(io.Discard, nil))
-	}
-
-	return f.logger
 }

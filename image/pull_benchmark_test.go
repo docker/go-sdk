@@ -9,11 +9,15 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/image"
+	"github.com/docker/docker/client"
+	sdkclient "github.com/docker/go-sdk/client"
 )
 
 // mockImagePullClient implements ImagePullClient for testing
 type mockImagePullClient struct {
+	client.APIClient
 	*testLogger
 	pullFunc func(ctx context.Context, image string, options image.PullOptions) (io.ReadCloser, error)
 }
@@ -24,6 +28,10 @@ func (m *mockImagePullClient) Close() error {
 
 func (m *mockImagePullClient) ImagePull(ctx context.Context, image string, options image.PullOptions) (io.ReadCloser, error) {
 	return m.pullFunc(ctx, image, options)
+}
+
+func (m *mockImagePullClient) Ping(_ context.Context) (types.Ping, error) {
+	return types.Ping{}, nil
 }
 
 func setupPullBenchmark(b *testing.B) *mockImagePullClient {
@@ -47,8 +55,11 @@ func BenchmarkPull(b *testing.B) {
 		b.ResetTimer()
 		b.ReportAllocs()
 
+		sdk, err := sdkclient.New(context.TODO(), sdkclient.WithDockerAPI(client))
+		require.NoError(b, err)
+
 		for range b.N {
-			err := Pull(ctx, imageName, WithPullClient(client), WithPullOptions(pullOpt))
+			err := Pull(ctx, imageName, WithPullClient(sdk), WithPullOptions(pullOpt))
 			require.NoError(b, err)
 		}
 	})
@@ -63,8 +74,11 @@ func BenchmarkPull(b *testing.B) {
 		b.ResetTimer()
 		b.ReportAllocs()
 
+		sdk, err := sdkclient.New(context.TODO(), sdkclient.WithDockerAPI(client))
+		require.NoError(b, err)
+
 		for range b.N {
-			err := Pull(ctx, imageName, WithPullClient(client), WithPullOptions(pullOpt))
+			err := Pull(ctx, imageName, WithPullClient(sdk), WithPullOptions(pullOpt))
 			require.NoError(b, err)
 		}
 	})
@@ -82,9 +96,12 @@ func BenchmarkPull(b *testing.B) {
 		b.ResetTimer()
 		b.ReportAllocs()
 
+		sdk, err := sdkclient.New(context.TODO(), sdkclient.WithDockerAPI(client))
+		require.NoError(b, err)
+
 		for range b.N {
 			attempts = 0
-			err := Pull(ctx, imageName, WithPullClient(client), WithPullOptions(pullOpt))
+			err := Pull(ctx, imageName, WithPullClient(sdk), WithPullOptions(pullOpt))
 			require.NoError(b, err)
 		}
 	})
@@ -99,8 +116,11 @@ func BenchmarkPull(b *testing.B) {
 		b.ResetTimer()
 		b.ReportAllocs()
 
+		sdk, err := sdkclient.New(context.TODO(), sdkclient.WithDockerAPI(client))
+		require.NoError(b, err)
+
 		for range b.N {
-			err := Pull(ctx, imageName, WithPullClient(client), WithPullOptions(pullOpt), WithPullHandler(func(r io.ReadCloser) error {
+			err := Pull(ctx, imageName, WithPullClient(sdk), WithPullOptions(pullOpt), WithPullHandler(func(r io.ReadCloser) error {
 				_, err := io.Copy(io.Discard, r)
 				return err
 			}))
