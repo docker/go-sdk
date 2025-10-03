@@ -78,4 +78,27 @@ func TestPull(t *testing.T) {
 
 		require.Contains(t, buf.String(), "Pulling from library/nginx")
 	})
+
+	t.Run("with-credentials-fn/success", func(t *testing.T) {
+		cli, err := client.New(context.Background())
+		require.NoError(t, err)
+		defer cli.Close()
+
+		pull(t, cli, nil, image.WithCredentialsFn(func(_ string) (string, string, error) {
+			// no credentials because the image is public
+			return "", "", nil
+		}))
+	})
+
+	t.Run("with-credentials-fn/error", func(t *testing.T) {
+		cli, err := client.New(context.Background())
+		require.NoError(t, err)
+		defer cli.Close()
+
+		expectedErr := errors.New("test error")
+
+		pull(t, cli, expectedErr, image.WithCredentialsFn(func(_ string) (string, string, error) {
+			return "test", "test", expectedErr
+		}))
+	})
 }

@@ -28,4 +28,10 @@ func TestWithOptions(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, opts, pullOpts.pullOptions)
 	})
+
+	t.Run("with-credentials-from-config", func(t *testing.T) {
+		opts := &pullOptions{}
+		err := WithCredentialsFromConfig(opts)
+		require.NoError(t, err)
+	})
 }
