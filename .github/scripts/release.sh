@@ -48,8 +48,9 @@ commit_title="chore(release): bump module versions"
 commit_body=""
 
 for m in $MODULES; do
+  next_tag_path=$(get_next_tag "${m}")
   # if the module version file does not exist, skip it
-  if [[ ! -f "${ROOT_DIR}/.github/scripts/.${m}-next-tag" ]]; then
+  if [[ ! -f "${next_tag_path}" ]]; then
     echo "Skipping ${m} because the pre-release script did not run"
     continue
   fi
@@ -60,7 +61,7 @@ for m in $MODULES; do
     execute_or_echo git add "${ROOT_DIR}/${m}/go.sum"
   fi
 
-  nextTag=$(cat "${ROOT_DIR}/.github/scripts/.${m}-next-tag")
+  nextTag=$(cat "${next_tag_path}")
   echo "Next tag for ${m}: ${nextTag}"
   commit_body="${commit_body}\n - ${m}: ${nextTag}"
 done
@@ -75,8 +76,9 @@ fi
 
 # Create all tags after the single commit
 for m in $MODULES; do
-  if [[ -f "${ROOT_DIR}/.github/scripts/.${m}-next-tag" ]]; then
-    nextTag=$(cat "${ROOT_DIR}/.github/scripts/.${m}-next-tag")
+  next_tag_path=$(get_next_tag "${m}")
+  if [[ -f "${next_tag_path}" ]]; then
+    nextTag=$(cat "${next_tag_path}")
     execute_or_echo git tag "${m}/${nextTag}"
   fi
 done
@@ -84,7 +86,8 @@ done
 execute_or_echo git push origin main --tags
 
 for m in $MODULES; do
-  nextTag=$(cat "${ROOT_DIR}/.github/scripts/.${m}-next-tag")
+  next_tag_path=$(get_next_tag "${m}")
+  nextTag=$(cat "${next_tag_path}")
   curlGolangProxy "${m}" "${nextTag}"
-  execute_or_echo rm "${ROOT_DIR}/.github/scripts/.${m}-next-tag"
+  execute_or_echo rm "${next_tag_path}"
 done

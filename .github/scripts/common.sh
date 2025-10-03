@@ -81,6 +81,13 @@ find_latest_tag() {
   git tag --list | grep -E "${module}/v[0-9]+\.[0-9]+\.[0-9]+.*" | sort -V | tail -n 1
 }
 
+# Function to get the next tag for a module
+get_next_tag() {
+  local module="$1"
+  local next_tag_path="${ROOT_DIR}/.github/scripts/.${module}-next-tag"
+  echo "${next_tag_path}"
+}
+
 # Portable in-place sed editing that works on both BSD (macOS) and GNU (Linux) sed
 portable_sed() {
   local pattern="$1"
