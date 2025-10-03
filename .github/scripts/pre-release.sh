@@ -110,7 +110,7 @@ MODULE=$(echo "$MODULE" | tr '[:upper:]' '[:lower:]')
 if [[ "$DRY_RUN" == "true" ]]; then
   echo "[DRY RUN] Would update ${ROOT_DIR}/${MODULE}/version.go with version: ${NEXT_VERSION}"
 else
-  portable_sed "s/version = \"[^\"]*\"/version = \"${NEXT_VERSION}\"/" "${ROOT_DIR}/${MODULE}/version.go"
+  portable_sed "s/^\([[:space:]]*version[[:space:]]*=[[:space:]]*\)\"[^\"]*\"/\1\"${NEXT_VERSION}\"/" "${ROOT_DIR}/${MODULE}/version.go"
 fi
 
 # if next version does not start with v, add it
