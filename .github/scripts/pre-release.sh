@@ -110,6 +110,12 @@ MODULE=$(echo "$MODULE" | tr '[:upper:]' '[:lower:]')
 if [[ "$DRY_RUN" == "true" ]]; then
   echo "[DRY RUN] Would update ${ROOT_DIR}/${MODULE}/version.go with version: ${NEXT_VERSION}"
 else
+  # Regex explanation:
+  #   ^([[:space:]]*version[[:space:]]*=[[:space:]]*)\"[^\"]*\"
+  #   - ^ : Start of line
+  #   - ([[:space:]]*version[[:space:]]*=[[:space:]]*) : Group 1 matches any leading whitespace, the word 'version', optional whitespace, '=', optional whitespace
+  #   - \"[^\"]*\" : Matches a quoted string (the version value)
+  # The replacement keeps the left part and replaces the quoted value with the new version.
   portable_sed "s/^\([[:space:]]*version[[:space:]]*=[[:space:]]*\)\"[^\"]*\"/\1\"${NEXT_VERSION}\"/" "${ROOT_DIR}/${MODULE}/version.go"
 fi
 

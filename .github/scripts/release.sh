@@ -71,7 +71,7 @@ done
 if [[ -n "$(git diff --cached)" ]]; then
   git commit -m "${commit_title}" -m "$(echo -e "${commit_body}")"
 else
-  echo "No staged changes to commit. Skipping release."
+  echo "No changes detected in modules. Release process aborted."
   exit 1 # exit with error code 1 to not proceed with the release
 fi
 
@@ -86,9 +86,10 @@ done
 
 if [[ "${DRY_RUN}" == "true" ]]; then
   echo "Remote operations will be skipped."
-  # show the last commit
+  # show the last commit, including the patch
   echo "Last commit:"
-  git -C "${ROOT_DIR}" --no-pager log -1 --pretty=format:'%C(auto)%h%C(reset) %s%nAuthor: %an <%ae>%nDate:   %ad' --date=iso-local
+  git_log_format='%C(auto)%h%C(reset) %s%nAuthor: %an <%ae>%nDate:   %ad'
+  git -C "${ROOT_DIR}" --no-pager log -1 --pretty=format:"${git_log_format}" --date=iso-local
   git -C "${ROOT_DIR}" --no-pager show -1 --format= --patch --stat
   # list the new tags, that should point to the same last commit
   echo "New tags:"
