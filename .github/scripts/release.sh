@@ -86,8 +86,6 @@ done
 execute_or_echo git push origin main --tags
 
 for m in $MODULES; do
-  next_tag_path=$(get_next_tag "${m}")
-  nextTag=$(cat "${next_tag_path}")
+  nextTag=$(cat $(get_next_tag "${m}"))
   curlGolangProxy "${m}" "${nextTag}"
-  execute_or_echo rm "${next_tag_path}"
 done

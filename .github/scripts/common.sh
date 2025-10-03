@@ -36,6 +36,7 @@ get_script_dir() {
 
 readonly CURRENT_DIR="$(get_script_dir)"
 readonly ROOT_DIR="$(dirname $(dirname "${CURRENT_DIR}"))"
+readonly BUILD_DIR="${ROOT_DIR}/.github/scripts/.build"
 readonly GITHUB_REPO="github.com/docker/go-sdk"
 readonly DRY_RUN="${DRY_RUN:-true}"
 
@@ -84,7 +85,7 @@ find_latest_tag() {
 # Function to get the next tag for a module
 get_next_tag() {
   local module="$1"
-  local next_tag_path="${ROOT_DIR}/.github/scripts/.${module}-next-tag"
+  local next_tag_path="${BUILD_DIR}/${module}-next-tag"
   echo "${next_tag_path}"
 }
 

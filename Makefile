@@ -15,8 +15,13 @@ tidy-all:
 	@echo "Running tidy in all modules..."
 	$(call for-all-modules,go mod tidy)
 
+clean-build-dir:
+	@echo "Cleaning build directory..."
+	@rm -rf .github/scripts/.build
+	@mkdir -p .github/scripts/.build
+
 # Release version for all modules
-release-all:
+release-all: clean-build-dir
 	@echo "Preparing releasing versions for all modules..."
 	$(call for-all-modules,make pre-release)
 
