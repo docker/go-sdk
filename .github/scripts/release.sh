@@ -12,7 +12,8 @@
 #
 # Environment Variables:
 #   DRY_RUN          - Enable dry run mode (default: true)
-#                      When true, shows git commands without executing them
+#                      When true, shows commands without executing them, except for git commands
+#                      that are executed but before pushing the changes to the remote repository.
 #
 # Examples:
 #   ./.github/scripts/release.sh
@@ -55,10 +56,10 @@ for m in $MODULES; do
     continue
   fi
 
-  execute_or_echo git add "${ROOT_DIR}/${m}/version.go"
-  execute_or_echo git add "${ROOT_DIR}/${m}/go.mod"
+  git add "${ROOT_DIR}/${m}/version.go"
+  git add "${ROOT_DIR}/${m}/go.mod"
   if [[ -f "${ROOT_DIR}/${m}/go.sum" ]]; then
-    execute_or_echo git add "${ROOT_DIR}/${m}/go.sum"
+    git add "${ROOT_DIR}/${m}/go.sum"
   fi
 
   nextTag=$(cat "${next_tag_path}")
@@ -68,7 +69,7 @@ done
 
 # Create a single commit if there are staged changes
 if [[ -n "$(git diff --cached)" ]]; then
-  execute_or_echo git commit -m "${commit_title}" -m "$(echo -e "${commit_body}")"
+  git commit -m "${commit_title}" -m "$(echo -e "${commit_body}")"
 else
   echo "No staged changes to commit. Skipping release."
   exit 1 # exit with error code 1 to not proceed with the release
@@ -79,9 +80,22 @@ for m in $MODULES; do
   next_tag_path=$(get_next_tag "${m}")
   if [[ -f "${next_tag_path}" ]]; then
     nextTag=$(cat "${next_tag_path}")
-    execute_or_echo git tag "${m}/${nextTag}"
+    git tag "${m}/${nextTag}"
   fi
 done
+
+if [[ "${DRY_RUN}" == "true" ]]; then
+  echo "Remote operations will be skipped."
+  # show the last commit
+  echo "Last commit:"
+  git -C "${ROOT_DIR}" --no-pager log -1 --pretty=format:'%C(auto)%h%C(reset) %s%nAuthor: %an <%ae>%nDate:   %ad' --date=iso-local
+  git -C "${ROOT_DIR}" --no-pager show -1 --format= --patch --stat
+  # list the new tags, that should point to the same last commit
+  echo "New tags:"
+  git -C "${ROOT_DIR}" --no-pager tag --list --points-at HEAD
+fi
+
+echo "Pushing changes and tags to remote repository..."
 
 execute_or_echo git push origin main --tags
 

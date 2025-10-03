@@ -133,14 +133,10 @@ echo "Next tag: ${NEXT_TAG}"
 MODULES=$(go work edit -json | jq -r '.Use[] | "\(.DiskPath | ltrimstr("./"))"' | tr '\n' ' ' && echo)
 
 # Save the next tag for the module to a file so that the release script can use it
-execute_or_echo echo "${NEXT_vVERSION}" > "$(get_next_tag "${MODULE}")"
+echo "${NEXT_vVERSION}" > "$(get_next_tag "${MODULE}")"
 
 for m in $MODULES; do
-  if [[ "$DRY_RUN" == "true" ]]; then
-    echo "[DRY RUN] Would update ${ROOT_DIR}/${m}/go.mod: ${GITHUB_REPO}/${MODULE} v${NEXT_VERSION}"
-  else
-    portable_sed "s|${GITHUB_REPO}/${MODULE} v[^[:space:]]*|${GITHUB_REPO}/${MODULE} v${NEXT_VERSION}|g" "${ROOT_DIR}/${m}/go.mod"
-    # Update the go.sum file
-    (cd "${ROOT_DIR}/${m}" && execute_or_echo go mod tidy)
-  fi
+  portable_sed "s|${GITHUB_REPO}/${MODULE} v[^[:space:]]*|${GITHUB_REPO}/${MODULE} v${NEXT_VERSION}|g" "${ROOT_DIR}/${m}/go.mod"
+  # Update the go.sum file
+  (cd "${ROOT_DIR}/${m}" && go mod tidy)
 done

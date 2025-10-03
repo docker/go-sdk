@@ -15,6 +15,7 @@
 #   find_latest_tag  - Find latest tag for a given module
 #   get_modules      - Get list of modules from go.work file
 #   get_script_dir   - Get directory of the calling script
+#   portable_sed     - Portable in-place sed editing
 #
 # Constants:
 #   ROOT_DIR         - Root directory of the repository
@@ -53,12 +54,7 @@ function curlGolangProxy() {
   #   github.com/docker/go-sdk/client/v1.0.0.info
   local module_url="https://proxy.golang.org/${GITHUB_REPO}/${module}/@v/${module_version}.info"
 
-  if [[ "${DRY_RUN}" == "true" ]]; then
-    echo "[DRY RUN] Would execute: curl ${module_url}"
-    return
-  fi
-
-  curl "${module_url}"
+  execute_or_echo curl "${module_url}"
 }
 
 
@@ -93,11 +89,6 @@ get_next_tag() {
 portable_sed() {
   local pattern="$1"
   local file="$2"
-  
-  if [[ "$DRY_RUN" == "true" ]]; then
-    echo "[DRY RUN] Would execute: sed '$pattern' in $file"
-    return
-  fi
   
   # Detect sed version and use appropriate syntax
   if sed --version >/dev/null 2>&1; then

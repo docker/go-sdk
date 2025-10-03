@@ -66,6 +66,7 @@ jobs:
       env:
         DRY_RUN: ${{ inputs.dry_run }}
         BUMP_TYPE: ${{ inputs.bump_type }}
+        LOCAL_RELEASE: false
       run: |
         echo "Starting release process..."
         make release-all

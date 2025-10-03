@@ -67,7 +67,7 @@ DRY_RUN=false make release-all
 ```
 
 #### Environment Variables
-- `DRY_RUN`: `true` (default) or `false`
+- `DRY_RUN`: `true` (default) or `false`. It generates the release (commit and tags) locally, without pushing changes to the remote repository.
 - `BUMP_TYPE`: `prerelease` (default), `patch`, `minor`, or `major`. To know more about the bump type values, please read more [here](https://github.com/fsaintjacques/semver-tool).
 
 ## Release Types
@@ -102,6 +102,7 @@ DRY_RUN=false make release-all
 
 ### 2. File Updates
 For each module:
+- Writes the next version to a file in the build directory, located at `.github/scripts/.build/<module>-next-tag`. This is a temporary file that is used to store the next version for the module.
 - Updates `<module>/version.go` with new version
 - Updates all `go.mod` files with new cross-module dependencies
 - Runs `go mod tidy` to update `go.sum` files
@@ -111,9 +112,13 @@ For each module:
 - Creates git tags for each module (e.g., `client/v0.1.0-alpha006`)
 - Pushes changes and tags to GitHub
 
+If `DRY_RUN` is `true`, the script does not push changes and tags to the remote repository.
+
 ### 4. Go Proxy Registration
 - Triggers Go proxy to fetch new module versions
 - Makes modules immediately available for download
+
+If `DRY_RUN` is `true`, the script does not trigger the Go proxy.
 
 ## Troubleshooting
 
