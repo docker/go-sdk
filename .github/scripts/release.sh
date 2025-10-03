@@ -69,7 +69,8 @@ done
 if [[ -n "$(git diff --cached)" ]]; then
   execute_or_echo git commit -m "${commit_title}" -m "$(echo -e "${commit_body}")"
 else
-  echo "No staged changes to commit"
+  echo "No staged changes to commit. Skipping release."
+  exit 1 # exit with error code 1 to not proceed with the release
 fi
 
 # Create all tags after the single commit
