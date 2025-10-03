@@ -50,12 +50,14 @@ function curlGolangProxy() {
   #   github.com/docker/go-sdk/client/v0.0.1.info
   #   github.com/docker/go-sdk/client/v0.1.0.info
   #   github.com/docker/go-sdk/client/v1.0.0.info
+  local module_url="https://proxy.golang.org/${GITHUB_REPO}/${module}/@v/${module_version}.info"
+
   if [[ "${DRY_RUN}" == "true" ]]; then
-    echo "[DRY RUN] Would execute: curl https://proxy.golang.org/${GITHUB_REPO}/${module}/@v/${module_version}.info"
+    echo "[DRY RUN] Would execute: curl ${module_url}"
     return
   fi
 
-  curl "https://proxy.golang.org/${GITHUB_REPO}/${module}/@v/${module_version}.info"
+  curl "${module_url}"
 }
 
 
