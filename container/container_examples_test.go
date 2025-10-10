@@ -223,21 +223,22 @@ func ExampleFromResponse() {
 	}
 	fmt.Println("File content:", buf.String())
 
-	// terminate the recreated container
+	// Terminate the recreated container
 	err = recreated.Terminate(context.Background())
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
 
-	// terminate the original container should fail
+	// Terminate the original container should fail
 	err = ctr.Terminate(context.Background())
-	if err == nil {
-		fmt.Println(err)
+	if err != nil {
+		fmt.Println("Container did not exist")
 		return
 	}
 
 	// Output:
 	// Container IDs match: true
 	// File content: Hello from FromResponse!
+	// Container did not exist
 }
