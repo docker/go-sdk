@@ -20,10 +20,12 @@ func TestFromResponse(t *testing.T) {
 		},
 	}
 
-	ctr, err := FromResponse(context.Background(), response)
+	ctr, err := FromResponse(context.Background(), nil, response)
 	require.NoError(t, err)
 	require.Equal(t, "1234567890abcdefgh", ctr.ID())
 	require.Equal(t, "1234567890ab", ctr.ShortID())
 	require.Equal(t, "nginx:latest", ctr.Image())
 	require.Equal(t, []string{"80/tcp", "8080/udp"}, ctr.exposedPorts)
+	require.NotNil(t, ctr.dockerClient)
+	require.NotNil(t, ctr.logger)
 }

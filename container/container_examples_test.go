@@ -7,6 +7,7 @@ import (
 	"io"
 	"strings"
 
+	containertypes "github.com/docker/docker/api/types/container"
 	"github.com/docker/go-sdk/container"
 	"github.com/docker/go-sdk/container/exec"
 )
@@ -164,4 +165,79 @@ func ExampleContainer_Exec() {
 	// <nil>
 	// /usr/share/nginx/html
 	// <nil>
+}
+
+func ExampleFromResponse() {
+	// First, create a container using Run
+	ctr, err := container.Run(context.Background(), container.WithImage("alpine:latest"))
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	// Use the SDK client from the existing container
+	cli := ctr.Client()
+
+	// List containers to get the Summary (this is what you'd typically get from the Docker API)
+	containers, err := cli.ContainerList(context.Background(), containertypes.ListOptions{All: true})
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	// Find our container in the list
+	var summary containertypes.Summary
+	for _, c := range containers {
+		if c.ID == ctr.ID() {
+			summary = c
+			break
+		}
+	}
+
+	// Now recreate the container using FromResponse with the container summary
+	// This is useful when you only have a container ID and need to perform operations on it
+	recreated, err := container.FromResponse(context.Background(), cli, summary)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	fmt.Println("Container IDs match:", recreated.ID() == ctr.ID())
+
+	// Now you can use operations like CopyToContainer on the recreated container
+	content := []byte("Hello from FromResponse!")
+	if err := recreated.CopyToContainer(context.Background(), content, "/tmp/test.txt", 0o644); err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	// Verify the file was copied
+	rc, err := recreated.CopyFromContainer(context.Background(), "/tmp/test.txt")
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	buf := new(bytes.Buffer)
+	if _, err := io.Copy(buf, rc); err != nil {
+		fmt.Println(err)
+		return
+	}
+	fmt.Println("File content:", buf.String())
+
+	// terminate the recreated container
+	err = recreated.Terminate(context.Background())
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	// terminate the original container should fail
+	err = ctr.Terminate(context.Background())
+	if err == nil {
+		fmt.Println(err)
+		return
+	}
+
+	// Output:
+	// Container IDs match: true
+	// File content: Hello from FromResponse!
 }

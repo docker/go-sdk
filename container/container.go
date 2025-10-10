@@ -84,19 +84,30 @@ func (c *Container) Host(ctx context.Context) (string, error) {
 	return host, nil
 }
 
-// FromResponse builds a container struct from the response of the Docker API
-func FromResponse(_ context.Context, response container.Summary) (*Container, error) {
+// FromResponse builds a container struct from the response of the Docker API.
+// If dockerClient is nil, a new client will be created using the default configuration.
+func FromResponse(ctx context.Context, dockerClient client.SDKClient, response container.Summary) (*Container, error) {
+	if dockerClient == nil {
+		sdk, err := client.New(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create docker client: %w", err)
+		}
+		dockerClient = sdk
+	}
+
 	exposedPorts := make([]string, len(response.Ports))
 	for i, port := range response.Ports {
 		exposedPorts[i] = fmt.Sprintf("%d/%s", port.PublicPort, port.Type)
 	}
 
 	ctr := &Container{
+		dockerClient: dockerClient,
 		containerID:  response.ID,
 		shortID:      response.ID[:12],
 		image:        response.Image,
 		isRunning:    response.State == "running",
 		exposedPorts: exposedPorts,
+		logger:       dockerClient.Logger(),
 		lifecycleHooks: []LifecycleHooks{
 			DefaultLoggingHook,
 		},
