@@ -232,10 +232,11 @@ func ExampleFromResponse() {
 
 	// Terminate the original container should fail
 	err = ctr.Terminate(context.Background())
-	if err != nil {
-		fmt.Println("Container did not exist")
+	if err == nil {
+		// Termination unexpectedly succeeded; a failure path for the example
 		return
 	}
+	fmt.Println("Container did not exist")
 
 	// Output:
 	// Container IDs match: true
