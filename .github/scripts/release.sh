@@ -112,7 +112,7 @@ if [[ "${DRY_RUN}" == "true" ]]; then
     fi
   done
   echo ""
-  echo "Changes in ${m}/version.go files:"
+  echo "Changes in version.go files:"
   for m in $MODULES; do
     next_tag_path=$(get_next_tag "${m}")
     if [[ -f "${next_tag_path}" ]]; then
