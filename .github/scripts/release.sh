@@ -61,7 +61,7 @@ else
 fi
 
 # Get all modules for staging go.mod changes
-ALL_MODULES=$(go work edit -json | jq -r '.Use[] | "\(.DiskPath | ltrimstr("./"))"' | tr '\n' ' ' && echo)
+ALL_MODULES=$(get_modules)
 
 commit_body=""
 tags_to_create=""

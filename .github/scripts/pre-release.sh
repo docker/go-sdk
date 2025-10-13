@@ -136,7 +136,7 @@ echo "Next tag: ${NEXT_TAG}"
 
 # Find the line that contains the module and replace it with the new version
 
-MODULES=$(go work edit -json | jq -r '.Use[] | "\(.DiskPath | ltrimstr("./"))"' | tr '\n' ' ' && echo)
+MODULES=$(get_modules)
 
 # Ensure build directory exists before saving next tag
 mkdir -p "${BUILD_DIR}"
