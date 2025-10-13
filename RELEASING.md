@@ -12,40 +12,32 @@ Each module's version is defined in the `version.go` file at the root of the mod
 
 ### 1. GitHub Actions (Recommended)
 
-The primary way to perform releases is through GitHub Actions workflow.
+The primary way to perform releases is through GitHub Actions workflows.
 
-#### Navigate to Actions
+#### Releasing All Modules
+
 1. Go to the [Actions tab](../../actions) in the GitHub repository
 2. Select the "Release All Modules" workflow
 3. Click "Run workflow"
+4. Configure release parameters:
+   - **Dry Run**: `true` (default) - Shows what would happen without making any git changes
+   - **Bump Type**: `prerelease` (default), `patch`, `minor`, or `major`
+5. **First Run (Dry Run)**: Always start with `dry_run: true` to preview changes
+6. **Review Output**: Check the workflow logs for version increments and changes
+7. **Actual Release**: If satisfied, run again with `dry_run: false`
 
-#### Configure Release Parameters
-- **Dry Run**: 
-  - ✅ `true` (default) - Shows what would happen without making changes
-  - ❌ `false` - Performs actual release with git commits and tags
-- **Bump Type**: Select version increment type
-  - `prerelease` (default) - Increments prerelease version (e.g., `v0.1.0-alpha005` → `v0.1.0-alpha006`)
-  - `patch` - Increments patch version (e.g., `v0.1.0` → `v0.1.1`)
-  - `minor` - Increments minor version (e.g., `v0.1.0` → `v0.2.0`)
-  - `major` - Increments major version (e.g., `v0.1.0` → `v1.0.0`)
+#### Releasing a Single Module
 
-#### Release Steps
-1. **First Run (Dry Run)**: Always start with `dry_run: true` to verify changes
-   ```
-   Dry Run: ✅ true
-   Bump Type: prerelease
-   ```
-   
-2. **Review Output**: Check the workflow logs to ensure:
-   - Correct version increments
-   - All modules are being updated
-   - No unexpected changes
+1. Go to the [Actions tab](../../actions) in the GitHub repository
+2. Select the "Release Single Module" workflow
+3. Click "Run workflow"
+4. Configure release parameters:
+   - **Module**: Type the module name (e.g., `container`, `client`, `image`)
+   - **Dry Run**: `true` (default) - Shows preview without making changes
+   - **Bump Type**: `prerelease` (default), `patch`, `minor`, or `major`
+5. Follow the same dry-run-first workflow as above
 
-3. **Actual Release**: If dry run looks good, run again with `dry_run: false`
-   ```
-   Dry Run: ❌ false  
-   Bump Type: prerelease
-   ```
+**Note**: The module name will be validated against the available modules in `go.work`. If you enter an invalid name, you'll get a helpful error message listing available modules.
 
 ### 2. Manual Release (Advanced)
 
@@ -57,18 +49,38 @@ If you need to perform releases manually or troubleshoot issues:
 - Git configured with push permissions
 - All modules building successfully
 
-#### Commands
+#### Releasing All Modules
 ```bash
-# Dry run to see what would happen
+# Dry run to preview changes (no git changes made)
 DRY_RUN=true make release-all
 
-# Actual release
+# Actual release (creates commits, tags, and pushes)
 DRY_RUN=false make release-all
+
+# With specific bump type
+BUMP_TYPE=patch DRY_RUN=false make release-all
+```
+
+#### Releasing a Single Module
+```bash
+# From the module directory
+cd container
+make pre-release              # Prepare version files
+DRY_RUN=true make release     # Preview (no git changes)
+DRY_RUN=false make release    # Actual release
+
+# Or using scripts directly from root
+./.github/scripts/pre-release.sh container
+DRY_RUN=false ./.github/scripts/release.sh container
 ```
 
 #### Environment Variables
-- `DRY_RUN`: `true` (default) or `false`. It generates the release (commit and tags) locally, without pushing changes to the remote repository.
-- `BUMP_TYPE`: `prerelease` (default), `patch`, `minor`, or `major`. To know more about the bump type values, please read more [here](https://github.com/fsaintjacques/semver-tool).
+- `DRY_RUN`: `true` (default) or `false`
+  - `true`: Shows what would be done without making any git changes (commits, tags, push)
+  - `false`: Creates commits, tags, and pushes to remote
+- `BUMP_TYPE`: `prerelease` (default), `patch`, `minor`, or `major`
+  - Controls how the version number is incremented
+  - Read more about semver [here](https://github.com/fsaintjacques/semver-tool)
 
 ## Release Types
 
@@ -108,17 +120,25 @@ For each module:
 - Runs `go mod tidy` to update `go.sum` files
 
 ### 3. Git Operations
-- Commits all version changes
+When `DRY_RUN=false`:
+- Creates a single commit with all version changes
 - Creates git tags for each module (e.g., `client/v0.1.0-alpha006`)
-- Pushes changes and tags to GitHub
+- Pushes commit and tags to GitHub
 
-If `DRY_RUN` is `true`, the script does not push changes and tags to the remote repository.
+When `DRY_RUN=true`:
+- **No git operations are performed**
+- Shows preview of what commit and tags would be created
+- Shows diffs of version files
+- Completely safe to run multiple times
 
 ### 4. Go Proxy Registration
+When `DRY_RUN=false`:
 - Triggers Go proxy to fetch new module versions
-- Makes modules immediately available for download
+- Makes modules immediately available for download via `go get`
 
-If `DRY_RUN` is `true`, the script does not trigger the Go proxy.
+When `DRY_RUN=true`:
+- No proxy registration occurs
+- Preview only
 
 ## Troubleshooting
 
@@ -142,13 +162,33 @@ If `DRY_RUN` is `true`, the script does not trigger the Go proxy.
 
 ### Manual Recovery
 
-If a release fails partway through:
+#### If Pre-Release Succeeds but Release Fails
 
-1. **Reset changes**: `git reset --hard HEAD`
-2. **Check current state**: `git status`
-3. **Review logs**: Check GitHub Actions logs for specific errors
-4. **Fix issues**: Address any underlying problems
-5. **Retry**: Run release process again
+Since dry-run makes no git changes, you're always safe. If you want to start over:
+
+```bash
+# Remove the prepared version files and restore original state
+cd container
+git restore version.go go.mod go.sum
+rm ../.github/scripts/.build/container-next-tag
+
+# Then run pre-release again
+make pre-release
+```
+
+#### If Release Partially Completes (DRY_RUN=false)
+
+If a non-dry-run release fails partway through:
+
+1. **Check current state**: `git status`
+2. **Review what happened**: `git log -1` and `git tag --points-at HEAD`
+3. **If commit was created but not pushed**:
+   ```bash
+   git reset --hard HEAD~1  # Undo commit
+   git tag -d module/v0.1.0-alpha001  # Delete local tag
+   ```
+4. **If pushed to remote**: Contact maintainers - may need to create a follow-up release
+5. **Retry**: Run release process again after fixes
 
 ### Getting Help
 
