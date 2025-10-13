@@ -75,7 +75,7 @@ dependencies-scan:
 	go list -json -m all | docker run --rm -i sonatypecommunity/nancy:latest sleuth --skip-update-check
 
 # ------------------------------------------------------------------------------
-# Prepare release
+# Release
 # ------------------------------------------------------------------------------
 .PHONY: pre-release
 pre-release:
@@ -85,3 +85,12 @@ pre-release:
 	fi
 	@echo "Releasing version for module: $(MODULE_DIR)"
 	@$(ROOT_DIR)/.github/scripts/pre-release.sh "$(MODULE_DIR)"
+
+.PHONY: release
+release:
+	@if [ -z "$(MODULE_DIR)" ]; then \
+		echo "Usage: make release, from one of the module directories (e.g. make release from client/ directory)"; \
+		exit 1; \
+	fi
+	@echo "Finalizing release for module: $(MODULE_DIR)"
+	@$(ROOT_DIR)/.github/scripts/release.sh "$(MODULE_DIR)"

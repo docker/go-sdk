@@ -3,12 +3,16 @@
 # =============================================================================
 # Release Finalizer
 # =============================================================================
-# Description: Commits and tags version changes for all modules, then triggers
+# Description: Commits and tags version changes for modules, then triggers
 #              Go proxy to make the new versions available for download
 #              This script is typically run after pre-release.sh has
-#              updated all module versions
+#              updated module versions
 #
-# Usage: ./.github/scripts/release.sh
+# Usage: ./.github/scripts/release.sh [module]
+#
+# Arguments:
+#   module           - Name of specific module to release (optional)
+#                      If not provided, releases all modules with prepared versions
 #
 # Environment Variables:
 #   DRY_RUN          - Enable dry run mode (default: true)
@@ -17,7 +21,9 @@
 #
 # Examples:
 #   ./.github/scripts/release.sh
+#   ./.github/scripts/release.sh container
 #   DRY_RUN=false ./.github/scripts/release.sh
+#   DRY_RUN=false ./.github/scripts/release.sh container
 #
 # Dependencies:
 #   - git (configured with push permissions)
@@ -42,10 +48,21 @@ set -e
 readonly SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 source "${SCRIPT_DIR}/common.sh"
 
-# Collect and stage changes across modules, then create a single commit
-MODULES=$(go work edit -json | jq -r '.Use[] | "\(.DiskPath | ltrimstr("./"))"' | tr '\n' ' ' && echo)
+MODULE="${1:-}"
 
-commit_title="chore(release): bump module versions"
+# Collect and stage changes across modules, then create a single commit
+if [[ -n "${MODULE}" ]]; then
+  # Single module release
+  MODULES="${MODULE}"
+  echo "Releasing single module: ${MODULE}"
+  commit_title="chore(${MODULE}): bump version"
+else
+  # All modules release
+  MODULES=$(go work edit -json | jq -r '.Use[] | "\(.DiskPath | ltrimstr("./"))"' | tr '\n' ' ' && echo)
+  echo "Releasing all modules with prepared versions"
+  commit_title="chore(release): bump module versions"
+fi
+
 commit_body=""
 
 for m in $MODULES; do
