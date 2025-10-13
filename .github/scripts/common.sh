@@ -93,9 +93,9 @@ portable_sed() {
   # Detect sed version and use appropriate syntax
   if sed --version >/dev/null 2>&1; then
     # GNU sed (Linux)
-    sed -i "$pattern" "$file"
+    execute_or_echo sed -i "$pattern" "$file"
   else
     # BSD sed (macOS)
-    sed -i '' "$pattern" "$file"
+    execute_or_echo sed -i '' "$pattern" "$file"
   fi
 }
