@@ -73,7 +73,9 @@ else
   MODULES_TO_TAG="${ALL_MODULES}"
 fi
 
-# Stage version.go and collect tag information only for modules being released
+# Stage version.go and collect tag information only for modules being released.
+# Note: Only version.go files for modules being released are staged here.
+#       go.mod and go.sum files for all modules are staged separately below.
 for m in $MODULES_TO_TAG; do
   next_tag_path=$(get_next_tag "${m}")
   # if the module version file does not exist, skip it
