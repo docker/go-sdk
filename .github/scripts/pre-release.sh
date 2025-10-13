@@ -138,6 +138,9 @@ echo "Next tag: ${NEXT_TAG}"
 
 MODULES=$(go work edit -json | jq -r '.Use[] | "\(.DiskPath | ltrimstr("./"))"' | tr '\n' ' ' && echo)
 
+# Ensure build directory exists before saving next tag
+mkdir -p "${BUILD_DIR}"
+
 # Save the next tag for the module to a file so that the release script can use it
 echo "${NEXT_vVERSION}" > "$(get_next_tag "${MODULE}")"
 
