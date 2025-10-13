@@ -1,8 +1,12 @@
-name: Release All Modules
+name: Release Single Module
 
 on:
   workflow_dispatch:
     inputs:
+      module:
+        description: 'Module to release (e.g., container, client, config, context, image, network, volume)'
+        required: true
+        type: string
       dry_run:
         description: 'Perform a dry run without creating tags or pushing changes'
         required: false
@@ -20,7 +24,7 @@ on:
           - major
 
 jobs:
-  release-all-modules:
+  release-module:
     # Additional safety check - only run on main branch
     if: ${{ github.ref == 'refs/heads/main' }}
     runs-on: ubuntu-latest
@@ -54,27 +58,54 @@ jobs:
         git config --global user.name "github-actions[bot]"
         git config --global user.email "github-actions[bot]@users.noreply.github.com"
 
+    - name: Validate module
+      run: |
+        # Get list of modules from go.work
+        AVAILABLE_MODULES=$(go work edit -json | jq -r '.Use[].DiskPath' | sed 's|^\./||')
+
+        # Check if the requested module exists
+        if ! echo "$AVAILABLE_MODULES" | grep -q "^${{ inputs.module }}$"; then
+          echo "❌ Error: Module '${{ inputs.module }}' not found in go.work"
+          echo ""
+          echo "Available modules:"
+          echo "$AVAILABLE_MODULES" | sed 's/^/  - /'
+          exit 1
+        fi
+
+        echo "✅ Module '${{ inputs.module }}' is valid"
+
     - name: Display run configuration
       run: |
         echo "🚀 Release Configuration:"
+        echo "  - Module: ${{ inputs.module }}"
         echo "  - Dry Run: ${{ inputs.dry_run }}"
         echo "  - Bump Type: ${{ inputs.bump_type }}"
         echo "  - Repository: ${{ github.repository }}"
         echo "  - Branch: ${{ github.ref_name }}"
 
-    - name: Run release for all modules
+    - name: Prepare release for module
       env:
         DRY_RUN: ${{ inputs.dry_run }}
         BUMP_TYPE: ${{ inputs.bump_type }}
         LOCAL_RELEASE: false
+      working-directory: "${{ inputs.module }}"
       run: |
-        echo "Starting release process..."
-        make release-all
+        echo "Preparing release for module: ${{ inputs.module }}"
+        make pre-release
+
+    - name: Finalize release for module
+      env:
+        DRY_RUN: ${{ inputs.dry_run }}
+        LOCAL_RELEASE: false
+      working-directory: "${{ inputs.module }}"
+      run: |
+        echo "Finalizing release for module: ${{ inputs.module }}"
+        make release
 
         if [[ "${{ inputs.dry_run }}" == "true" ]]; then
-          echo "✅ Dry run release completed successfully!"
+          echo "✅ Dry run release completed successfully for ${{ inputs.module }}!"
           echo "No changes were made to the repository."
         else
-          echo "✅ Release completed successfully!"
-          echo "All modules have been updated, tags have been created and Go proxy has been updated"
+          echo "✅ Release completed successfully for ${{ inputs.module }}!"
+          echo "Module has been updated, tag has been created and Go proxy has been updated"
         fi
