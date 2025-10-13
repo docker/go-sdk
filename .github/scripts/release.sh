@@ -52,20 +52,29 @@ MODULE="${1:-}"
 # Collect and stage changes across modules, then create a single commit
 if [[ -n "${MODULE}" ]]; then
   # Single module release
-  MODULES="${MODULE}"
   echo "Releasing single module: ${MODULE}"
   commit_title="chore(${MODULE}): bump version"
 else
   # All modules release
-  MODULES=$(go work edit -json | jq -r '.Use[] | "\(.DiskPath | ltrimstr("./"))"' | tr '\n' ' ' && echo)
   echo "Releasing all modules with prepared versions"
   commit_title="chore(release): bump module versions"
 fi
 
+# Get all modules for staging go.mod changes
+ALL_MODULES=$(go work edit -json | jq -r '.Use[] | "\(.DiskPath | ltrimstr("./"))"' | tr '\n' ' ' && echo)
+
 commit_body=""
 tags_to_create=""
 
-for m in $MODULES; do
+# Determine which modules to tag
+if [[ -n "${MODULE}" ]]; then
+  MODULES_TO_TAG="${MODULE}"
+else
+  MODULES_TO_TAG="${ALL_MODULES}"
+fi
+
+# Stage version.go and collect tag information only for modules being released
+for m in $MODULES_TO_TAG; do
   next_tag_path=$(get_next_tag "${m}")
   # if the module version file does not exist, skip it
   if [[ ! -f "${next_tag_path}" ]]; then
@@ -74,15 +83,19 @@ for m in $MODULES; do
   fi
 
   execute_or_echo git add "${ROOT_DIR}/${m}/version.go"
-  execute_or_echo git add "${ROOT_DIR}/${m}/go.mod"
-  if [[ -f "${ROOT_DIR}/${m}/go.sum" ]]; then
-    execute_or_echo git add "${ROOT_DIR}/${m}/go.sum"
-  fi
 
   nextTag=$(cat "${next_tag_path}")
   echo "Next tag for ${m}: ${nextTag}"
   commit_body="${commit_body}\n - ${m}: ${nextTag}"
   tags_to_create="${tags_to_create} ${m}/${nextTag}"
+done
+
+# Stage go.mod and go.sum for ALL modules (they all need to reference the new version)
+for m in $ALL_MODULES; do
+  execute_or_echo git add "${ROOT_DIR}/${m}/go.mod"
+  if [[ -f "${ROOT_DIR}/${m}/go.sum" ]]; then
+    execute_or_echo git add "${ROOT_DIR}/${m}/go.sum"
+  fi
 done
 
 if [[ "${DRY_RUN}" == "true" ]]; then
@@ -101,25 +114,24 @@ if [[ "${DRY_RUN}" == "true" ]]; then
   done
   echo ""
   echo "Files that would be committed:"
-  for m in $MODULES; do
+  for m in $MODULES_TO_TAG; do
     next_tag_path=$(get_next_tag "${m}")
     if [[ -f "${next_tag_path}" ]]; then
       echo "  ${m}/version.go"
-      echo "  ${m}/go.mod"
-      if [[ -f "${ROOT_DIR}/${m}/go.sum" ]]; then
-        echo "  ${m}/go.sum"
-      fi
+    fi
+  done
+  for m in $ALL_MODULES; do
+    echo "  ${m}/go.mod"
+    if [[ -f "${ROOT_DIR}/${m}/go.sum" ]]; then
+      echo "  ${m}/go.sum"
     fi
   done
   echo ""
   echo "Changes in module files:"
-  for m in $MODULES; do
-    next_tag_path=$(get_next_tag "${m}")
-    if [[ -f "${next_tag_path}" ]]; then
-      echo ""
-      echo "--- ${m}/... ---"
-      git --no-pager diff "${ROOT_DIR}/${m}" || echo "  (new file)"
-    fi
+  for m in $ALL_MODULES; do
+    echo ""
+    echo "--- ${m}/... ---"
+    git --no-pager diff "${ROOT_DIR}/${m}" || echo "  (new file)"
   done
   echo ""
   echo "=========================================="
@@ -138,7 +150,7 @@ else
 fi
 
 # Create all tags after the single commit
-for m in $MODULES; do
+for m in $MODULES_TO_TAG; do
   next_tag_path=$(get_next_tag "${m}")
   if [[ -f "${next_tag_path}" ]]; then
     nextTag=$(cat "${next_tag_path}")
@@ -158,7 +170,7 @@ echo ""
 echo "Pushing changes and tags to remote repository..."
 execute_or_echo git push origin main --tags
 
-for m in $MODULES; do
+for m in $MODULES_TO_TAG; do
   nextTag=$(cat $(get_next_tag "${m}"))
   curlGolangProxy "${m}" "${nextTag}"
 done
