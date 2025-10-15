@@ -9,28 +9,28 @@ import (
 )
 
 // FindByID finds the volume by ID.
-func FindByID(ctx context.Context, volumeID string, opts ...FindOptions) (Volume, error) {
+func FindByID(ctx context.Context, volumeID string, opts ...FindOptions) (*Volume, error) {
 	findOpts := &findOptions{}
 	for _, opt := range opts {
 		if err := opt(findOpts); err != nil {
-			return Volume{}, err
+			return nil, err
 		}
 	}
 
 	if findOpts.client == nil {
 		sdk, err := client.New(ctx)
 		if err != nil {
-			return Volume{}, err
+			return nil, err
 		}
 		findOpts.client = sdk
 	}
 
 	v, err := findOpts.client.VolumeInspect(ctx, volumeID)
 	if err != nil {
-		return Volume{}, err
+		return nil, err
 	}
 
-	return Volume{
+	return &Volume{
 		Volume:       &v,
 		dockerClient: findOpts.client,
 	}, nil

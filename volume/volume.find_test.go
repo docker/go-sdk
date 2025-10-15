@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/containerd/errdefs"
 	"github.com/stretchr/testify/require"
 
 	"github.com/docker/docker/api/types/filters"
@@ -31,6 +32,12 @@ func TestByID(t *testing.T) {
 		require.Equal(t, v.Options, vol.Options)
 		require.Equal(t, v.CreatedAt, vol.CreatedAt)
 		require.Equal(t, v.ClusterVolume, vol.ClusterVolume)
+	})
+
+	t.Run("does-not-exist", func(t *testing.T) {
+		vol, err := volume.FindByID(context.Background(), "does-not-exist")
+		require.ErrorIs(t, err, errdefs.ErrNotFound)
+		require.Nil(t, vol)
 	})
 
 	t.Run("with-find-client", func(t *testing.T) {
