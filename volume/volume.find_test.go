@@ -65,15 +65,20 @@ func TestList(t *testing.T) {
 	})
 
 	t.Run("multiple-volumes", func(t *testing.T) {
+		vols, err := volume.List(context.Background())
+		require.NoError(t, err)
+
+		initialCount := len(vols)
+
 		for i := range 10 {
 			v, err := volume.New(context.Background(), volume.WithName(fmt.Sprintf("test-volume-%d", i)))
 			volume.Cleanup(t, v)
 			require.NoError(t, err)
 		}
 
-		vols, err := volume.List(context.Background())
+		vols, err = volume.List(context.Background())
 		require.NoError(t, err)
-		require.Len(t, vols, 10)
+		require.Len(t, vols, initialCount+10)
 
 		names := make([]string, len(vols))
 		for i, v := range vols {
