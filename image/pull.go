@@ -66,7 +66,7 @@ func Pull(ctx context.Context, imageName string, opts ...PullOption) error {
 
 	pullOpts.pullOptions.RegistryAuth, err = registry.EncodeAuthConfig(authConfig)
 	if err != nil {
-		pullOpts.client.Logger().Warn("failed to marshal image auth, setting empty credentials for the image", "image", imageName, "error", err)
+		pullOpts.client.Logger().Warn("failed to encode image auth, setting empty credentials for the image", "image", imageName, "error", err)
 	}
 
 	var pull io.ReadCloser
