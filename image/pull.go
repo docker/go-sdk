@@ -2,8 +2,6 @@ package image
 
 import (
 	"context"
-	"encoding/base64"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -11,8 +9,8 @@ import (
 
 	"github.com/cenkalti/backoff/v4"
 
+	"github.com/docker/docker/api/types/registry"
 	"github.com/docker/go-sdk/client"
-	"github.com/docker/go-sdk/config"
 )
 
 // defaultPullHandler is the default pull handler function.
@@ -61,15 +59,14 @@ func Pull(ctx context.Context, imageName string, opts ...PullOption) error {
 		return fmt.Errorf("failed to retrieve registry credentials for %s: %w", imageName, err)
 	}
 
-	authConfig := config.AuthConfig{
+	authConfig := registry.AuthConfig{
 		Username: username,
 		Password: password,
 	}
-	encodedJSON, err := json.Marshal(authConfig)
+
+	pullOpts.pullOptions.RegistryAuth, err = registry.EncodeAuthConfig(authConfig)
 	if err != nil {
 		pullOpts.client.Logger().Warn("failed to marshal image auth, setting empty credentials for the image", "image", imageName, "error", err)
-	} else {
-		pullOpts.pullOptions.RegistryAuth = base64.URLEncoding.EncodeToString(encodedJSON)
 	}
 
 	var pull io.ReadCloser
