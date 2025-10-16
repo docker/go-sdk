@@ -8,6 +8,8 @@ import (
 	"os/exec"
 	"runtime"
 	"strings"
+
+	"github.com/docker/docker/api/types/registry"
 )
 
 // Errors from credential helpers.
@@ -34,8 +36,8 @@ var (
 // Hostnames should already be resolved using [ResolveRegistryHost]
 //
 // If the username string is empty, the password string is an identity token.
-func credentialsFromHelper(helper, hostname string) (AuthConfig, error) {
-	var creds AuthConfig
+func credentialsFromHelper(helper, hostname string) (registry.AuthConfig, error) {
+	var creds registry.AuthConfig
 	credHelperName := helper
 	if helper == "" {
 		helper, helperErr := getCredentialHelper()

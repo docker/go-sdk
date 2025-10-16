@@ -10,13 +10,15 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+
+	"github.com/docker/docker/api/types/registry"
 )
 
 func TestDecodeBase64Auth(t *testing.T) {
 	for _, tc := range base64TestCases() {
-		t.Run(tc.name, testBase64Case(tc, func() (AuthConfig, error) {
+		t.Run(tc.name, testBase64Case(tc, func() (registry.AuthConfig, error) {
 			user, pass, err := decodeBase64Auth(tc.config)
-			return AuthConfig{
+			return registry.AuthConfig{
 				Username: user,
 				Password: pass,
 			}, err
@@ -29,11 +31,11 @@ func TestConfig_RegistryCredentialsForHostname(t *testing.T) {
 		for _, tc := range base64TestCases() {
 			t.Run(tc.name, func(t *testing.T) {
 				config := Config{
-					AuthConfigs: map[string]AuthConfig{
+					AuthConfigs: map[string]registry.AuthConfig{
 						"some.domain": tc.config,
 					},
 				}
-				testBase64Case(tc, func() (AuthConfig, error) {
+				testBase64Case(tc, func() (registry.AuthConfig, error) {
 					return config.AuthConfigForHostname("some.domain")
 				})(t)
 			})
@@ -43,7 +45,7 @@ func TestConfig_RegistryCredentialsForHostname(t *testing.T) {
 
 type base64TestCase struct {
 	name    string
-	config  AuthConfig
+	config  registry.AuthConfig
 	expUser string
 	expPass string
 	expErr  bool
@@ -52,11 +54,11 @@ type base64TestCase struct {
 func base64TestCases() []base64TestCase {
 	cases := []base64TestCase{
 		{name: "empty"},
-		{name: "not base64", expErr: true, config: AuthConfig{Auth: "not base64"}},
-		{name: "invalid format", expErr: true, config: AuthConfig{
+		{name: "not base64", expErr: true, config: registry.AuthConfig{Auth: "not base64"}},
+		{name: "invalid format", expErr: true, config: registry.AuthConfig{
 			Auth: base64.StdEncoding.EncodeToString([]byte("invalid format")),
 		}},
-		{name: "happy case", expUser: "user", expPass: "pass", config: AuthConfig{
+		{name: "happy case", expUser: "user", expPass: "pass", config: registry.AuthConfig{
 			Auth: base64.StdEncoding.EncodeToString([]byte("user:pass")),
 		}},
 	}
@@ -64,7 +66,7 @@ func base64TestCases() []base64TestCase {
 	return cases
 }
 
-type testAuthFn func() (AuthConfig, error)
+type testAuthFn func() (registry.AuthConfig, error)
 
 func testBase64Case(tc base64TestCase, authFn testAuthFn) func(t *testing.T) {
 	return func(t *testing.T) {

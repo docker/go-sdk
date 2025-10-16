@@ -14,19 +14,12 @@ import (
 )
 
 // ToRegistryAuthConfig converts a go-sdk AuthConfig to Docker Engine API registry.AuthConfig.
+// Since AuthConfig is now an alias to registry.AuthConfig, this simply returns the input.
 //
 // Deprecated: This function is deprecated and will be removed in a future release.
 // Use the native go-sdk types directly and these adapters only when needed.
-func ToRegistryAuthConfig(authConfig config.AuthConfig) registry.AuthConfig {
-	return registry.AuthConfig{
-		Username:      authConfig.Username,
-		Password:      authConfig.Password,
-		Auth:          authConfig.Auth,
-		Email:         "",
-		ServerAddress: authConfig.ServerAddress,
-		IdentityToken: authConfig.IdentityToken,
-		RegistryToken: authConfig.RegistryToken,
-	}
+func ToRegistryAuthConfig(authConfig registry.AuthConfig) registry.AuthConfig {
+	return authConfig
 }
 
 // ToConfigFile converts a go-sdk Config to Docker CLI configfile.ConfigFile.
@@ -69,7 +62,7 @@ func ToConfigFile(cfg config.Config) *configfile.ConfigFile {
 //
 // Deprecated: This function is deprecated and will be removed in a future release.
 // Use the native go-sdk types directly and these adapters only when needed.
-func ToCLIAuthConfig(authConfig config.AuthConfig) types.AuthConfig {
+func ToCLIAuthConfig(authConfig registry.AuthConfig) types.AuthConfig {
 	return types.AuthConfig{
 		Username:      authConfig.Username,
 		Password:      authConfig.Password,
@@ -85,7 +78,7 @@ func ToCLIAuthConfig(authConfig config.AuthConfig) types.AuthConfig {
 //
 // Deprecated: This function is deprecated and will be removed in a future release.
 // Use the native go-sdk types directly and these adapters only when needed.
-func ToCLIAuthConfigs(authConfigs map[string]config.AuthConfig) map[string]types.AuthConfig {
+func ToCLIAuthConfigs(authConfigs map[string]registry.AuthConfig) map[string]types.AuthConfig {
 	result := make(map[string]types.AuthConfig, len(authConfigs))
 	for name, authConfig := range authConfigs {
 		result[name] = ToCLIAuthConfig(authConfig)

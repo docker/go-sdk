@@ -7,11 +7,13 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+
+	"github.com/docker/docker/api/types/registry"
 )
 
 func TestConfig_AuthConfigsForImages(t *testing.T) {
 	config := Config{
-		AuthConfigs: map[string]AuthConfig{
+		AuthConfigs: map[string]registry.AuthConfig{
 			"registry1.io": {Username: "user1", Password: "pass1"},
 			"registry2.io": {Username: "user2", Password: "pass2"},
 		},
@@ -35,7 +37,7 @@ func TestConfig_AuthConfigsForImages(t *testing.T) {
 
 func TestConfig_CacheManagement(t *testing.T) {
 	config := Config{
-		AuthConfigs: map[string]AuthConfig{
+		AuthConfigs: map[string]registry.AuthConfig{
 			"test.io": {Username: "user", Password: "pass"},
 		},
 	}
@@ -63,7 +65,7 @@ func TestConfig_CacheManagement(t *testing.T) {
 
 func TestConfig_ConcurrentAccess(t *testing.T) {
 	config := Config{
-		AuthConfigs: map[string]AuthConfig{
+		AuthConfigs: map[string]registry.AuthConfig{
 			"test.io": {Username: "user", Password: "pass"},
 		},
 	}
@@ -87,13 +89,13 @@ func TestConfig_ConcurrentAccess(t *testing.T) {
 
 func TestConfig_CacheKeyGeneration(t *testing.T) {
 	config1 := Config{
-		AuthConfigs: map[string]AuthConfig{
+		AuthConfigs: map[string]registry.AuthConfig{
 			"test.io": {Username: "user1", Password: "pass1"},
 		},
 	}
 
 	config2 := Config{
-		AuthConfigs: map[string]AuthConfig{
+		AuthConfigs: map[string]registry.AuthConfig{
 			"test.io": {Username: "user2", Password: "pass2"},
 		},
 	}
@@ -119,7 +121,7 @@ func TestConfigSave(t *testing.T) {
 	c := Config{
 		filepath:       filepath.Join(dockerDir, FileName),
 		CurrentContext: "test",
-		AuthConfigs:    map[string]AuthConfig{},
+		AuthConfigs:    map[string]registry.AuthConfig{},
 	}
 
 	require.NoError(t, c.Save())

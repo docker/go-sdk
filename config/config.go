@@ -12,6 +12,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/docker/docker/api/types/registry"
 	"github.com/docker/go-sdk/config/auth"
 )
 
@@ -19,7 +20,7 @@ var cacheInitMutex sync.Mutex
 
 // authConfigCache holds the caching state for a Config instance
 type authConfigCache struct {
-	entries map[string]AuthConfig
+	entries map[string]registry.AuthConfig
 	mutex   sync.RWMutex
 	key     string
 }
@@ -30,7 +31,7 @@ func (c *Config) clearAuthCache() {
 	cache.mutex.Lock()
 	defer cache.mutex.Unlock()
 
-	cache.entries = make(map[string]AuthConfig)
+	cache.entries = make(map[string]registry.AuthConfig)
 }
 
 // cacheStats returns statistics about the auth config cache
@@ -72,7 +73,7 @@ func (c *Config) initCache() {
 	}
 
 	newCache := &authConfigCache{
-		entries: make(map[string]AuthConfig),
+		entries: make(map[string]registry.AuthConfig),
 		key:     c.generateCacheKey(),
 	}
 
@@ -89,7 +90,7 @@ func (c *Config) generateCacheKey() string {
 }
 
 // AuthConfigForHostname returns the auth config for the given hostname with caching
-func (c *Config) AuthConfigForHostname(hostname string) (AuthConfig, error) {
+func (c *Config) AuthConfigForHostname(hostname string) (registry.AuthConfig, error) {
 	cache := c.getCache()
 
 	// Try cache first
@@ -103,7 +104,7 @@ func (c *Config) AuthConfigForHostname(hostname string) (AuthConfig, error) {
 	// Cache miss - resolve auth config
 	authConfig, err := c.resolveAuthConfigForHostname(hostname)
 	if err != nil {
-		return AuthConfig{}, err
+		return registry.AuthConfig{}, err
 	}
 
 	// Cache the result
@@ -115,8 +116,8 @@ func (c *Config) AuthConfigForHostname(hostname string) (AuthConfig, error) {
 }
 
 // AuthConfigsForImages returns auth configs for multiple images with caching
-func (c *Config) AuthConfigsForImages(images []string) (map[string]AuthConfig, error) {
-	result := make(map[string]AuthConfig)
+func (c *Config) AuthConfigsForImages(images []string) (map[string]registry.AuthConfig, error) {
+	result := make(map[string]registry.AuthConfig)
 	var errs []error
 
 	// Process each image
@@ -143,15 +144,15 @@ func (c *Config) AuthConfigsForImages(images []string) (map[string]AuthConfig, e
 }
 
 // AuthConfigForImage returns the auth config for a single image
-func (c *Config) AuthConfigForImage(image string) (string, AuthConfig, error) {
+func (c *Config) AuthConfigForImage(image string) (string, registry.AuthConfig, error) {
 	ref, err := auth.ParseImageRef(image)
 	if err != nil {
-		return "", AuthConfig{}, fmt.Errorf("parse image ref: %w", err)
+		return "", registry.AuthConfig{}, fmt.Errorf("parse image ref: %w", err)
 	}
 
 	authConfig, err := c.AuthConfigForHostname(ref.Registry)
 	if err != nil {
-		return ref.Registry, AuthConfig{}, err
+		return ref.Registry, registry.AuthConfig{}, err
 	}
 
 	authConfig.ServerAddress = ref.Registry
@@ -206,7 +207,7 @@ func (c *Config) Save() error {
 }
 
 // resolveAuthConfigForHostname performs the actual auth config resolution
-func (c *Config) resolveAuthConfigForHostname(hostname string) (AuthConfig, error) {
+func (c *Config) resolveAuthConfigForHostname(hostname string) (registry.AuthConfig, error) {
 	// Normalize Docker registry hostnames
 	hostname = auth.ResolveRegistryHost(hostname)
 
@@ -234,19 +235,19 @@ func (c *Config) resolveAuthConfigForHostname(hostname string) (AuthConfig, erro
 }
 
 // resolveFromCredentialHelper resolves credentials from a credential helper
-func (c *Config) resolveFromCredentialHelper(helper, hostname string) (AuthConfig, error) {
+func (c *Config) resolveFromCredentialHelper(helper, hostname string) (registry.AuthConfig, error) {
 	// Use existing credentialsFromHelper function but adapt to return AuthConfig
 	credentials, err := credentialsFromHelper(helper, hostname)
 	if err != nil {
-		return AuthConfig{}, err
+		return registry.AuthConfig{}, err
 	}
 
 	return credentials, nil
 }
 
 // processStoredAuthConfig processes auth config from stored configuration
-func (c *Config) processStoredAuthConfig(stored AuthConfig, hostname string) (AuthConfig, error) {
-	authConfig := AuthConfig{
+func (c *Config) processStoredAuthConfig(stored registry.AuthConfig, hostname string) (registry.AuthConfig, error) {
+	authConfig := registry.AuthConfig{
 		Auth:          stored.Auth,
 		IdentityToken: stored.IdentityToken,
 		Password:      stored.Password,
@@ -269,7 +270,7 @@ func (c *Config) processStoredAuthConfig(stored AuthConfig, hostname string) (Au
 		// Base64 auth case
 		user, pass, err := decodeBase64Auth(authConfig)
 		if err != nil {
-			return AuthConfig{}, fmt.Errorf("decode base64 auth: %w", err)
+			return registry.AuthConfig{}, fmt.Errorf("decode base64 auth: %w", err)
 		}
 		authConfig.Username = user
 		authConfig.Password = pass
@@ -286,7 +287,7 @@ func (c *Config) processStoredAuthConfig(stored AuthConfig, hostname string) (Au
 // It takes the "Auth" filed from AuthConfig and decodes that into a username and password.
 //
 // If "Auth" is empty, an empty user/pass will be returned, but not an error.
-func decodeBase64Auth(auth AuthConfig) (string, string, error) {
+func decodeBase64Auth(auth registry.AuthConfig) (string, string, error) {
 	if auth.Auth == "" {
 		return "", "", nil
 	}

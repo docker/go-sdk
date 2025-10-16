@@ -4,11 +4,13 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+
+	"github.com/docker/docker/api/types/registry"
 )
 
 func BenchmarkAuthConfigCaching(b *testing.B) {
 	cfg := Config{
-		AuthConfigs: map[string]AuthConfig{
+		AuthConfigs: map[string]registry.AuthConfig{
 			"test.io": {Username: "user", Password: "pass"},
 		},
 	}

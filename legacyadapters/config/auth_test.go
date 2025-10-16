@@ -14,19 +14,19 @@ import (
 func TestToRegistryAuthConfig(t *testing.T) {
 	tests := []struct {
 		name     string
-		input    config.AuthConfig
+		input    registry.AuthConfig
 		expected registry.AuthConfig
 	}{
 		{
 			name:  "empty config",
-			input: config.AuthConfig{},
+			input: registry.AuthConfig{},
 			expected: registry.AuthConfig{
 				Email: "",
 			},
 		},
 		{
 			name: "basic username and password",
-			input: config.AuthConfig{
+			input: registry.AuthConfig{
 				Username: "testuser",
 				Password: "testpass",
 			},
@@ -38,7 +38,7 @@ func TestToRegistryAuthConfig(t *testing.T) {
 		},
 		{
 			name: "with auth field",
-			input: config.AuthConfig{
+			input: registry.AuthConfig{
 				Username: "user",
 				Password: "pass",
 				Auth:     "dXNlcjpwYXNz", // base64 encoded "user:pass"
@@ -52,7 +52,7 @@ func TestToRegistryAuthConfig(t *testing.T) {
 		},
 		{
 			name: "with server address",
-			input: config.AuthConfig{
+			input: registry.AuthConfig{
 				Username:      "user",
 				Password:      "pass",
 				ServerAddress: "registry.example.com",
@@ -66,7 +66,7 @@ func TestToRegistryAuthConfig(t *testing.T) {
 		},
 		{
 			name: "with identity token",
-			input: config.AuthConfig{
+			input: registry.AuthConfig{
 				Username:      "user",
 				IdentityToken: "identity-token-123",
 			},
@@ -78,7 +78,7 @@ func TestToRegistryAuthConfig(t *testing.T) {
 		},
 		{
 			name: "with registry token",
-			input: config.AuthConfig{
+			input: registry.AuthConfig{
 				Username:      "user",
 				RegistryToken: "registry-token-456",
 			},
@@ -90,7 +90,7 @@ func TestToRegistryAuthConfig(t *testing.T) {
 		},
 		{
 			name: "complete config",
-			input: config.AuthConfig{
+			input: registry.AuthConfig{
 				Username:      "testuser",
 				Password:      "testpass",
 				Auth:          "dGVzdHVzZXI6dGVzdHBhc3M=", // base64 encoded "testuser:testpass"
@@ -120,7 +120,7 @@ func TestToRegistryAuthConfig(t *testing.T) {
 
 func TestToRegistryAuthConfig_EmailAlwaysEmpty(t *testing.T) {
 	// Test that Email field is always set to empty string, regardless of input
-	input := config.AuthConfig{
+	input := registry.AuthConfig{
 		Username: "user",
 		Password: "pass",
 	}
@@ -153,7 +153,7 @@ func TestConfigToConfigFile(t *testing.T) {
 		{
 			name: "basic config with auth",
 			input: config.Config{
-				AuthConfigs: map[string]config.AuthConfig{
+				AuthConfigs: map[string]registry.AuthConfig{
 					"registry.example.com": {
 						Username: "testuser",
 						Password: "testpass",
@@ -217,19 +217,19 @@ func TestToCLIAuthConfig(t *testing.T) {
 	t.Helper()
 	tests := []struct {
 		name     string
-		input    config.AuthConfig
+		input    registry.AuthConfig
 		expected types.AuthConfig
 	}{
 		{
 			name:  "empty config",
-			input: config.AuthConfig{},
+			input: registry.AuthConfig{},
 			expected: types.AuthConfig{
 				Email: "",
 			},
 		},
 		{
 			name: "basic username and password",
-			input: config.AuthConfig{
+			input: registry.AuthConfig{
 				Username: "testuser",
 				Password: "testpass",
 			},
@@ -241,7 +241,7 @@ func TestToCLIAuthConfig(t *testing.T) {
 		},
 		{
 			name: "with auth field",
-			input: config.AuthConfig{
+			input: registry.AuthConfig{
 				Username: "user",
 				Password: "pass",
 				Auth:     "dXNlcjpwYXNz",
@@ -255,7 +255,7 @@ func TestToCLIAuthConfig(t *testing.T) {
 		},
 		{
 			name: "with server address and identity token",
-			input: config.AuthConfig{
+			input: registry.AuthConfig{
 				Username:      "user",
 				ServerAddress: "registry.example.com",
 				IdentityToken: "identity-token-123",
@@ -269,7 +269,7 @@ func TestToCLIAuthConfig(t *testing.T) {
 		},
 		{
 			name: "with registry token included",
-			input: config.AuthConfig{
+			input: registry.AuthConfig{
 				Username:      "user",
 				Password:      "pass",
 				RegistryToken: "registry-token-456",
@@ -295,17 +295,17 @@ func TestToCLIAuthConfigs(t *testing.T) {
 	t.Helper()
 	tests := []struct {
 		name     string
-		input    map[string]config.AuthConfig
+		input    map[string]registry.AuthConfig
 		expected map[string]types.AuthConfig
 	}{
 		{
 			name:     "empty map",
-			input:    map[string]config.AuthConfig{},
+			input:    map[string]registry.AuthConfig{},
 			expected: map[string]types.AuthConfig{},
 		},
 		{
 			name: "single auth config",
-			input: map[string]config.AuthConfig{
+			input: map[string]registry.AuthConfig{
 				"registry.example.com": {
 					Username: "testuser",
 					Password: "testpass",
@@ -321,7 +321,7 @@ func TestToCLIAuthConfigs(t *testing.T) {
 		},
 		{
 			name: "multiple auth configs",
-			input: map[string]config.AuthConfig{
+			input: map[string]registry.AuthConfig{
 				"registry1.example.com": {
 					Username: "user1",
 					Password: "pass1",

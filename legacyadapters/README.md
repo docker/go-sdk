@@ -23,11 +23,12 @@ Convert SDK auth config to Docker Engine API format:
 
 ```go
 import (
+    "github.com/docker/docker/api/types/registry"
     "github.com/docker/go-sdk/config"
     legacyconfig "github.com/docker/go-sdk/legacyadapters/config"
 )
 
-sdkAuth := config.AuthConfig{
+sdkAuth := registry.AuthConfig{
     Username:      "myuser",
     Password:      "mypass",
     ServerAddress: "registry.example.com",
@@ -46,7 +47,7 @@ Convert SDK config to Docker CLI config file format:
 
 ```go
 sdkConfig := config.Config{
-    AuthConfigs: map[string]config.AuthConfig{
+    AuthConfigs: map[string]registry.AuthConfig{
         "registry.example.com": {
             Username: "user",
             Password: "pass",
