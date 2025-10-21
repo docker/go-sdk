@@ -2,11 +2,8 @@ go 1.23.6
 
 use (
 	./client
-	./config
 	./container
-	./context
 	./image
-	./legacyadapters
 	./network
 	./volume
 )

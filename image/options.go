@@ -2,7 +2,6 @@ package image
 
 import (
 	"errors"
-	"fmt"
 	"io"
 
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
@@ -10,7 +9,6 @@ import (
 	"github.com/docker/docker/api/types/build"
 	"github.com/docker/docker/api/types/image"
 	"github.com/docker/go-sdk/client"
-	"github.com/docker/go-sdk/config"
 )
 
 // BuildOption is a function that configures the build options.
@@ -59,20 +57,12 @@ func WithCredentialsFn(credentialsFn func(string) (string, string, error)) PullO
 // WithCredentialsFromConfig configures pull to retrieve credentials from the CLI config
 func WithCredentialsFromConfig(opts *pullOptions) error {
 	opts.credentialsFn = func(imageName string) (string, string, error) {
-		authConfigs, err := config.AuthConfigs(imageName)
+		_, authConfig, err := opts.client.AuthConfigForImage(imageName)
 		if err != nil {
 			return "", "", err
 		}
 
-		// there must be only one auth config for the image
-		if len(authConfigs) > 1 {
-			return "", "", fmt.Errorf("multiple auth configs found for image %s, expected only one", imageName)
-		}
-
-		for _, ac := range authConfigs {
-			return ac.Username, ac.Password, nil
-		}
-		return "", "", nil
+		return authConfig.Username, authConfig.Password, nil
 	}
 	return nil
 }
