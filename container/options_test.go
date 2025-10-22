@@ -593,7 +593,7 @@ func TestWithDefinition(t *testing.T) {
 func TestWithPullHandler(t *testing.T) {
 	def := Definition{}
 
-	opt := WithPullHandler(func(r io.ReadCloser) error {
+	opt := WithPullHandler(func(_ io.ReadCloser) error {
 		return nil
 	})
 	require.NoError(t, opt.Customize(&def))
