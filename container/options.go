@@ -116,7 +116,7 @@ func WithAdditionalEndpointSettingsModifier(modifier func(settings map[string]*a
 
 					// Merge original into current to preserve original values
 					// while allowing user additions to take effect
-					if err := mergo.Merge(currentES, originalES); err != nil {
+					if err := mergo.Merge(currentES, originalES, mergo.WithOverride); err != nil {
 						// Restore original for safety
 						log.Printf("failed to merge endpoint settings for network %q: %v, restoring original", networkName, err)
 						settings[networkName] = originalES
