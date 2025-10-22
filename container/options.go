@@ -55,7 +55,7 @@ func WithConfigModifier(modifier func(config *container.Config)) CustomizeDefini
 }
 
 // WithAdditionalConfigModifier allows to add additional config to the container.
-// It will merge the additional config with the existing config.
+// It applies the additional config after the original config.
 func WithAdditionalConfigModifier(modifier func(config *container.Config)) CustomizeDefinitionOption {
 	return func(def *Definition) error {
 		if def.configModifier == nil {
@@ -157,7 +157,7 @@ func WithHostConfigModifier(modifier func(hostConfig *container.HostConfig)) Cus
 }
 
 // WithAdditionalHostConfigModifier allows to add additional host config to the container.
-// It will merge the additional host config with the existing host config.
+// It applies the additional host config after the original host config.
 func WithAdditionalHostConfigModifier(modifier func(hostConfig *container.HostConfig)) CustomizeDefinitionOption {
 	return func(def *Definition) error {
 		if def.hostConfigModifier == nil {
