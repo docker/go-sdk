@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"maps"
 	"slices"
 	"time"
@@ -13,6 +14,7 @@ import (
 	"github.com/docker/go-sdk/client"
 	"github.com/docker/go-sdk/container/exec"
 	"github.com/docker/go-sdk/container/wait"
+	"github.com/docker/go-sdk/image"
 	"github.com/docker/go-sdk/network"
 )
 
@@ -411,6 +413,15 @@ func WithDefinition(def *Definition) CustomizeDefinitionOption {
 
 		// return the definition to the caller
 		*def = *d
+		return nil
+	}
+}
+
+// WithPullOptions is an adapter for the [image.WithPullHandler] option.
+// It allows to change the default behavior for the pull-image operation.
+func WithPullHandler(handler func(r io.ReadCloser) error) CustomizeDefinitionOption {
+	return func(d *Definition) error {
+		d.pullOptions = append(d.pullOptions, image.WithPullHandler(handler))
 		return nil
 	}
 }

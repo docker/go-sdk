@@ -3,6 +3,7 @@ package container
 import (
 	"bytes"
 	"errors"
+	"io"
 	"testing"
 	"time"
 
@@ -587,4 +588,14 @@ func TestWithDefinition(t *testing.T) {
 	require.NoError(t, opt.Customize(&def1))
 	require.Equal(t, "alpine", def1.image)
 	require.Equal(t, "alpine", def2.image)
+}
+
+func TestWithPullHandler(t *testing.T) {
+	def := Definition{}
+
+	opt := WithPullHandler(func(r io.ReadCloser) error {
+		return nil
+	})
+	require.NoError(t, opt.Customize(&def))
+	require.Len(t, def.pullOptions, 1)
 }
