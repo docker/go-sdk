@@ -14,6 +14,7 @@ import (
 	apinetwork "github.com/docker/docker/api/types/network"
 	"github.com/docker/go-sdk/client"
 	"github.com/docker/go-sdk/container/exec"
+	"github.com/docker/go-sdk/container/log"
 	"github.com/docker/go-sdk/container/wait"
 	"github.com/docker/go-sdk/network"
 )
@@ -116,7 +117,9 @@ func WithAdditionalEndpointSettingsModifier(modifier func(settings map[string]*a
 					// Merge original into current to preserve original values
 					// while allowing user additions to take effect
 					if err := mergo.Merge(currentES, originalES); err != nil {
-						// If merge fails, keep the current settings
+						// Restore original for safety
+						log.Printf("failed to merge endpoint settings for network %q: %v, restoring original", networkName, err)
+						settings[networkName] = originalES
 						continue
 					}
 					settings[networkName] = currentES
