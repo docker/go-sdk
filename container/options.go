@@ -104,9 +104,15 @@ func WithAdditionalEndpointSettingsModifier(modifier func(settings map[string]*a
 			// Apply the user's modifier
 			modifier(settings)
 
-			// Merge: for any network that had original settings, merge them with current settings
+			// For any network that had original settings, merge them with current settings
 			for networkName, originalES := range originalSettings {
 				if currentES, exists := settings[networkName]; exists {
+					if currentES == nil {
+						// Restore the original settings, as additions shouldn't delete
+						settings[networkName] = originalES
+						continue
+					}
+
 					// Merge original into current to preserve original values
 					// while allowing user additions to take effect
 					if err := mergo.Merge(currentES, originalES); err != nil {
