@@ -60,13 +60,14 @@ func WithConfigModifier(modifier func(config *container.Config)) CustomizeDefini
 // It applies the additional config after the original config.
 func WithAdditionalConfigModifier(modifier func(config *container.Config)) CustomizeDefinitionOption {
 	return func(def *Definition) error {
-		if def.configModifier == nil {
-			return errors.New("config modifier is not set")
-		}
-
 		originalModifier := def.configModifier
 
 		def.configModifier = func(config *container.Config) {
+			if originalModifier == nil {
+				modifier(config)
+				return
+			}
+
 			originalModifier(config)
 			modifier(config)
 		}
@@ -88,13 +89,14 @@ func WithEndpointSettingsModifier(modifier func(settings map[string]*apinetwork.
 // It will merge the additional endpoint settings with the existing endpoint settings.
 func WithAdditionalEndpointSettingsModifier(modifier func(settings map[string]*apinetwork.EndpointSettings)) CustomizeDefinitionOption {
 	return func(def *Definition) error {
-		if def.endpointSettingsModifier == nil {
-			return errors.New("endpoint settings modifier is not set")
-		}
-
 		originalModifier := def.endpointSettingsModifier
 
 		def.endpointSettingsModifier = func(settings map[string]*apinetwork.EndpointSettings) {
+			if originalModifier == nil {
+				modifier(settings)
+				return
+			}
+
 			// Apply the original modifier first
 			originalModifier(settings)
 
@@ -162,13 +164,14 @@ func WithHostConfigModifier(modifier func(hostConfig *container.HostConfig)) Cus
 // It applies the additional host config after the original host config.
 func WithAdditionalHostConfigModifier(modifier func(hostConfig *container.HostConfig)) CustomizeDefinitionOption {
 	return func(def *Definition) error {
-		if def.hostConfigModifier == nil {
-			return errors.New("host config modifier is not set")
-		}
-
 		originalModifier := def.hostConfigModifier
 
 		def.hostConfigModifier = func(hostConfig *container.HostConfig) {
+			if originalModifier == nil {
+				modifier(hostConfig)
+				return
+			}
+
 			originalModifier(hostConfig)
 			modifier(hostConfig)
 		}

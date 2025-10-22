@@ -16,70 +16,106 @@ import (
 )
 
 func TestWithAdditionalHostConfigModifier(t *testing.T) {
-	def := Definition{
-		image: "alpine",
-		hostConfigModifier: func(hostConfig *container.HostConfig) {
-			hostConfig.ContainerIDFile = "container-id-file"
-		},
-	}
+	t.Run("add-to-existing", func(t *testing.T) {
+		def := Definition{
+			image: "alpine",
+			hostConfigModifier: func(hostConfig *container.HostConfig) {
+				hostConfig.ContainerIDFile = "container-id-file"
+			},
+		}
 
-	opt := WithAdditionalHostConfigModifier(func(hostConfig *container.HostConfig) {
-		hostConfig.Binds = append(hostConfig.Binds, "/host/path:/container/path")
+		opt := WithAdditionalHostConfigModifier(func(hostConfig *container.HostConfig) {
+			hostConfig.Binds = append(hostConfig.Binds, "/host/path:/container/path")
+		})
+		require.NoError(t, opt.Customize(&def))
+
+		hc := container.HostConfig{}
+
+		def.hostConfigModifier(&hc)
+		require.Equal(t, "container-id-file", hc.ContainerIDFile)
+		require.Equal(t, []string{"/host/path:/container/path"}, hc.Binds)
 	})
-	require.NoError(t, opt.Customize(&def))
 
-	hc := container.HostConfig{}
+	t.Run("nil-original", func(t *testing.T) {
+		def := Definition{}
 
-	def.hostConfigModifier(&hc)
-	require.Equal(t, "container-id-file", hc.ContainerIDFile)
-	require.Equal(t, []string{"/host/path:/container/path"}, hc.Binds)
+		opt := WithAdditionalHostConfigModifier(func(hostConfig *container.HostConfig) {
+			hostConfig.Binds = append(hostConfig.Binds, "/host/path:/container/path")
+		})
+		require.NoError(t, opt.Customize(&def))
+	})
 }
 
 func TestWithAdditionalConfigModifier(t *testing.T) {
-	def := Definition{
-		image: "alpine",
-		configModifier: func(config *container.Config) {
-			config.Env = append(config.Env, "ENV1=value1", "ENV2=value2")
-			config.Hostname = "test-hostname-1"
-		},
-	}
+	t.Run("add-to-existing", func(t *testing.T) {
+		def := Definition{
+			image: "alpine",
+			configModifier: func(config *container.Config) {
+				config.Env = append(config.Env, "ENV1=value1", "ENV2=value2")
+				config.Hostname = "test-hostname-1"
+			},
+		}
 
-	opt := WithAdditionalConfigModifier(func(config *container.Config) {
-		config.Env = append(config.Env, "ENV3=value3", "ENV4=value4")
-		config.Hostname = "test-hostname-2"
+		opt := WithAdditionalConfigModifier(func(config *container.Config) {
+			config.Env = append(config.Env, "ENV3=value3", "ENV4=value4")
+			config.Hostname = "test-hostname-2"
+		})
+		require.NoError(t, opt.Customize(&def))
+
+		config := container.Config{}
+
+		def.configModifier(&config)
+		require.Equal(t, []string{"ENV1=value1", "ENV2=value2", "ENV3=value3", "ENV4=value4"}, config.Env)
+		require.Equal(t, "test-hostname-2", config.Hostname)
 	})
-	require.NoError(t, opt.Customize(&def))
 
-	config := container.Config{}
+	t.Run("nil-original", func(t *testing.T) {
+		def := Definition{}
 
-	def.configModifier(&config)
-	require.Equal(t, []string{"ENV1=value1", "ENV2=value2", "ENV3=value3", "ENV4=value4"}, config.Env)
-	require.Equal(t, "test-hostname-2", config.Hostname)
+		opt := WithAdditionalConfigModifier(func(config *container.Config) {
+			config.Env = append(config.Env, "ENV3=value3", "ENV4=value4")
+			config.Hostname = "test-hostname-2"
+		})
+		require.NoError(t, opt.Customize(&def))
+	})
 }
 
 func TestWithAdditionalEndpointSettingsModifier(t *testing.T) {
-	def := Definition{
-		image: "alpine",
-		endpointSettingsModifier: func(settings map[string]*apinetwork.EndpointSettings) {
+	t.Run("add-to-existing", func(t *testing.T) {
+		def := Definition{
+			image: "alpine",
+			endpointSettingsModifier: func(settings map[string]*apinetwork.EndpointSettings) {
+				settings["test-network"] = &apinetwork.EndpointSettings{
+					Aliases: []string{"alias1", "alias2"},
+				}
+			},
+		}
+
+		opt := WithAdditionalEndpointSettingsModifier(func(settings map[string]*apinetwork.EndpointSettings) {
+			settings["test-network"] = &apinetwork.EndpointSettings{
+				Links: []string{"link1:alias1", "link2:alias2"},
+			}
+		})
+		require.NoError(t, opt.Customize(&def))
+
+		endpointSettings := map[string]*apinetwork.EndpointSettings{}
+
+		def.endpointSettingsModifier(endpointSettings)
+		require.Contains(t, endpointSettings, "test-network")
+		require.Equal(t, []string{"alias1", "alias2"}, endpointSettings["test-network"].Aliases)
+		require.Equal(t, []string{"link1:alias1", "link2:alias2"}, endpointSettings["test-network"].Links)
+	})
+
+	t.Run("nil-original", func(t *testing.T) {
+		def := Definition{}
+
+		opt := WithAdditionalEndpointSettingsModifier(func(settings map[string]*apinetwork.EndpointSettings) {
 			settings["test-network"] = &apinetwork.EndpointSettings{
 				Aliases: []string{"alias1", "alias2"},
 			}
-		},
-	}
-
-	opt := WithAdditionalEndpointSettingsModifier(func(settings map[string]*apinetwork.EndpointSettings) {
-		settings["test-network"] = &apinetwork.EndpointSettings{
-			Links: []string{"link1:alias1", "link2:alias2"},
-		}
+		})
+		require.NoError(t, opt.Customize(&def))
 	})
-	require.NoError(t, opt.Customize(&def))
-
-	endpointSettings := map[string]*apinetwork.EndpointSettings{}
-
-	def.endpointSettingsModifier(endpointSettings)
-	require.Contains(t, endpointSettings, "test-network")
-	require.Equal(t, []string{"alias1", "alias2"}, endpointSettings["test-network"].Aliases)
-	require.Equal(t, []string{"link1:alias1", "link2:alias2"}, endpointSettings["test-network"].Links)
 }
 
 func TestWithStartupCommand(t *testing.T) {
