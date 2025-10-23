@@ -496,7 +496,7 @@ func TestWithName(t *testing.T) {
 		def := Definition{}
 
 		opt := WithName("")
-		require.ErrorIs(t, opt.Customize(&def), ErrReuseEmptyName)
+		require.ErrorIs(t, opt.Customize(&def), ErrContainerNameEmpty)
 	})
 }
 

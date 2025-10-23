@@ -21,7 +21,7 @@ import (
 	"github.com/docker/go-sdk/network"
 )
 
-var ErrReuseEmptyName = errors.New("with reuse option a container name mustn't be empty")
+var ErrContainerNameEmpty = errors.New("container name mustn't be empty")
 
 // ContainerCustomizer is an interface that can be used to configure the container
 // definition. The passed definition is merged with the default one.
@@ -181,10 +181,11 @@ func WithAdditionalHostConfigModifier(modifier func(hostConfig *container.HostCo
 }
 
 // WithName will set the name of the container.
+// It returns an error if the container name is empty.
 func WithName(containerName string) CustomizeDefinitionOption {
 	return func(def *Definition) error {
 		if containerName == "" {
-			return ErrReuseEmptyName
+			return ErrContainerNameEmpty
 		}
 		def.name = containerName
 		return nil
