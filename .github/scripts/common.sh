@@ -72,7 +72,7 @@ execute_or_echo() {
 # Validate that git remote origin points to the correct repository
 # This prevents accidentally pushing to the wrong remote
 validate_git_remote() {
-  local actual_origin=$(git -C "${ROOT_DIR}" remote get-url origin 2>/dev/null || echo "")
+  local actual_origin="$(git -C "${ROOT_DIR}" remote get-url origin 2>/dev/null || echo "")"
 
   if [[ -z "$actual_origin" ]]; then
     echo "❌ Error: No 'origin' remote found"
