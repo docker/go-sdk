@@ -56,7 +56,7 @@ If you need to perform releases manually or troubleshoot issues:
 #### Releasing All Modules
 ```bash
 # Step 1: Dry run to preview version changes (no build files created)
-make pre-release-all  # DRY_RUN=true by default, safe to run
+DRY_RUN=true make pre-release-all  # Explicit dry run, safe to run
 
 # Step 2: Prepare release for real (creates build files in .github/scripts/.build/)
 DRY_RUN=false make pre-release-all
