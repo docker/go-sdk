@@ -66,8 +66,8 @@ if [[ ! -f "${VERSION_FILE}" ]]; then
   exit 1
 fi
 
-# Read current version from version.go
-readonly CURRENT_VERSION=$(grep -o 'version = "[^"]*"' "${VERSION_FILE}" | cut -d'"' -f2)
+# Read current version from version.go (allow arbitrary whitespace around =)
+readonly CURRENT_VERSION=$(grep -o 'version[[:space:]]*=[[:space:]]*"[^"]*"' "${VERSION_FILE}" | cut -d'"' -f2)
 
 # Compare versions
 if [[ "${CURRENT_VERSION}" != "${NEXT_VERSION_NO_V}" ]]; then
