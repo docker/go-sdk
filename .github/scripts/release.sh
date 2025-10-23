@@ -47,6 +47,9 @@ set -e
 readonly SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 source "${SCRIPT_DIR}/common.sh"
 
+# Validate git remote before doing anything
+validate_git_remote
+
 MODULE="${1:-}"
 
 # Collect and stage changes across modules, then create a single commit
