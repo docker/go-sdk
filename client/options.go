@@ -5,7 +5,7 @@ import (
 	"errors"
 	"log/slog"
 
-	"github.com/docker/docker/client"
+	"github.com/moby/moby/client"
 )
 
 // ClientOption is a type that represents an option for configuring a client.

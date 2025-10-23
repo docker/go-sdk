@@ -4,10 +4,10 @@ import (
 	"context"
 	"fmt"
 	"net"
+	"strconv"
 
 	"github.com/containerd/errdefs"
-
-	"github.com/docker/go-connections/nat"
+	"github.com/moby/moby/api/types/network"
 )
 
 // Endpoint gets proto://host:port string for the lowest numbered exposed port
@@ -18,14 +18,14 @@ func (c *Container) Endpoint(ctx context.Context, proto string) (string, error) 
 		return "", err
 	}
 
-	if len(inspect.NetworkSettings.Ports) == 0 {
+	if len(inspect.Container.NetworkSettings.Ports) == 0 {
 		return "", errdefs.ErrNotFound.WithMessage("no ports exposed")
 	}
 
 	// Get lowest numbered bound port.
-	var lowestPort nat.Port
-	for port := range inspect.NetworkSettings.Ports {
-		if lowestPort == "" || port.Int() < lowestPort.Int() {
+	var lowestPort network.Port
+	for port := range inspect.Container.NetworkSettings.Ports {
+		if lowestPort.IsZero() || port.Num() < lowestPort.Num() {
 			lowestPort = port
 		}
 	}
@@ -36,7 +36,9 @@ func (c *Container) Endpoint(ctx context.Context, proto string) (string, error) 
 // PortEndpoint gets proto://host:port string for the given exposed port
 // It returns proto://host:port or proto://[IPv6host]:port string for the given exposed port.
 // It returns just host:port or [IPv6host]:port if proto is blank.
-func (c *Container) PortEndpoint(ctx context.Context, port nat.Port, proto string) (string, error) {
+//
+// TODO(robmry) - remove proto and use port.Proto()
+func (c *Container) PortEndpoint(ctx context.Context, port network.Port, proto string) (string, error) {
 	host, err := c.Host(ctx)
 	if err != nil {
 		return "", err
@@ -47,7 +49,7 @@ func (c *Container) PortEndpoint(ctx context.Context, port nat.Port, proto strin
 		return "", err
 	}
 
-	hostPort := net.JoinHostPort(host, outerPort.Port())
+	hostPort := net.JoinHostPort(host, strconv.Itoa(int(outerPort.Num())))
 	if proto == "" {
 		return hostPort, nil
 	}
@@ -56,19 +58,19 @@ func (c *Container) PortEndpoint(ctx context.Context, port nat.Port, proto strin
 }
 
 // MappedPort gets externally mapped port for a container port
-func (c *Container) MappedPort(ctx context.Context, port nat.Port) (nat.Port, error) {
+func (c *Container) MappedPort(ctx context.Context, port network.Port) (network.Port, error) {
 	inspect, err := c.Inspect(ctx)
 	if err != nil {
-		return "", fmt.Errorf("inspect: %w", err)
+		return network.Port{}, fmt.Errorf("inspect: %w", err)
 	}
-	if inspect.HostConfig.NetworkMode == "host" {
+	if inspect.Container.HostConfig.NetworkMode == "host" {
 		return port, nil
 	}
 
-	ports := inspect.NetworkSettings.Ports
+	ports := inspect.Container.NetworkSettings.Ports
 
 	for k, p := range ports {
-		if k.Port() != port.Port() {
+		if k != port {
 			continue
 		}
 		if port.Proto() != "" && k.Proto() != port.Proto() {
@@ -77,8 +79,8 @@ func (c *Container) MappedPort(ctx context.Context, port nat.Port) (nat.Port, er
 		if len(p) == 0 {
 			continue
 		}
-		return nat.NewPort(k.Proto(), p[0].HostPort)
+		return network.ParsePort(p[0].HostPort + "/" + string(k.Proto()))
 	}
 
-	return "", errdefs.ErrNotFound.WithMessage(fmt.Sprintf("port %q not found", port))
+	return network.Port{}, errdefs.ErrNotFound.WithMessage(fmt.Sprintf("port %q not found", port))
 }

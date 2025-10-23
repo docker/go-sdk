@@ -9,7 +9,8 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/docker/docker/client"
+	"github.com/moby/moby/client"
+
 	dockercontext "github.com/docker/go-sdk/context"
 )
 
@@ -34,7 +35,7 @@ var (
 		return func(c SDKClient) error {
 			var pingErr error
 			for i := range 3 {
-				if _, pingErr = c.Ping(ctx); pingErr == nil {
+				if _, pingErr = c.Ping(ctx, client.PingOptions{}); pingErr == nil {
 					return nil
 				}
 				select {
@@ -135,7 +136,7 @@ func (c *sdkClient) init() error {
 
 	opts = append(opts, client.WithHTTPHeaders(httpHeaders))
 
-	api, err := client.NewClientWithOpts(opts...)
+	api, err := client.New(opts...)
 	if err != nil {
 		return fmt.Errorf("new client: %w", err)
 	}

@@ -11,9 +11,9 @@ import (
 	"testing"
 	"time"
 
+	dockercontainer "github.com/moby/moby/api/types/container"
 	"github.com/stretchr/testify/require"
 
-	dockercontainer "github.com/docker/docker/api/types/container"
 	"github.com/docker/go-sdk/client"
 	"github.com/docker/go-sdk/container"
 	"github.com/docker/go-sdk/container/wait"

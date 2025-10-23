@@ -4,10 +4,12 @@ import (
 	"context"
 	"errors"
 	"io"
-	slog "log/slog"
+	"log/slog"
 
-	"github.com/docker/docker/api/types/container"
-	"github.com/docker/go-connections/nat"
+	"github.com/moby/moby/api/types/container"
+	"github.com/moby/moby/api/types/network"
+	"github.com/moby/moby/client"
+
 	"github.com/docker/go-sdk/container/exec"
 )
 
@@ -15,9 +17,9 @@ var ErrPortNotFound = errors.New("port not found")
 
 type MockStrategyTarget struct {
 	HostImpl              func(context.Context) (string, error)
-	InspectImpl           func(context.Context) (*container.InspectResponse, error)
-	PortsImpl             func(context.Context) (nat.PortMap, error)
-	MappedPortImpl        func(context.Context, nat.Port) (nat.Port, error)
+	InspectImpl           func(context.Context) (client.ContainerInspectResult, error)
+	PortsImpl             func(context.Context) (network.PortMap, error)
+	MappedPortImpl        func(context.Context, network.Port) (network.Port, error)
 	LogsImpl              func(context.Context) (io.ReadCloser, error)
 	ExecImpl              func(context.Context, []string, ...exec.ProcessOption) (int, io.Reader, error)
 	StateImpl             func(context.Context) (*container.State, error)
@@ -29,11 +31,11 @@ func (st *MockStrategyTarget) Host(ctx context.Context) (string, error) {
 	return st.HostImpl(ctx)
 }
 
-func (st *MockStrategyTarget) Inspect(ctx context.Context) (*container.InspectResponse, error) {
+func (st *MockStrategyTarget) Inspect(ctx context.Context) (client.ContainerInspectResult, error) {
 	return st.InspectImpl(ctx)
 }
 
-func (st *MockStrategyTarget) MappedPort(ctx context.Context, port nat.Port) (nat.Port, error) {
+func (st *MockStrategyTarget) MappedPort(ctx context.Context, port network.Port) (network.Port, error) {
 	return st.MappedPortImpl(ctx, port)
 }
 

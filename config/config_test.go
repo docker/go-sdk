@@ -6,9 +6,8 @@ import (
 	"sync"
 	"testing"
 
+	"github.com/moby/moby/api/types/registry"
 	"github.com/stretchr/testify/require"
-
-	"github.com/docker/docker/api/types/registry"
 )
 
 func TestConfig_AuthConfigsForImages(t *testing.T) {

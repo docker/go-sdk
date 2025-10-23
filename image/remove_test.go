@@ -4,9 +4,9 @@ import (
 	"context"
 	"testing"
 
+	dockerclient "github.com/moby/moby/client"
 	"github.com/stretchr/testify/require"
 
-	dockerimage "github.com/docker/docker/api/types/image"
 	"github.com/docker/go-sdk/client"
 	"github.com/docker/go-sdk/image"
 )
@@ -36,7 +36,7 @@ func TestRemove(t *testing.T) {
 	t.Run("success/with-options", func(t *testing.T) {
 		pullImage(t, img)
 
-		resp, err := image.Remove(context.Background(), img, image.WithRemoveOptions(dockerimage.RemoveOptions{
+		resp, err := image.Remove(context.Background(), img, image.WithRemoveOptions(dockerclient.ImageRemoveOptions{
 			Force:         true,
 			PruneChildren: true,
 		}))

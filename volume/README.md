@@ -30,7 +30,7 @@ if err != nil {
 }
 fmt.Printf("volume: %+v", vol)
 
-vols, err := volume.List(context.Background(), volume.WithFilters(filters.NewArgs(filters.Arg("label", "volume.type=example-test"))))
+vols, err := volume.List(context.Background(), make(client.Filters).Add("label", "volume.type=example-test"))
 if err != nil {
     log.Println(err)
     return
@@ -62,4 +62,4 @@ When terminating a volume, the `Terminate` function can be customized using func
 When finding a volume, the `FindByID` and `List` functions can be customized using functional options. The following options are available:
 
 - `WithFindClient(client *client.Client) volume.FindOptions`: The client to use to find the volume. If not provided, the default client will be used.
-- `WithFilters(filters filters.Args) volume.FindOptions`: The filters to use to find the volume. In the case of the `FindByID` function, this option is ignored.
+- `WithFilters(filters client.Filters) volume.FindOptions`: The filters to use to find the volume. In the case of the `FindByID` function, this option is ignored.

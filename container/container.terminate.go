@@ -7,7 +7,8 @@ import (
 	"reflect"
 	"time"
 
-	"github.com/docker/docker/api/types/container"
+	dockerclient "github.com/moby/moby/client"
+
 	"github.com/docker/go-sdk/client"
 )
 
@@ -46,7 +47,7 @@ func (o *TerminateOptions) Cleanup(cli client.SDKClient) error {
 	// Best effort to remove all volumes.
 	var errs []error
 	for _, volume := range o.volumes {
-		if errRemove := cli.VolumeRemove(o.ctx, volume, true); errRemove != nil {
+		if _, errRemove := cli.VolumeRemove(o.ctx, volume, dockerclient.VolumeRemoveOptions{Force: true}); errRemove != nil {
 			errs = append(errs, fmt.Errorf("volume remove %q: %w", volume, errRemove))
 		}
 	}
@@ -121,14 +122,14 @@ func (c *Container) Terminate(ctx context.Context, opts ...TerminateOption) erro
 
 	// TODO: Handle errors from ContainerRemove more correctly, e.g. should we
 	// run the terminated hook?
-	errs := []error{
-		c.terminatingHook(ctx),
-		c.dockerClient.ContainerRemove(ctx, c.ID(), container.RemoveOptions{
-			RemoveVolumes: true,
-			Force:         true,
-		}),
-		c.terminatedHook(ctx),
-	}
+	errs := make([]error, 0, 4)
+	errs = append(errs, c.terminatingHook(ctx))
+	_, err = c.dockerClient.ContainerRemove(ctx, c.ID(), dockerclient.ContainerRemoveOptions{
+		RemoveVolumes: true,
+		Force:         true,
+	})
+	errs = append(errs, err)
+	errs = append(errs, c.terminatedHook(ctx))
 
 	c.isRunning = false
 

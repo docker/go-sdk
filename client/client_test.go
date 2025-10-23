@@ -5,9 +5,9 @@ import (
 	"path/filepath"
 	"testing"
 
+	dockerclient "github.com/moby/moby/client"
 	"github.com/stretchr/testify/require"
 
-	dockerclient "github.com/docker/docker/client"
 	"github.com/docker/go-sdk/client"
 	dockercontext "github.com/docker/go-sdk/context"
 )
@@ -24,7 +24,7 @@ func TestNew(t *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, cli)
 
-		info, err := cli.Info(context.Background())
+		info, err := cli.Info(context.Background(), dockerclient.InfoOptions{})
 		require.NoError(t, err)
 		require.NotNil(t, info)
 	})
@@ -34,11 +34,11 @@ func TestNew(t *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, cli)
 
-		info1, err := cli.Info(context.Background())
+		info1, err := cli.Info(context.Background(), dockerclient.InfoOptions{})
 		require.NoError(t, err)
 		require.NotNil(t, info1)
 
-		info2, err := cli.Info(context.Background())
+		info2, err := cli.Info(context.Background(), dockerclient.InfoOptions{})
 		require.NoError(t, err)
 		require.NotNil(t, info2)
 
@@ -99,7 +99,7 @@ func TestNew(t *testing.T) {
 
 		infoHealthCheck := func(ctx context.Context) func(c client.SDKClient) error {
 			return func(c client.SDKClient) error {
-				_, err := c.Info(ctx)
+				_, err := c.Info(ctx, dockerclient.InfoOptions{})
 				return err
 			}
 		}

@@ -9,7 +9,7 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/docker/docker/api/types/registry"
+	"github.com/moby/moby/api/types/registry"
 )
 
 // Errors from credential helpers.

@@ -3,8 +3,8 @@ package volume
 import (
 	"context"
 
-	"github.com/docker/docker/api/types/filters"
-	"github.com/docker/docker/api/types/volume"
+	dockerclient "github.com/moby/moby/client"
+
 	"github.com/docker/go-sdk/client"
 )
 
@@ -25,13 +25,13 @@ func FindByID(ctx context.Context, volumeID string, opts ...FindOptions) (*Volum
 		findOpts.client = sdk
 	}
 
-	v, err := findOpts.client.VolumeInspect(ctx, volumeID)
+	v, err := findOpts.client.VolumeInspect(ctx, volumeID, dockerclient.VolumeInspectOptions{})
 	if err != nil {
 		return nil, err
 	}
 
 	return &Volume{
-		Volume:       &v,
+		Volume:       &v.Volume,
 		dockerClient: findOpts.client,
 	}, nil
 }
@@ -39,7 +39,7 @@ func FindByID(ctx context.Context, volumeID string, opts ...FindOptions) (*Volum
 // List lists volumes.
 func List(ctx context.Context, opts ...FindOptions) ([]Volume, error) {
 	findOpts := &findOptions{
-		filters: filters.NewArgs(),
+		filters: dockerclient.Filters{},
 	}
 	for _, opt := range opts {
 		if err := opt(findOpts); err != nil {
@@ -55,17 +55,17 @@ func List(ctx context.Context, opts ...FindOptions) ([]Volume, error) {
 		findOpts.client = sdk
 	}
 
-	response, err := findOpts.client.VolumeList(ctx, volume.ListOptions{
+	response, err := findOpts.client.VolumeList(ctx, dockerclient.VolumeListOptions{
 		Filters: findOpts.filters,
 	})
 	if err != nil {
 		return nil, err
 	}
 
-	volumes := make([]Volume, len(response.Volumes))
-	for i, v := range response.Volumes {
+	volumes := make([]Volume, len(response.Items))
+	for i, v := range response.Items {
 		volumes[i] = Volume{
-			Volume:       v,
+			Volume:       &v,
 			dockerClient: findOpts.client,
 		}
 	}

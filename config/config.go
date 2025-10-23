@@ -12,7 +12,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/docker/docker/api/types/registry"
+	"github.com/moby/moby/api/types/registry"
+
 	"github.com/docker/go-sdk/config/auth"
 )
 

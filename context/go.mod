@@ -1,6 +1,6 @@
 module github.com/docker/go-sdk/context
 
-go 1.24
+go 1.24.0
 
 replace github.com/docker/go-sdk/config => ../config
 
@@ -13,8 +13,8 @@ require (
 require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/distribution/reference v0.6.0 // indirect
-	github.com/docker/docker v28.3.2+incompatible // indirect
 	github.com/kr/text v0.2.0 // indirect
+	github.com/moby/moby/api v1.52.0 // indirect
 	github.com/opencontainers/image-spec v1.1.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
