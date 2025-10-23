@@ -55,15 +55,20 @@ If you need to perform releases manually or troubleshoot issues:
 
 #### Releasing All Modules
 ```bash
-# Dry run to preview changes (no git changes made)
-DRY_RUN=true make release-all
+# Step 1: Dry run to preview version changes (no build files created)
+make pre-release-all  # DRY_RUN=true by default, safe to run
 
-# Actual release (creates commits, tags, and pushes)
+# Step 2: Prepare release for real (creates build files in .github/scripts/.build/)
+DRY_RUN=false make pre-release-all
+
+# Step 3: Actual release (automatically checks pre-release, creates commits, tags, and pushes)
 DRY_RUN=false make release-all
 
 # With specific bump type
 BUMP_TYPE=patch DRY_RUN=false make release-all
 ```
+
+**Note**: The `release-all` target automatically runs `check-pre-release` for all modules to verify that `pre-release-all` was completed successfully (with `DRY_RUN=false`). If you try to run `release-all` without first running `pre-release-all` with `DRY_RUN=false`, it will fail with an error.
 
 #### Releasing a Single Module
 ```bash
@@ -111,19 +116,28 @@ DRY_RUN=false ./.github/scripts/release.sh container
 
 ## What Happens During Release
 
-### 1. Version Calculation
+### 1. Pre-Release Phase
+The `pre-release-all` or `pre-release` command must be run first:
 - Finds latest tag for each module
 - Uses semver-tool to calculate next version
 - Handles prerelease numbering with leading zeros
+- Writes the next version to a file in the build directory, located at `.github/scripts/.build/<module>-next-tag`
 
-### 2. File Updates
+### 2. Pre-Release Check
+The `release-all` command automatically runs `check-pre-release` for all modules to verify:
+- The `.github/scripts/.build` directory exists
+- Each module has a corresponding `<module>-next-tag` file
+- If any checks fail, the release is aborted with an error message
+
+This check ensures that `pre-release-all` was completed successfully before proceeding with the release.
+
+### 3. File Updates
 For each module:
-- Writes the next version to a file in the build directory, located at `.github/scripts/.build/<module>-next-tag`. This is a temporary file that is used to store the next version for the module.
 - Updates `<module>/version.go` with new version
 - Updates all `go.mod` files with new cross-module dependencies
 - Runs `go mod tidy` to update `go.sum` files
 
-### 3. Git Operations
+### 4. Git Operations
 When `DRY_RUN=false`:
 - Creates a single commit with all version changes
 - Creates git tags for each module (e.g., `client/v0.1.0-alpha006`)
@@ -135,7 +149,7 @@ When `DRY_RUN=true`:
 - Shows diffs of version files
 - Completely safe to run multiple times
 
-### 4. Go Proxy Registration
+### 5. Go Proxy Registration
 When `DRY_RUN=false`:
 - Triggers Go proxy to fetch new module versions
 - Makes modules immediately available for download via `go get`

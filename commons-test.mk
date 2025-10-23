@@ -86,6 +86,21 @@ pre-release:
 	@echo "Releasing version for module: $(MODULE_DIR)"
 	@$(ROOT_DIR)/.github/scripts/pre-release.sh "$(MODULE_DIR)"
 
+.PHONY: check-pre-release
+check-pre-release:
+	@if [ -z "$(MODULE_DIR)" ]; then \
+		echo "Usage: make check-pre-release, from one of the module directories (e.g. make check-pre-release from client/ directory)"; \
+		exit 1; \
+	fi
+	@echo "Checking if pre-release was completed for module: $(MODULE_DIR)"
+	@build_file="$(ROOT_DIR)/.github/scripts/.build/$(MODULE_DIR)-next-tag"; \
+	if [ ! -f "$$build_file" ]; then \
+		echo "Error: Missing build file for module '$(MODULE_DIR)' at $$build_file"; \
+		echo "Please run 'make pre-release' first (without DRY_RUN=true)"; \
+		exit 1; \
+	fi
+	@echo "✅ Pre-release check passed for module: $(MODULE_DIR)"
+
 .PHONY: release
 release:
 	@if [ -z "$(MODULE_DIR)" ]; then \
