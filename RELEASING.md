@@ -14,6 +14,8 @@ Each module's version is defined in the `version.go` file at the root of the mod
 
 The primary way to perform releases is through GitHub Actions workflows.
 
+**Important**: GitHub Actions release workflows can only be run from the `main` branch. The workflows will automatically be skipped if triggered from any other branch. This is a safety measure to ensure releases are only performed from the primary branch.
+
 #### Releasing All Modules
 
 1. Go to the [Actions tab](../../actions) in the GitHub repository
@@ -42,6 +44,8 @@ The primary way to perform releases is through GitHub Actions workflows.
 ### 2. Manual Release (Advanced)
 
 If you need to perform releases manually or troubleshoot issues:
+
+**Note**: Manual releases using `make` commands can technically be run from any branch, but should be run from the `main` branch for consistency with the GitHub Actions workflows.
 
 #### Prerequisites
 - Docker installed (for semver-tool)
