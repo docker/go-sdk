@@ -124,21 +124,21 @@ The `pre-release-all` or `pre-release` command must be run first:
 - Writes the next version to a file in the build directory, located at `.github/scripts/.build/<module>-next-tag`
 
 ### 2. Release Validation Checks
-Before creating any commits or tags, the release script performs validation checks:
+Before creating any commits or tags, the release script performs the following validation checks:
 
-#### Git Remote Validation
+**Git Remote Validation:**
 - Verifies that the `origin` remote points to `git@github.com:docker/go-sdk.git` (or HTTPS equivalent)
 - Prevents accidentally pushing releases to forks or personal repositories
 - If validation fails, the script aborts immediately with instructions to fix the remote
 
-#### Pre-Release Check
-The `release-all` command automatically runs `check-pre-release` for all modules to verify:
-- The `.github/scripts/.build` directory exists
-- Each module has a corresponding `<module>-next-tag` file
-- The version in the `<module>-next-tag` file matches the version in `<module>/version.go`
+**Pre-Release Verification:**
+- The `release-all` command automatically runs `check-pre-release` for all modules
+- Verifies the `.github/scripts/.build` directory exists
+- Checks each module has a corresponding `<module>-next-tag` file
+- Validates the version in `<module>-next-tag` matches the version in `<module>/version.go`
 - If any checks fail, the release is aborted with an error message
-
-This check is implemented in `.github/scripts/check-pre-release.sh` and ensures that `pre-release-all` was completed successfully (with `DRY_RUN=false`) and that all version files are properly updated before proceeding with the release.
+- Implemented in `.github/scripts/check-pre-release.sh`
+- Ensures `pre-release-all` was completed successfully (with `DRY_RUN=false`)
 
 You can manually run the check for a specific module:
 ```bash
