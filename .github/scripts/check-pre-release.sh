@@ -35,10 +35,8 @@ set -e
 readonly SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 readonly ROOT_DIR="$( cd "${SCRIPT_DIR}/../.." && pwd )"
 
-# Get module name from argument
-MODULE="${1:-}"
-# lowercase the module name
-readonly MODULE=$(echo "$MODULE" | tr '[:upper:]' '[:lower:]')
+# Get module name from argument and lowercase it
+readonly MODULE=$(echo "${1:-}" | tr '[:upper:]' '[:lower:]')
 
 if [[ -z "$MODULE" ]]; then
   echo "Error: Module name is required"
