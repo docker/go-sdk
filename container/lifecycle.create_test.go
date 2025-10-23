@@ -5,15 +5,16 @@ import (
 	"context"
 	"io"
 	"log/slog"
+	"net/netip"
 	"regexp"
 	"testing"
 	"time"
 
+	"github.com/moby/moby/api/types/container"
+	"github.com/moby/moby/api/types/network"
+	dockerclient "github.com/moby/moby/client"
 	"github.com/stretchr/testify/require"
 
-	"github.com/docker/docker/api/types/container"
-	"github.com/docker/docker/api/types/network"
-	"github.com/docker/go-connections/nat"
 	"github.com/docker/go-sdk/client"
 )
 
@@ -21,14 +22,14 @@ const nginxAlpineImage = "nginx:alpine"
 
 func TestMergePortBindings(t *testing.T) {
 	type arg struct {
-		configPortMap nat.PortMap
-		parsedPortMap nat.PortMap
+		configPortMap network.PortMap
+		parsedPortMap network.PortMap
 		exposedPorts  []string
 	}
 	cases := []struct {
 		name     string
 		arg      arg
-		expected nat.PortMap
+		expected network.PortMap
 	}{
 		{
 			name: "empty ports",
@@ -37,65 +38,69 @@ func TestMergePortBindings(t *testing.T) {
 				parsedPortMap: nil,
 				exposedPorts:  nil,
 			},
-			expected: map[nat.Port][]nat.PortBinding{},
+			expected: map[network.Port][]network.PortBinding{},
 		},
 		{
 			name: "config port map but not exposed",
 			arg: arg{
-				configPortMap: map[nat.Port][]nat.PortBinding{
-					"80/tcp": {{HostIP: "1", HostPort: "2"}},
+				configPortMap: map[network.Port][]network.PortBinding{
+					network.MustParsePort("80/tcp"): {{HostIP: netip.MustParseAddr("127.0.0.1"), HostPort: "2"}},
 				},
 				parsedPortMap: nil,
 				exposedPorts:  nil,
 			},
-			expected: map[nat.Port][]nat.PortBinding{},
+			expected: map[network.Port][]network.PortBinding{},
 		},
 		{
 			name: "parsed port map without config",
 			arg: arg{
 				configPortMap: nil,
-				parsedPortMap: map[nat.Port][]nat.PortBinding{
-					"80/tcp": {{HostIP: "", HostPort: ""}},
+				parsedPortMap: map[network.Port][]network.PortBinding{
+					network.MustParsePort("80/tcp"): {{}},
 				},
 				exposedPorts: nil,
 			},
-			expected: map[nat.Port][]nat.PortBinding{
-				"80/tcp": {{HostIP: "", HostPort: "0"}},
+			expected: map[network.Port][]network.PortBinding{
+				network.MustParsePort("80/tcp"): {
+					{HostPort: "0"},
+				},
 			},
 		},
 		{
 			name: "parsed and configured but not exposed",
 			arg: arg{
-				configPortMap: map[nat.Port][]nat.PortBinding{
-					"80/tcp": {{HostIP: "1", HostPort: "2"}},
+				configPortMap: map[network.Port][]network.PortBinding{
+					network.MustParsePort("80/tcp"): {{HostIP: netip.MustParseAddr("127.0.0.1"), HostPort: "2"}},
 				},
-				parsedPortMap: map[nat.Port][]nat.PortBinding{
-					"80/tcp": {{HostIP: "", HostPort: ""}},
+				parsedPortMap: map[network.Port][]network.PortBinding{
+					network.MustParsePort("80/tcp"): {{}},
 				},
 				exposedPorts: nil,
 			},
-			expected: map[nat.Port][]nat.PortBinding{
-				"80/tcp": {{HostIP: "", HostPort: "0"}},
+			expected: map[network.Port][]network.PortBinding{
+				network.MustParsePort("80/tcp"): {
+					{HostPort: "0"},
+				},
 			},
 		},
 		{
 			name: "merge both parsed and config",
 			arg: arg{
-				configPortMap: map[nat.Port][]nat.PortBinding{
-					"60/tcp": {{HostIP: "1", HostPort: "2"}},
-					"70/tcp": {{HostIP: "1", HostPort: "2"}},
-					"80/tcp": {{HostIP: "1", HostPort: "2"}},
+				configPortMap: map[network.Port][]network.PortBinding{
+					network.MustParsePort("60/tcp"): {{HostIP: netip.MustParseAddr("127.0.0.1"), HostPort: "2"}},
+					network.MustParsePort("70/tcp"): {{HostIP: netip.MustParseAddr("127.0.0.1"), HostPort: "2"}},
+					network.MustParsePort("80/tcp"): {{HostIP: netip.MustParseAddr("127.0.0.1"), HostPort: "2"}},
 				},
-				parsedPortMap: map[nat.Port][]nat.PortBinding{
-					"80/tcp": {{HostIP: "", HostPort: ""}},
-					"90/tcp": {{HostIP: "", HostPort: ""}},
+				parsedPortMap: map[network.Port][]network.PortBinding{
+					network.MustParsePort("80/tcp"): {{}},
+					network.MustParsePort("90/tcp"): {{}},
 				},
 				exposedPorts: []string{"70", "80/tcp"},
 			},
-			expected: map[nat.Port][]nat.PortBinding{
-				"70/tcp": {{HostIP: "1", HostPort: "2"}},
-				"80/tcp": {{HostIP: "1", HostPort: "2"}},
-				"90/tcp": {{HostIP: "", HostPort: "0"}},
+			expected: map[network.Port][]network.PortBinding{
+				network.MustParsePort("70/tcp"): {{HostIP: netip.MustParseAddr("127.0.0.1"), HostPort: "2"}},
+				network.MustParsePort("80/tcp"): {{HostIP: netip.MustParseAddr("127.0.0.1"), HostPort: "2"}},
+				network.MustParsePort("90/tcp"): {{HostPort: "0"}},
 			},
 		},
 	}
@@ -124,10 +129,10 @@ func TestPreCreateModifierHook(t *testing.T) {
 				config.Env = []string{"a=b"}
 			},
 			hostConfigModifier: func(hostConfig *container.HostConfig) {
-				hostConfig.PortBindings = nat.PortMap{
-					"80/tcp": []nat.PortBinding{
+				hostConfig.PortBindings = network.PortMap{
+					network.MustParsePort("80/tcp"): []network.PortBinding{
 						{
-							HostIP:   "1",
+							HostIP:   netip.MustParseAddr("127.0.0.1"),
 							HostPort: "2",
 						},
 					},
@@ -178,10 +183,10 @@ func TestPreCreateModifierHook(t *testing.T) {
 		def := &Definition{
 			image: nginxAlpineImage, // alpine image does expose port 80
 			hostConfigModifier: func(hostConfig *container.HostConfig) {
-				hostConfig.PortBindings = nat.PortMap{
-					"80/tcp": []nat.PortBinding{
+				hostConfig.PortBindings = network.PortMap{
+					network.MustParsePort("80/tcp"): []network.PortBinding{
 						{
-							HostIP:   "1",
+							HostIP:   netip.MustParseAddr("127.0.0.1"),
 							HostPort: "2",
 						},
 					},
@@ -204,12 +209,12 @@ func TestPreCreateModifierHook(t *testing.T) {
 
 		require.Equal(
 			t,
-			nat.PortSet(nat.PortSet{}),
+			network.PortSet(network.PortSet{}),
 			inputConfig.ExposedPorts,
 			"Docker config's exposed ports should be empty",
 		)
 		require.Equal(t,
-			nat.PortMap{},
+			network.PortMap{},
 			inputHostConfig.PortBindings,
 			"Host config's portBinding should be empty",
 		)
@@ -291,10 +296,10 @@ func TestPreCreateModifierHook(t *testing.T) {
 		def := &Definition{
 			image: nginxAlpineImage, // alpine image does expose port 80
 			hostConfigModifier: func(hostConfig *container.HostConfig) {
-				hostConfig.PortBindings = nat.PortMap{
-					"80/tcp": []nat.PortBinding{
+				hostConfig.PortBindings = network.PortMap{
+					network.MustParsePort("80/tcp"): []network.PortBinding{
 						{
-							HostIP:   "localhost",
+							HostIP:   netip.MustParseAddr("127.0.0.1"),
 							HostPort: "8080",
 						},
 					},
@@ -314,18 +319,18 @@ func TestPreCreateModifierHook(t *testing.T) {
 		require.NoError(t, err)
 
 		// assertions
-		require.Equal(t, "localhost", inputHostConfig.PortBindings["80/tcp"][0].HostIP)
-		require.Equal(t, "8080", inputHostConfig.PortBindings["80/tcp"][0].HostPort)
+		require.Equal(t, netip.MustParseAddr("127.0.0.1"), inputHostConfig.PortBindings[network.MustParsePort("80/tcp")][0].HostIP)
+		require.Equal(t, "8080", inputHostConfig.PortBindings[network.MustParsePort("80/tcp")][0].HostPort)
 	})
 
 	t.Run("definition-contains-exposed-port-modifiers-with-protocol", func(t *testing.T) {
 		def := &Definition{
 			image: nginxAlpineImage, // alpine image does expose port 80
 			hostConfigModifier: func(hostConfig *container.HostConfig) {
-				hostConfig.PortBindings = nat.PortMap{
-					"80/tcp": []nat.PortBinding{
+				hostConfig.PortBindings = network.PortMap{
+					network.MustParsePort("80/tcp"): []network.PortBinding{
 						{
-							HostIP:   "localhost",
+							HostIP:   netip.MustParseAddr("127.0.0.1"),
 							HostPort: "8080",
 						},
 					},
@@ -345,8 +350,8 @@ func TestPreCreateModifierHook(t *testing.T) {
 		require.NoError(t, err)
 
 		// assertions
-		require.Equal(t, "localhost", inputHostConfig.PortBindings["80/tcp"][0].HostIP)
-		require.Equal(t, "8080", inputHostConfig.PortBindings["80/tcp"][0].HostPort)
+		require.Equal(t, netip.MustParseAddr("127.0.0.1"), inputHostConfig.PortBindings[network.MustParsePort("80/tcp")][0].HostIP)
+		require.Equal(t, "8080", inputHostConfig.PortBindings[network.MustParsePort("80/tcp")][0].HostPort)
 	})
 }
 
@@ -418,7 +423,7 @@ func TestLifecycleHooks_WithMultipleHooks(t *testing.T) {
 	require.Len(t, regexp.MustCompile("Stopping container").FindAllString(log, -1), 6)
 }
 
-func testCreateNetwork(t *testing.T, networkName string) network.CreateResponse {
+func testCreateNetwork(t *testing.T, networkName string) dockerclient.NetworkCreateResult {
 	t.Helper()
 
 	dockerClient, err := client.New(context.TODO())
@@ -427,11 +432,11 @@ func testCreateNetwork(t *testing.T, networkName string) network.CreateResponse 
 		require.NoError(t, dockerClient.Close())
 	})
 
-	nw, err := dockerClient.NetworkCreate(context.Background(), networkName, network.CreateOptions{})
+	nw, err := dockerClient.NetworkCreate(context.Background(), networkName, dockerclient.NetworkCreateOptions{})
 	require.NoError(t, err)
 
 	t.Cleanup(func() {
-		err := dockerClient.NetworkRemove(context.Background(), nw.ID)
+		_, err := dockerClient.NetworkRemove(context.Background(), nw.ID, dockerclient.NetworkRemoveOptions{})
 		require.NoError(t, err)
 		require.NoError(t, dockerClient.Close())
 	})

@@ -11,10 +11,10 @@ import (
 	"github.com/cenkalti/backoff/v4"
 	"github.com/moby/go-archive"
 	"github.com/moby/go-archive/compression"
+	dockerclient "github.com/moby/moby/client"
+	"github.com/moby/moby/client/pkg/jsonmessage"
 	"github.com/moby/term"
 
-	"github.com/docker/docker/api/types/build"
-	"github.com/docker/docker/pkg/jsonmessage"
 	"github.com/docker/go-sdk/client"
 )
 
@@ -63,7 +63,7 @@ func BuildFromDir(ctx context.Context, dir string, dockerfile string, tag string
 		return "", fmt.Errorf("archive build context: %w", err)
 	}
 
-	buildOpts := build.ImageBuildOptions{
+	buildOpts := dockerclient.ImageBuildOptions{
 		Dockerfile: dockerfile,
 	}
 
@@ -83,7 +83,7 @@ func Build(ctx context.Context, contextReader io.Reader, tag string, opts ...Bui
 	}
 
 	buildOpts := &buildOptions{
-		opts: build.ImageBuildOptions{
+		opts: dockerclient.ImageBuildOptions{
 			Dockerfile: "Dockerfile",
 		},
 	}
@@ -127,15 +127,15 @@ func Build(ctx context.Context, contextReader io.Reader, tag string, opts ...Bui
 	defer tryClose(contextReader)
 
 	resp, err := backoff.RetryNotifyWithData(
-		func() (build.ImageBuildResponse, error) {
+		func() (dockerclient.ImageBuildResult, error) {
 			var err error
 
 			resp, err := buildOpts.client.ImageBuild(ctx, contextReader, buildOpts.opts)
 			if err != nil {
 				if client.IsPermanentClientError(err) {
-					return build.ImageBuildResponse{}, backoff.Permanent(fmt.Errorf("build image: %w", err))
+					return dockerclient.ImageBuildResult{}, backoff.Permanent(fmt.Errorf("build image: %w", err))
 				}
-				return build.ImageBuildResponse{}, err
+				return dockerclient.ImageBuildResult{}, err
 			}
 
 			return resp, nil

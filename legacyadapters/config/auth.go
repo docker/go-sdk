@@ -7,9 +7,10 @@
 package config
 
 import (
+	"github.com/moby/moby/api/types/registry"
+
 	"github.com/docker/cli/cli/config/configfile"
 	"github.com/docker/cli/cli/config/types"
-	"github.com/docker/docker/api/types/registry"
 	"github.com/docker/go-sdk/config"
 )
 

@@ -3,6 +3,8 @@ package volume
 import (
 	"context"
 	"fmt"
+
+	"github.com/moby/moby/client"
 )
 
 // TerminableVolume is a volume that can be terminated.
@@ -19,5 +21,6 @@ func (v *Volume) Terminate(ctx context.Context, opts ...TerminateOption) error {
 		}
 	}
 
-	return v.dockerClient.VolumeRemove(ctx, v.Name, terminateOptions.force)
+	_, err := v.dockerClient.VolumeRemove(ctx, v.Name, client.VolumeRemoveOptions{Force: terminateOptions.force})
+	return err
 }

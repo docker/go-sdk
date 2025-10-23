@@ -5,19 +5,16 @@ import (
 	"fmt"
 
 	"github.com/containerd/errdefs"
-	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
-
-	"github.com/docker/docker/api/types/container"
-	"github.com/docker/docker/api/types/filters"
-	"github.com/docker/docker/api/types/network"
+	"github.com/moby/moby/api/types/container"
+	"github.com/moby/moby/client"
 )
 
 // ContainerCreate creates a new container.
-func (c *sdkClient) ContainerCreate(ctx context.Context, config *container.Config, hostConfig *container.HostConfig, networkingConfig *network.NetworkingConfig, platform *ocispec.Platform, name string) (container.CreateResponse, error) {
+func (c *sdkClient) ContainerCreate(ctx context.Context, options client.ContainerCreateOptions) (client.ContainerCreateResult, error) {
 	// Add the labels that identify this as a container created by the SDK.
-	AddSDKLabels(config.Labels)
+	AddSDKLabels(options.Config.Labels)
 
-	return c.APIClient.ContainerCreate(ctx, config, hostConfig, networkingConfig, platform, name)
+	return c.APIClient.ContainerCreate(ctx, options)
 }
 
 // FindContainerByName finds a container by name. The name filter uses a regex to find the containers.
@@ -27,14 +24,16 @@ func (c *sdkClient) FindContainerByName(ctx context.Context, name string) (*cont
 	}
 
 	// Note that, 'name' filter will use regex to find the containers
-	filter := filters.NewArgs(filters.Arg("name", fmt.Sprintf("^%s$", name)))
-	containers, err := c.ContainerList(ctx, container.ListOptions{All: true, Filters: filter})
+	containers, err := c.ContainerList(ctx, client.ContainerListOptions{
+		All:     true,
+		Filters: make(client.Filters).Add("name", "^"+name+"$"),
+	})
 	if err != nil {
 		return nil, fmt.Errorf("container list: %w", err)
 	}
 
-	if len(containers) > 0 {
-		return &containers[0], nil
+	if len(containers.Items) > 0 {
+		return &containers.Items[0], nil
 	}
 
 	return nil, errdefs.ErrNotFound.WithMessage(fmt.Sprintf("container %s not found", name))

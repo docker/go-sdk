@@ -3,9 +3,12 @@ package container
 import (
 	"context"
 	"net"
+	"net/netip"
+	"strconv"
 	"testing"
 	"time"
 
+	"github.com/moby/moby/api/types/network"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -36,26 +39,22 @@ func TestUDPPortBinding(t *testing.T) {
 		Cleanup(t, c)
 
 		// Test MappedPort function - this was the bug
-		udpPort, err := nat.NewPort("udp", "8080")
-		require.NoError(t, err)
+		udpPort, ok := network.PortFrom(8080, "udp")
+		require.True(t, ok)
 
 		mappedPort, err := c.MappedPort(ctx, udpPort)
 		require.NoError(t, err)
 
 		// Before fix: mappedPort.Port() would return "0"
 		// After fix: mappedPort.Port() returns actual port like "55051"
-		assert.NotEqual(t, "0", mappedPort.Port(), "UDP port should not return '0'")
-		assert.Equal(t, "udp", mappedPort.Proto(), "Protocol should be UDP")
-
-		portNum := mappedPort.Int()
-		assert.Positive(t, portNum, "Port number should be greater than 0")
-		assert.LessOrEqual(t, portNum, 65535, "Port number should be valid UDP port range")
+		require.NotEqual(t, 0, mappedPort.Num(), "UDP port should not return '0'")
+		require.Equal(t, network.UDP, mappedPort.Proto(), "Protocol should be UDP")
 
 		// Verify the port is actually accessible (basic connectivity test)
 		hostIP, err := c.Host(ctx)
 		require.NoError(t, err)
 
-		address := net.JoinHostPort(hostIP, mappedPort.Port())
+		address := net.JoinHostPort(hostIP, strconv.Itoa(int(mappedPort.Num())))
 		conn, err := net.DialTimeout("udp", address, 2*time.Second)
 		require.NoError(t, err, "Should be able to connect to UDP port")
 		conn.Close()
@@ -70,17 +69,14 @@ func TestUDPPortBinding(t *testing.T) {
 		require.NoError(t, err)
 		Cleanup(t, c)
 
-		tcpPort, err := nat.NewPort("tcp", "80")
-		require.NoError(t, err)
+		tcpPort, ok := network.PortFrom(80, "tcp")
+		require.True(t, ok)
 
 		mappedPort, err := c.MappedPort(ctx, tcpPort)
 		require.NoError(t, err)
 
-		assert.NotEqual(t, "0", mappedPort.Port(), "TCP port should not return '0'")
-		assert.Equal(t, "tcp", mappedPort.Proto(), "Protocol should be TCP")
-
-		portNum := mappedPort.Int()
-		assert.Positive(t, portNum, "Port number should be greater than 0")
+		assert.NotEqual(t, 0, mappedPort.Num(), "TCP port should not return '0'")
+		assert.Equal(t, network.TCP, mappedPort.Proto(), "Protocol should be TCP")
 	})
 }
 
@@ -90,18 +86,19 @@ func TestPortBindingInternalLogic(t *testing.T) {
 	t.Run("mergePortBindings fixes empty HostPort", func(t *testing.T) {
 		// Test the core fix: empty HostPort should become "0"
 		// This simulates what nat.ParsePortSpecs returns for "8080/udp"
-		exposedPortMap := nat.PortMap{
-			"8080/udp": []nat.PortBinding{{HostIP: "", HostPort: ""}}, // Empty HostPort (the bug)
+		exposedPortMap := network.PortMap{
+			network.MustParsePort("8080/udp"): []network.PortBinding{{}}, // Empty HostPort (the bug)
 		}
-		configPortMap := nat.PortMap{} // No existing port bindings
+		configPortMap := network.PortMap{} // No existing port bindings
 		exposedPorts := []string{"8080/udp"}
 
 		// Call the function our fix modified
 		result := mergePortBindings(configPortMap, exposedPortMap, exposedPorts)
 
 		// Verify the fix worked
-		require.Contains(t, result, nat.Port("8080/udp"))
-		bindings := result["8080/udp"]
+		udp80 := network.MustParsePort("8080/udp")
+		require.Contains(t, result, udp80)
+		bindings := result[udp80]
 		require.Len(t, bindings, 1)
 
 		// THE KEY ASSERTION: Empty HostPort should become "0"
@@ -112,20 +109,20 @@ func TestPortBindingInternalLogic(t *testing.T) {
 
 	t.Run("mergePortBindings preserves existing HostPort", func(t *testing.T) {
 		// Ensure we don't modify already-set HostPort values
-		exposedPortMap := nat.PortMap{
-			"8080/udp": []nat.PortBinding{{HostIP: "127.0.0.1", HostPort: "9090"}},
+		exposedPortMap := network.PortMap{
+			network.MustParsePort("8080/udp"): []network.PortBinding{{HostIP: netip.MustParseAddr("127.0.0.1"), HostPort: "9090"}},
 		}
-		configPortMap := nat.PortMap{}
+		configPortMap := network.PortMap{}
 		exposedPorts := []string{"8080/udp"}
 
 		result := mergePortBindings(configPortMap, exposedPortMap, exposedPorts)
 
-		bindings := result["8080/udp"]
+		bindings := result[network.MustParsePort("8080/udp")]
 		require.Len(t, bindings, 1)
 
 		// Should preserve existing values
 		assert.Equal(t, "9090", bindings[0].HostPort, "Existing HostPort should be preserved")
-		assert.Equal(t, "127.0.0.1", bindings[0].HostIP, "Existing HostIP should be preserved")
+		assert.Equal(t, "127.0.0.1", bindings[0].HostIP.String(), "Existing HostIP should be preserved")
 	})
 
 	t.Run("nat.ParsePortSpecs behavior documentation", func(t *testing.T) {

@@ -4,9 +4,9 @@ import (
 	"context"
 	"testing"
 
+	dockerclient "github.com/moby/moby/client"
 	"github.com/stretchr/testify/require"
 
-	"github.com/docker/docker/api/types/image"
 	"github.com/docker/go-sdk/client"
 )
 
@@ -22,7 +22,7 @@ func TestWithOptions(t *testing.T) {
 	})
 
 	t.Run("with-pull-options", func(t *testing.T) {
-		opts := image.PullOptions{}
+		opts := dockerclient.ImagePullOptions{}
 		pullOpts := &pullOptions{}
 		err := WithPullOptions(opts)(pullOpts)
 		require.NoError(t, err)

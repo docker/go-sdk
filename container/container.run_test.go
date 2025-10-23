@@ -15,10 +15,11 @@ import (
 	"time"
 
 	"github.com/containerd/errdefs"
+	apicontainer "github.com/moby/moby/api/types/container"
+	apinetwork "github.com/moby/moby/api/types/network"
+	dockerclient "github.com/moby/moby/client"
 	"github.com/stretchr/testify/require"
 
-	apicontainer "github.com/docker/docker/api/types/container"
-	apinetwork "github.com/docker/docker/api/types/network"
 	"github.com/docker/go-sdk/client"
 	"github.com/docker/go-sdk/container"
 	"github.com/docker/go-sdk/container/exec"
@@ -185,9 +186,9 @@ echo "done"
 		require.NoError(t, err)
 		require.NotNil(t, inspect)
 
-		require.Contains(t, inspect.Config.Env, "ENV1=value1")
-		require.Contains(t, inspect.Config.Env, "ENV2=value2")
-		require.Equal(t, "test-hostname", inspect.Config.Hostname)
+		require.Contains(t, inspect.Container.Config.Env, "ENV1=value1")
+		require.Contains(t, inspect.Container.Config.Env, "ENV2=value2")
+		require.Equal(t, "test-hostname", inspect.Container.Config.Hostname)
 	})
 
 	t.Run("with-host-config-modifier", func(t *testing.T) {
@@ -205,7 +206,7 @@ echo "done"
 		require.NoError(t, err)
 		require.NotNil(t, inspect)
 
-		require.Contains(t, inspect.HostConfig.CapDrop, "CAP_NET_ADMIN")
+		require.Contains(t, inspect.Container.HostConfig.CapDrop, "CAP_NET_ADMIN")
 	})
 
 	t.Run("with-endpoint-settings-modifier", func(t *testing.T) {
@@ -228,9 +229,9 @@ echo "done"
 		require.NoError(t, err)
 		require.NotNil(t, inspect)
 
-		require.Contains(t, inspect.NetworkSettings.Networks, name)
-		require.Contains(t, inspect.NetworkSettings.Networks[name].Aliases, "alias1")
-		require.Contains(t, inspect.NetworkSettings.Networks[name].Aliases, "alias2")
+		require.Contains(t, inspect.Container.NetworkSettings.Networks, name)
+		require.Contains(t, inspect.Container.NetworkSettings.Networks[name].Aliases, "alias1")
+		require.Contains(t, inspect.Container.NetworkSettings.Networks[name].Aliases, "alias2")
 	})
 
 	t.Run("with-startup-command", func(t *testing.T) {
@@ -303,8 +304,8 @@ echo "done"
 			require.NoError(t, err)
 			require.NotNil(t, inspect)
 
-			require.Equal(t, ctr.ID(), inspect.ID)
-			require.Equal(t, ctr.Image(), inspect.Config.Image)
+			require.Equal(t, ctr.ID(), inspect.Container.ID)
+			require.Equal(t, ctr.Image(), inspect.Container.Config.Image)
 		})
 
 		t.Run("endpoint", func(t *testing.T) {
@@ -328,26 +329,26 @@ echo "done"
 		})
 
 		t.Run("port-endpoint", func(t *testing.T) {
-			portEndpoint, err := ctr.PortEndpoint(context.Background(), "80/tcp", "tcp")
+			portEndpoint, err := ctr.PortEndpoint(context.Background(), apinetwork.MustParsePort("80/tcp"), "tcp")
 			require.NoError(t, err)
 			require.True(t, strings.HasPrefix(portEndpoint, "tcp://"))
 		})
 
 		t.Run("port-endpoint-not-found", func(t *testing.T) {
-			portEndpoint, err := ctr.PortEndpoint(context.Background(), "3306/tcp", "tcp")
+			portEndpoint, err := ctr.PortEndpoint(context.Background(), apinetwork.MustParsePort("3306/tcp"), "tcp")
 			require.ErrorIs(t, err, errdefs.ErrNotFound)
 			require.Empty(t, portEndpoint)
 		})
 
 		t.Run("mapped-port", func(t *testing.T) {
-			mappedPort, err := ctr.MappedPort(context.Background(), "80/tcp")
+			mappedPort, err := ctr.MappedPort(context.Background(), apinetwork.MustParsePort("80/tcp"))
 			require.NoError(t, err)
 			require.NotNil(t, mappedPort)
-			require.NotEqual(t, "80", mappedPort.Port())
+			require.NotEqual(t, "80", mappedPort)
 		})
 
 		t.Run("mapped-port-not-found", func(t *testing.T) {
-			mappedPort, err := ctr.MappedPort(context.Background(), "3306/tcp")
+			mappedPort, err := ctr.MappedPort(context.Background(), apinetwork.MustParsePort("3306/tcp"))
 			require.ErrorIs(t, err, errdefs.ErrNotFound)
 			require.Empty(t, mappedPort)
 		})
@@ -366,7 +367,7 @@ echo "done"
 			require.NoError(t, err)
 			require.NotNil(t, state)
 
-			require.Equal(t, "running", state.Status)
+			require.Equal(t, apicontainer.StateRunning, state.Status)
 
 			err = c.Stop(context.Background())
 			require.NoError(t, err)
@@ -374,7 +375,7 @@ echo "done"
 			state, err = c.State(context.Background())
 			require.NoError(t, err)
 			require.NotNil(t, state)
-			require.Equal(t, "exited", state.Status)
+			require.Equal(t, apicontainer.StateExited, state.Status)
 
 			err = c.Terminate(context.Background())
 			require.NoError(t, err)
@@ -404,11 +405,11 @@ func TestRun_addSDKLabels(t *testing.T) {
 	inspect, err := ctr.Inspect(context.Background())
 	require.NoError(t, err)
 
-	require.Contains(t, inspect.Config.Labels, client.LabelBase)
-	require.Contains(t, inspect.Config.Labels, client.LabelLang)
-	require.Contains(t, inspect.Config.Labels, client.LabelVersion)
-	require.Contains(t, inspect.Config.Labels, client.LabelBase+".container")
-	require.Equal(t, container.Version(), inspect.Config.Labels[client.LabelBase+".container"])
+	require.Contains(t, inspect.Container.Config.Labels, client.LabelBase)
+	require.Contains(t, inspect.Container.Config.Labels, client.LabelLang)
+	require.Contains(t, inspect.Container.Config.Labels, client.LabelVersion)
+	require.Contains(t, inspect.Container.Config.Labels, client.LabelBase+".container")
+	require.Equal(t, container.Version(), inspect.Container.Config.Labels[client.LabelBase+".container"])
 }
 
 //go:embed testdata/hello.sh
@@ -657,7 +658,7 @@ func TestRunWithNetworks(t *testing.T) {
 		return container.Run(context.Background(), opts...)
 	}
 
-	testInspect := func(t *testing.T, ctr *container.Container) *apicontainer.InspectResponse {
+	testInspect := func(t *testing.T, ctr *container.Container) dockerclient.ContainerInspectResult {
 		t.Helper()
 
 		inspect, err := ctr.Inspect(context.Background())
@@ -685,8 +686,8 @@ func TestRunWithNetworks(t *testing.T) {
 		require.NoError(t, runErr)
 
 		inspect := testInspect(t, ctr)
-		require.Len(t, inspect.NetworkSettings.Networks, 1)
-		require.Equal(t, []string{"ctr1"}, inspect.NetworkSettings.Networks[nw.Name()].Aliases)
+		require.Len(t, inspect.Container.NetworkSettings.Networks, 1)
+		require.Equal(t, []string{"ctr1"}, inspect.Container.NetworkSettings.Networks[nw.Name()].Aliases)
 	})
 
 	t.Run("with-bridge-network", func(t *testing.T) {
@@ -704,8 +705,8 @@ func TestRunWithNetworks(t *testing.T) {
 		require.NoError(t, runErr)
 
 		inspect := testInspect(t, ctr)
-		require.Len(t, inspect.NetworkSettings.Networks, 1)
-		require.Empty(t, inspect.NetworkSettings.Networks["bridge"].Aliases) // Bridge network does not support aliases
+		require.Len(t, inspect.Container.NetworkSettings.Networks, 1)
+		require.Empty(t, inspect.Container.NetworkSettings.Networks["bridge"].Aliases) // Bridge network does not support aliases
 	})
 
 	t.Run("with-new-network", func(t *testing.T) {
@@ -720,7 +721,7 @@ func TestRunWithNetworks(t *testing.T) {
 		// We need to clean up the network first, else it fails
 		// because the network would have active endpoints (containers)
 		inspect := testInspect(t, ctr)
-		for k := range inspect.NetworkSettings.Networks {
+		for k := range inspect.Container.NetworkSettings.Networks {
 			network.CleanupByID(t, k)
 		}
 
@@ -730,7 +731,7 @@ func TestRunWithNetworks(t *testing.T) {
 		require.NoError(t, runErr)
 
 		require.NotNil(t, inspect)
-		require.Len(t, inspect.NetworkSettings.Networks, 1)
+		require.Len(t, inspect.Container.NetworkSettings.Networks, 1)
 	})
 
 	t.Run("with-network-name", func(t *testing.T) {
@@ -750,8 +751,8 @@ func TestRunWithNetworks(t *testing.T) {
 		require.NotNil(t, ctr)
 
 		inspect := testInspect(t, ctr)
-		require.Len(t, inspect.NetworkSettings.Networks, 1)
-		require.Equal(t, []string{"ctr1"}, inspect.NetworkSettings.Networks[newNetwork.Name()].Aliases)
+		require.Len(t, inspect.Container.NetworkSettings.Networks, 1)
+		require.Equal(t, []string{"ctr1"}, inspect.Container.NetworkSettings.Networks[newNetwork.Name()].Aliases)
 	})
 
 	t.Run("with-multiple-networks", func(t *testing.T) {
@@ -774,9 +775,9 @@ func TestRunWithNetworks(t *testing.T) {
 		require.NoError(t, runErr)
 
 		inspect := testInspect(t, ctr)
-		require.Len(t, inspect.NetworkSettings.Networks, 2)
-		require.Equal(t, []string{"ctr1"}, inspect.NetworkSettings.Networks[nw1.Name()].Aliases)
-		require.Equal(t, []string{"ctr2"}, inspect.NetworkSettings.Networks[nw2.Name()].Aliases)
+		require.Len(t, inspect.Container.NetworkSettings.Networks, 2)
+		require.Equal(t, []string{"ctr1"}, inspect.Container.NetworkSettings.Networks[nw1.Name()].Aliases)
+		require.Equal(t, []string{"ctr2"}, inspect.Container.NetworkSettings.Networks[nw2.Name()].Aliases)
 	})
 }
 
@@ -809,11 +810,11 @@ func TestRunWithWaitStrategy(t *testing.T) {
 	}
 
 	t.Run("for-listening-port", func(t *testing.T) {
-		testRun(t, nginxAlpineImage, wait.ForListeningPort("80/tcp"), false)
+		testRun(t, nginxAlpineImage, wait.ForListeningPort(apinetwork.MustParsePort("80/tcp")), false)
 	})
 
 	t.Run("for-mapped-port", func(t *testing.T) {
-		testRun(t, nginxAlpineImage, wait.ForMappedPort("80/tcp"), false)
+		testRun(t, nginxAlpineImage, wait.ForMappedPort(apinetwork.MustParsePort("80/tcp")), false)
 	})
 
 	t.Run("for-exposed-port", func(t *testing.T) {
@@ -874,7 +875,7 @@ func TestRunWithWaitStrategy(t *testing.T) {
 	})
 }
 
-func testCreateNetwork(t *testing.T, networkName string) apinetwork.CreateResponse {
+func testCreateNetwork(t *testing.T, networkName string) dockerclient.NetworkCreateResult {
 	t.Helper()
 
 	dockerClient, err := client.New(context.TODO())
@@ -883,11 +884,11 @@ func testCreateNetwork(t *testing.T, networkName string) apinetwork.CreateRespon
 		require.NoError(t, dockerClient.Close())
 	})
 
-	nw, err := dockerClient.NetworkCreate(context.Background(), networkName, apinetwork.CreateOptions{})
+	nw, err := dockerClient.NetworkCreate(context.Background(), networkName, dockerclient.NetworkCreateOptions{})
 	require.NoError(t, err)
 
 	t.Cleanup(func() {
-		err := dockerClient.NetworkRemove(context.Background(), nw.ID)
+		_, err := dockerClient.NetworkRemove(context.Background(), nw.ID, dockerclient.NetworkRemoveOptions{})
 		require.NoError(t, err)
 		require.NoError(t, dockerClient.Close())
 	})

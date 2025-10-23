@@ -9,9 +9,8 @@ import (
 	"strconv"
 	"testing"
 
+	"github.com/moby/moby/api/types/registry"
 	"github.com/stretchr/testify/require"
-
-	"github.com/docker/docker/api/types/registry"
 )
 
 func TestDecodeBase64Auth(t *testing.T) {

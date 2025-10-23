@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/docker/docker/api/types/container"
+	"github.com/moby/moby/client"
 )
 
 // Start will start an already created container
@@ -14,7 +14,7 @@ func (c *Container) Start(ctx context.Context) error {
 		return fmt.Errorf("starting hook: %w", err)
 	}
 
-	if err := c.dockerClient.ContainerStart(ctx, c.ID(), container.StartOptions{}); err != nil {
+	if _, err := c.dockerClient.ContainerStart(ctx, c.ID(), client.ContainerStartOptions{}); err != nil {
 		return fmt.Errorf("container start: %w", err)
 	}
 	defer c.dockerClient.Close()

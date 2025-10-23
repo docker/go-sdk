@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/moby/moby/client"
 	"github.com/stretchr/testify/require"
 
-	"github.com/docker/docker/api/types/filters"
 	"github.com/docker/go-sdk/volume"
 )
 
@@ -82,7 +82,7 @@ func BenchmarkVolumeOperations(b *testing.B) {
 		b.ReportAllocs()
 		b.ResetTimer()
 		for range b.N {
-			_, err := volume.List(context.Background(), volume.WithFilters(filters.NewArgs(filters.Arg("label", "volume.type=test"))))
+			_, err := volume.List(context.Background(), volume.WithFilters(make(client.Filters).Add("label", "volume.type=test")))
 			require.NoError(b, err)
 		}
 	})

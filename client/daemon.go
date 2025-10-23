@@ -3,17 +3,18 @@ package client
 import (
 	"context"
 	"errors"
+	"net/netip"
 	"net/url"
 	"os"
 
-	"github.com/docker/docker/api/types/network"
+	"github.com/moby/moby/client"
 )
 
 // dockerEnvFile is the file that is created when running inside a container.
 // It's a variable to allow testing.
 var dockerEnvFile = "/.dockerenv"
 
-// DaemonHost gets the host or ip of the Docker daemon where ports are exposed on
+// DaemonHostWithContext gets the host or ip of the Docker daemon where ports are exposed on
 // Warning: this is based on your Docker host setting. Will fail if using an SSH tunnel
 func (c *sdkClient) DaemonHostWithContext(ctx context.Context) (string, error) {
 	c.mtx.Lock()
@@ -38,9 +39,10 @@ func (c *sdkClient) daemonHostLocked(ctx context.Context) (string, error) {
 		if inAContainer(dockerEnvFile) {
 			ip, err := c.getGatewayIP(ctx, "bridge")
 			if err != nil {
-				ip = "localhost"
+				host = "localhost"
+			} else {
+				host = ip.String()
 			}
-			host = ip
 		} else {
 			host = "localhost"
 		}
@@ -51,21 +53,21 @@ func (c *sdkClient) daemonHostLocked(ctx context.Context) (string, error) {
 	return host, nil
 }
 
-func (c *sdkClient) getGatewayIP(ctx context.Context, defaultNetwork string) (string, error) {
-	nw, err := c.NetworkInspect(ctx, defaultNetwork, network.InspectOptions{})
+func (c *sdkClient) getGatewayIP(ctx context.Context, defaultNetwork string) (netip.Addr, error) {
+	nw, err := c.NetworkInspect(ctx, defaultNetwork, client.NetworkInspectOptions{})
 	if err != nil {
-		return "", err
+		return netip.Addr{}, err
 	}
 
-	var ip string
-	for _, cfg := range nw.IPAM.Config {
-		if cfg.Gateway != "" {
+	var ip netip.Addr
+	for _, cfg := range nw.Network.IPAM.Config {
+		if cfg.Gateway.IsValid() {
 			ip = cfg.Gateway
 			break
 		}
 	}
-	if ip == "" {
-		return "", errors.New("failed to get gateway IP from network settings")
+	if !ip.IsValid() {
+		return netip.Addr{}, errors.New("failed to get gateway IP from network settings")
 	}
 
 	return ip, nil

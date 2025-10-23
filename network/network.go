@@ -5,8 +5,8 @@ import (
 	"fmt"
 
 	"github.com/google/uuid"
+	dockerclient "github.com/moby/moby/client"
 
-	"github.com/docker/docker/api/types/network"
 	"github.com/docker/go-sdk/client"
 )
 
@@ -36,7 +36,7 @@ func New(ctx context.Context, opts ...Option) (*Network, error) {
 
 	networkOptions.labels[moduleLabel] = Version()
 
-	nc := network.CreateOptions{
+	nc := dockerclient.NetworkCreateOptions{
 		Driver:     networkOptions.driver,
 		Internal:   networkOptions.internal,
 		EnableIPv6: &networkOptions.enableIPv6,
@@ -50,7 +50,7 @@ func New(ctx context.Context, opts ...Option) (*Network, error) {
 		return nil, fmt.Errorf("create network: %w", err)
 	}
 
-	if resp.Warning != "" {
+	if len(resp.Warning) > 0 {
 		networkOptions.client.Logger().Warn("warning creating network", "message", resp.Warning)
 	}
 

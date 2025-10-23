@@ -9,14 +9,14 @@ import (
 	"time"
 
 	"github.com/containerd/errdefs"
+	dockerclient "github.com/moby/moby/client"
 	"github.com/stretchr/testify/require"
 
-	"github.com/docker/docker/api/types/image"
 	sdkclient "github.com/docker/go-sdk/client"
 )
 
 func TestPull(t *testing.T) {
-	defaultPullOpts := []PullOption{WithPullOptions(image.PullOptions{})}
+	defaultPullOpts := []PullOption{WithPullOptions(dockerclient.ImagePullOptions{})}
 
 	testPull := func(t *testing.T, imageName string, pullOpts []PullOption, mockCli *errMockCli, shouldRetry bool) string {
 		t.Helper()

@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"log"
 
+	dockerclient "github.com/moby/moby/client"
+
 	"github.com/docker/go-sdk/client"
 )
 
@@ -15,13 +17,13 @@ func ExampleNew() {
 		return
 	}
 
-	info, err := cli.Info(context.Background())
+	info, err := cli.Info(context.Background(), dockerclient.InfoOptions{})
 	if err != nil {
 		log.Printf("error getting info: %s", err)
 		return
 	}
 
-	fmt.Println(info.OperatingSystem != "")
+	fmt.Println(info.Info.OperatingSystem != "")
 
 	// Output:
 	// true

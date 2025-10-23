@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/docker/docker/api/types/container"
+	"github.com/moby/moby/client"
 )
 
 // StopOptions is a type that holds the options for stopping a container.
@@ -70,12 +70,12 @@ func (c *Container) Stop(ctx context.Context, opts ...StopOption) error {
 		return fmt.Errorf("stopping hook: %w", err)
 	}
 
-	var options container.StopOptions
+	var options client.ContainerStopOptions
 
 	timeoutSeconds := int(stopOptions.StopTimeout().Seconds())
 	options.Timeout = &timeoutSeconds
 
-	if err := c.dockerClient.ContainerStop(stopOptions.Context(), c.ID(), options); err != nil {
+	if _, err := c.dockerClient.ContainerStop(stopOptions.Context(), c.ID(), options); err != nil {
 		return fmt.Errorf("container stop: %w", err)
 	}
 

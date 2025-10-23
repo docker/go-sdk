@@ -3,7 +3,8 @@ package config
 import (
 	"fmt"
 
-	"github.com/docker/docker/api/types/registry"
+	"github.com/moby/moby/api/pkg/authconfig"
+	"github.com/moby/moby/api/types/registry"
 )
 
 // This is used by the docker CLI in cases where an oauth identity token is used.
@@ -38,5 +39,5 @@ func AuthConfigForHostname(hostname string) (registry.AuthConfig, error) {
 
 // EncodeBase64 encodes an AuthConfig into base64.
 func EncodeBase64(authConfig registry.AuthConfig) (string, error) {
-	return registry.EncodeAuthConfig(authConfig)
+	return authconfig.Encode(authConfig)
 }

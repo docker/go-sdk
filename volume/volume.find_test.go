@@ -6,9 +6,9 @@ import (
 	"testing"
 
 	"github.com/containerd/errdefs"
+	dockerclient "github.com/moby/moby/client"
 	"github.com/stretchr/testify/require"
 
-	"github.com/docker/docker/api/types/filters"
 	"github.com/docker/go-sdk/client"
 	"github.com/docker/go-sdk/volume"
 )
@@ -58,7 +58,7 @@ func TestList(t *testing.T) {
 		volume.Cleanup(t, v)
 		require.NoError(t, err)
 
-		vols, err := volume.List(context.Background(), volume.WithFilters(filters.NewArgs(filters.Arg("name", v.Name))))
+		vols, err := volume.List(context.Background(), volume.WithFilters(make(dockerclient.Filters).Add("name", v.Name)))
 		require.NoError(t, err)
 		require.Len(t, vols, 1)
 		require.Equal(t, v.Name, vols[0].Name)
@@ -95,14 +95,14 @@ func TestList(t *testing.T) {
 		volume.Cleanup(t, v)
 		require.NoError(t, err)
 
-		vols, err := volume.List(context.Background(), volume.WithFilters(filters.NewArgs(filters.Arg("label", "volume.type=test"))))
+		vols, err := volume.List(context.Background(), volume.WithFilters(make(dockerclient.Filters).Add("label", "volume.type=test")))
 		require.NoError(t, err)
 		require.Len(t, vols, 1)
 		require.Equal(t, v.Name, vols[0].Name)
 	})
 
 	t.Run("EMPTY", func(t *testing.T) {
-		vols, err := volume.List(context.Background(), volume.WithFilters(filters.NewArgs(filters.Arg("label", "volume.type=FOO"))))
+		vols, err := volume.List(context.Background(), volume.WithFilters(make(dockerclient.Filters).Add("label", "volume.type=FOO")))
 		require.NoError(t, err)
 		require.Empty(t, vols)
 	})

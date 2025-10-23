@@ -4,9 +4,8 @@ import (
 	"context"
 	"testing"
 
+	"github.com/moby/moby/api/types/container"
 	"github.com/stretchr/testify/require"
-
-	"github.com/docker/docker/api/types/container"
 )
 
 func TestFromResponse(t *testing.T) {
@@ -14,7 +13,7 @@ func TestFromResponse(t *testing.T) {
 		ID:    "1234567890abcdefgh",
 		Image: "nginx:latest",
 		State: "running",
-		Ports: []container.Port{
+		Ports: []container.PortSummary{
 			{PublicPort: 80, Type: "tcp"},
 			{PublicPort: 8080, Type: "udp"},
 		},
