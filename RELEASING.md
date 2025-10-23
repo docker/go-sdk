@@ -127,9 +127,17 @@ The `pre-release-all` or `pre-release` command must be run first:
 The `release-all` command automatically runs `check-pre-release` for all modules to verify:
 - The `.github/scripts/.build` directory exists
 - Each module has a corresponding `<module>-next-tag` file
+- The version in the `<module>-next-tag` file matches the version in `<module>/version.go`
 - If any checks fail, the release is aborted with an error message
 
-This check ensures that `pre-release-all` was completed successfully before proceeding with the release.
+This check is implemented in `.github/scripts/check-pre-release.sh` and ensures that `pre-release-all` was completed successfully (with `DRY_RUN=false`) and that all version files are properly updated before proceeding with the release.
+
+You can manually run the check for a specific module:
+```bash
+make -C client check-pre-release
+# or
+cd client && make check-pre-release
+```
 
 ### 3. File Updates
 For each module:
