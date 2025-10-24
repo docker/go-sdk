@@ -115,11 +115,20 @@ get_next_tag() {
   echo "${next_tag_path}"
 }
 
+# Extract version string from a version.go file
+# Usage: get_version_from_file <path_to_version.go>
+# Returns: version string (e.g., "0.1.0-alpha011")
+get_version_from_file() {
+  local file="$1"
+  # Use pattern that allows arbitrary whitespace around = sign
+  grep -o 'version[[:space:]]*=[[:space:]]*"[^"]*"' "$file" | cut -d'"' -f2
+}
+
 # Portable in-place sed editing that works on both BSD (macOS) and GNU (Linux) sed
 portable_sed() {
   local pattern="$1"
   local file="$2"
-  
+
   # Detect sed version and use appropriate syntax
   if sed --version >/dev/null 2>&1; then
     # GNU sed (Linux)

@@ -33,7 +33,7 @@ set -e
 
 # Source common functions
 readonly SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-readonly ROOT_DIR="$( cd "${SCRIPT_DIR}/../.." && pwd )"
+source "${SCRIPT_DIR}/common.sh"
 
 # Get module name from argument and lowercase it
 readonly MODULE=$(echo "${1:-}" | tr '[:upper:]' '[:lower:]')
@@ -48,7 +48,7 @@ fi
 echo "Checking if pre-release was completed for module: ${MODULE}"
 
 # Check if next-tag file exists
-readonly BUILD_FILE="${ROOT_DIR}/.github/scripts/.build/${MODULE}-next-tag"
+readonly BUILD_FILE="${BUILD_DIR}/${MODULE}-next-tag"
 if [[ ! -f "${BUILD_FILE}" ]]; then
   echo "Error: Missing build file for module '${MODULE}' at ${BUILD_FILE}"
   echo "Please run 'make pre-release-all' or 'make pre-release' first (with DRY_RUN=false)"
@@ -66,8 +66,8 @@ if [[ ! -f "${VERSION_FILE}" ]]; then
   exit 1
 fi
 
-# Read current version from version.go (allow arbitrary whitespace around =)
-readonly CURRENT_VERSION=$(grep -o 'version[[:space:]]*=[[:space:]]*"[^"]*"' "${VERSION_FILE}" | cut -d'"' -f2)
+# Read current version from version.go
+readonly CURRENT_VERSION=$(get_version_from_file "${VERSION_FILE}")
 
 # Compare versions
 if [[ "${CURRENT_VERSION}" != "${NEXT_VERSION_NO_V}" ]]; then

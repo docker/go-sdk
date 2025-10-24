@@ -29,3 +29,8 @@ pre-release-all: clean-build-dir
 release-all:
 	$(call for-all-modules,make check-pre-release)
 	@./.github/scripts/release.sh
+
+# Refresh Go proxy for all modules
+refresh-proxy-all:
+	@echo "Refreshing Go proxy for all modules..."
+	$(call for-all-modules,make refresh-proxy)
