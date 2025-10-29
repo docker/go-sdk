@@ -72,7 +72,7 @@ func ExamplePull_withPullHandler() {
 }
 
 func ExampleDisplayProgress() {
-	// Display formatted pull progress to stderr instead of stdout
+	// Display formatted pull progress to a custom writer (buffer in this example)
 	buff := &bytes.Buffer{}
 
 	err := image.Pull(context.Background(), "nginx:latest",
