@@ -59,7 +59,9 @@ func BenchmarkPull(b *testing.B) {
 		require.NoError(b, err)
 
 		for range b.N {
-			err := Pull(ctx, imageName, WithPullClient(sdk), WithPullOptions(pullOpt))
+			err := Pull(ctx, imageName, WithPullClient(sdk), WithPullOptions(pullOpt), WithCredentialsFn(func(_ string) (string, string, error) {
+				return "", "", nil
+			}))
 			require.NoError(b, err)
 		}
 	})
@@ -78,7 +80,9 @@ func BenchmarkPull(b *testing.B) {
 		require.NoError(b, err)
 
 		for range b.N {
-			err := Pull(ctx, imageName, WithPullClient(sdk), WithPullOptions(pullOpt))
+			err := Pull(ctx, imageName, WithPullClient(sdk), WithPullOptions(pullOpt), WithCredentialsFn(func(_ string) (string, string, error) {
+				return "user", "pass", nil
+			}))
 			require.NoError(b, err)
 		}
 	})
@@ -99,9 +103,17 @@ func BenchmarkPull(b *testing.B) {
 		sdk, err := sdkclient.New(context.TODO(), sdkclient.WithDockerAPI(client))
 		require.NoError(b, err)
 
+		// Use a custom pull handler that discards output to avoid measuring display performance
+		discardHandler := func(r io.ReadCloser) error {
+			_, err := io.Copy(io.Discard, r)
+			return err
+		}
+
 		for range b.N {
 			attempts = 0
-			err := Pull(ctx, imageName, WithPullClient(sdk), WithPullOptions(pullOpt))
+			err := Pull(ctx, imageName, WithPullClient(sdk), WithPullOptions(pullOpt), WithPullHandler(discardHandler), WithCredentialsFn(func(_ string) (string, string, error) {
+				return "", "", nil
+			}))
 			require.NoError(b, err)
 		}
 	})
@@ -123,6 +135,8 @@ func BenchmarkPull(b *testing.B) {
 			err := Pull(ctx, imageName, WithPullClient(sdk), WithPullOptions(pullOpt), WithPullHandler(func(r io.ReadCloser) error {
 				_, err := io.Copy(io.Discard, r)
 				return err
+			}), WithCredentialsFn(func(_ string) (string, string, error) {
+				return "user", "pass", nil
 			}))
 			require.NoError(b, err)
 		}
