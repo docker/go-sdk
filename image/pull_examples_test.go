@@ -70,3 +70,18 @@ func ExamplePull_withPullHandler() {
 	// <nil>
 	// true
 }
+
+func ExampleDisplayProgress() {
+	// Display formatted pull progress to stderr instead of stdout
+	buff := &bytes.Buffer{}
+
+	err := image.Pull(context.Background(), "nginx:latest",
+		image.WithPullHandler(image.DisplayProgress(buff)))
+
+	fmt.Println(err)
+	fmt.Println(strings.Contains(buff.String(), "Pulling from"))
+
+	// Output:
+	// <nil>
+	// true
+}
