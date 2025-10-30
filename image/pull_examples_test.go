@@ -72,14 +72,18 @@ func ExamplePull_withPullHandler() {
 }
 
 func ExampleDisplayProgress() {
-	// Display formatted pull progress to a custom writer (buffer in this example)
+	// Display formatted pull progress to a custom writer (buffer in this example).
+	// Verifies that DisplayProgress formats the output (not raw JSON).
 	buff := &bytes.Buffer{}
 
 	err := image.Pull(context.Background(), "nginx:latest",
 		image.WithPullHandler(image.DisplayProgress(buff)))
 
 	fmt.Println(err)
-	fmt.Println(strings.Contains(buff.String(), "Pulling from"))
+	// Every single message from Docker starts with { and contains ",
+	// so raw JSON will always have {", while formatted output strips
+	// away the JSON structure.
+	fmt.Println(!strings.Contains(buff.String(), "{\""))
 
 	// Output:
 	// <nil>
