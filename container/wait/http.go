@@ -163,6 +163,21 @@ func (ws *HTTPStrategy) Timeout() *time.Duration {
 	return ws.timeout
 }
 
+// String returns a human-readable description of the wait strategy.
+func (ws *HTTPStrategy) String() string {
+	proto := "HTTP"
+	if ws.UseTLS {
+		proto = "HTTPS"
+	}
+
+	port := "default"
+	if ws.Port != "" {
+		port = string(ws.Port)
+	}
+
+	return fmt.Sprintf("%s %s request on port %s path %s", proto, ws.Method, port, ws.Path)
+}
+
 // WaitUntilReady implements Strategy.WaitUntilReady
 func (ws *HTTPStrategy) WaitUntilReady(ctx context.Context, target StrategyTarget) error {
 	timeout := defaultTimeout()

@@ -96,8 +96,13 @@ var defaultReadinessHook = func() LifecycleHooks {
 
 				// if a Wait Strategy has been specified, wait before returning
 				if waiter.WaitingFor() != nil {
-					c.Logger().Info("Waiting for container to be ready", "containerID", c.ShortID(), "image", c.Image())
-					if err := waiter.WaitingFor().WaitUntilReady(ctx, waiter); err != nil {
+					strategy := waiter.WaitingFor()
+					strategyDesc := "unknown strategy"
+					if s, ok := strategy.(fmt.Stringer); ok {
+						strategyDesc = s.String()
+					}
+					c.Logger().Info("Waiting for container to be ready", "containerID", c.ShortID(), "image", c.Image(), "strategy", strategyDesc)
+					if err := strategy.WaitUntilReady(ctx, waiter); err != nil {
 						return fmt.Errorf("wait until ready: %w", err)
 					}
 				}

@@ -113,6 +113,27 @@ func (hp *HostPortStrategy) Timeout() *time.Duration {
 	return hp.timeout
 }
 
+// String returns a human-readable description of the wait strategy.
+func (hp *HostPortStrategy) String() string {
+	port := "first exposed port"
+	if hp.Port != "" {
+		port = fmt.Sprintf("port %s", hp.Port)
+	}
+
+	checks := ""
+	if hp.skipInternalCheck && hp.skipExternalCheck {
+		checks = " to be mapped"
+	} else if hp.skipInternalCheck {
+		checks = " to be accessible externally"
+	} else if hp.skipExternalCheck {
+		checks = " to be listening internally"
+	} else {
+		checks = " to be listening"
+	}
+
+	return fmt.Sprintf("%s%s", port, checks)
+}
+
 // detectInternalPort returns the lowest internal port that is currently bound.
 // If no internal port is found, it returns the zero nat.Port value which
 // can be checked against an empty string.
