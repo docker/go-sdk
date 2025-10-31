@@ -5,21 +5,42 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"os"
 	"time"
 
 	"github.com/cenkalti/backoff/v4"
+	"github.com/moby/term"
 
 	"github.com/docker/docker/api/types/registry"
+	"github.com/docker/docker/pkg/jsonmessage"
 	"github.com/docker/go-sdk/client"
 )
 
+// DisplayProgress creates a pull handler that displays formatted pull progress to the given writer.
+// It automatically detects if the writer is a terminal and enables colors and progress bars accordingly.
+// If the writer is not a terminal, it displays plain text progress information.
+//
+// This is useful when you want to customize where progress is displayed while maintaining
+// the formatted output. For example:
+//
+//	err := image.Pull(ctx, "nginx:latest",
+//		image.WithPullHandler(image.DisplayProgress(os.Stderr)))
+func DisplayProgress(out io.Writer) func(r io.ReadCloser) error {
+	return func(r io.ReadCloser) error {
+		// Get file descriptor and check if it's a terminal
+		fd, isTerm := term.GetFdInfo(out)
+
+		// Use Docker's jsonmessage package to properly display pull progress
+		// This will render progress bars on terminals or plain text otherwise
+		return jsonmessage.DisplayJSONMessagesStream(r, out, fd, isTerm, nil)
+	}
+}
+
 // defaultPullHandler is the default pull handler function.
 // It downloads the entire docker image, and finishes at EOF of the pull request.
+// It properly formats JSON progress messages for terminal display using Docker's jsonmessage package.
 // It's up to the caller to handle the io.ReadCloser and close it properly.
-var defaultPullHandler = func(r io.ReadCloser) error {
-	_, err := io.ReadAll(r)
-	return err
-}
+var defaultPullHandler = DisplayProgress(os.Stdout)
 
 // Pull pulls an image from a remote registry, retrying on non-permanent errors.
 // See [client.IsPermanentClientError] for the list of non-permanent errors.

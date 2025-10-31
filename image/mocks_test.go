@@ -39,7 +39,11 @@ func (f *errMockCli) ImageBuild(_ context.Context, _ io.Reader, _ build.ImageBui
 
 func (f *errMockCli) ImagePull(_ context.Context, _ string, _ image.PullOptions) (io.ReadCloser, error) {
 	f.imagePullCount++
-	return io.NopCloser(&bytes.Buffer{}), f.err
+	// Return mock JSON messages similar to real Docker pull output
+	mockPullOutput := `{"status":"Pulling from library/nginx","id":"latest"}
+{"status":"Pull complete","id":"abc123"}
+`
+	return io.NopCloser(bytes.NewBufferString(mockPullOutput)), f.err
 }
 
 func (f *errMockCli) Close() error {
