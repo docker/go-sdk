@@ -175,7 +175,7 @@ func (ws *HTTPStrategy) String() string {
 		port = string(ws.Port)
 	}
 
-	return fmt.Sprintf("%s %s request on port %s path %s", proto, ws.Method, port, ws.Path)
+	return fmt.Sprintf("%s %s request on port %s path %q", proto, ws.Method, port, ws.Path)
 }
 
 // WaitUntilReady implements Strategy.WaitUntilReady
