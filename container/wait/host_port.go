@@ -120,14 +120,15 @@ func (hp *HostPortStrategy) String() string {
 		port = fmt.Sprintf("port %s", hp.Port)
 	}
 
-	checks := ""
-	if hp.skipInternalCheck && hp.skipExternalCheck {
+	var checks string
+	switch {
+	case hp.skipInternalCheck && hp.skipExternalCheck:
 		checks = " to be mapped"
-	} else if hp.skipInternalCheck {
+	case hp.skipInternalCheck:
 		checks = " to be accessible externally"
-	} else if hp.skipExternalCheck {
+	case hp.skipExternalCheck:
 		checks = " to be listening internally"
-	} else {
+	default:
 		checks = " to be listening"
 	}
 
