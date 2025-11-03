@@ -172,7 +172,7 @@ func (ws *HTTPStrategy) String() string {
 
 	port := "default"
 	if ws.Port != "" {
-		port = string(ws.Port)
+		port = ws.Port.Port()
 	}
 
 	return fmt.Sprintf("%s %s request on port %s path %q", proto, ws.Method, port, ws.Path)

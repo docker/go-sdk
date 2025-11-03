@@ -65,7 +65,7 @@ func (w *waitForSQL) Timeout() *time.Duration {
 func (w *waitForSQL) String() string {
 	port := "default"
 	if w.Port != "" {
-		port = string(w.Port)
+		port = w.Port.Port()
 	}
 
 	query := ""
