@@ -79,7 +79,15 @@ func (ws *ExecStrategy) Timeout() *time.Duration {
 
 // String returns a human-readable description of the wait strategy.
 func (ws *ExecStrategy) String() string {
-	return fmt.Sprintf("exec command %v", ws.cmd)
+	if len(ws.cmd) == 0 {
+		return "exec command"
+	}
+	// Only show the command name and argument count to avoid exposing sensitive data
+	argCount := len(ws.cmd) - 1
+	if argCount == 0 {
+		return fmt.Sprintf("exec command %q", ws.cmd[0])
+	}
+	return fmt.Sprintf("exec command %q with %d argument(s)", ws.cmd[0], argCount)
 }
 
 func (ws *ExecStrategy) WaitUntilReady(ctx context.Context, target StrategyTarget) error {
