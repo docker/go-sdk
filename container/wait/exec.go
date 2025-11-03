@@ -87,7 +87,10 @@ func (ws *ExecStrategy) String() string {
 	if argCount == 0 {
 		return fmt.Sprintf("exec command %q", ws.cmd[0])
 	}
-	return fmt.Sprintf("exec command %q with %d argument(s)", ws.cmd[0], argCount)
+	if argCount == 1 {
+		return fmt.Sprintf("exec command %q with 1 argument", ws.cmd[0])
+	}
+	return fmt.Sprintf("exec command %q with %d arguments", ws.cmd[0], argCount)
 }
 
 func (ws *ExecStrategy) WaitUntilReady(ctx context.Context, target StrategyTarget) error {
