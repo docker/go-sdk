@@ -6,7 +6,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/docker/go-sdk/client/registry"
-	"github.com/docker/go-sdk/config/auth"
 )
 
 const (
@@ -57,7 +56,7 @@ func TestParseImageRef(t *testing.T) {
 		}
 
 		t.Run("image", func(t *testing.T) {
-			ref, err := auth.ParseImageRef(testRegistry + "nginx")
+			ref, err := registry.ParseImageRef(testRegistry + "nginx")
 			require.NoError(t, err)
 			require.Equal(t, expectedRegistry, ref.Registry)
 			require.Equal(t, expectedRepositoryPrefix+"nginx", ref.Repository)
