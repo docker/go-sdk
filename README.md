@@ -237,35 +237,6 @@ func main() {
 
 </details>
 
-#### Reading the current Docker context
-
-With the `moby/moby/client` package, you basically can't do it, as this functionality is part of the client code of the Docker CLI.
-
-With the `go-sdk`, you can do:
-
-<details>
-  <summary>See the code</summary>
-
-```go
-package main
-
-import (
-	"fmt"
-
-	"github.com/docker/go-sdk/context"
-)
-
-func main() {
-	ctx, err := context.Current()
-	if err != nil {
-		panic(err)
-	}
-	fmt.Println("Current Docker context name:", ctx)
-}
-```
-
-</details>
-
 ## Features
 
 - Initialize a Docker client, using the current Docker context to resolve the Docker host and socket
@@ -278,9 +249,7 @@ func main() {
 
 ```bash
 go get github.com/docker/go-sdk/client
-go get github.com/docker/go-sdk/config
 go get github.com/docker/go-sdk/container
-go get github.com/docker/go-sdk/context
 go get github.com/docker/go-sdk/image
 go get github.com/docker/go-sdk/network
 go get github.com/docker/go-sdk/volume
