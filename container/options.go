@@ -4,19 +4,24 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"maps"
 	"slices"
 	"time"
+
+	"dario.cat/mergo"
 
 	"github.com/docker/docker/api/types/container"
 	apinetwork "github.com/docker/docker/api/types/network"
 	"github.com/docker/go-sdk/client"
 	"github.com/docker/go-sdk/container/exec"
+	"github.com/docker/go-sdk/container/log"
 	"github.com/docker/go-sdk/container/wait"
+	"github.com/docker/go-sdk/image"
 	"github.com/docker/go-sdk/network"
 )
 
-var ErrReuseEmptyName = errors.New("with reuse option a container name mustn't be empty")
+var ErrContainerNameEmpty = errors.New("container name mustn't be empty")
 
 // ContainerCustomizer is an interface that can be used to configure the container
 // definition. The passed definition is merged with the default one.
@@ -51,10 +56,83 @@ func WithConfigModifier(modifier func(config *container.Config)) CustomizeDefini
 	}
 }
 
+// WithAdditionalConfigModifier allows to add additional config to the container.
+// It applies the additional config after the original config.
+func WithAdditionalConfigModifier(modifier func(config *container.Config)) CustomizeDefinitionOption {
+	return func(def *Definition) error {
+		originalModifier := def.configModifier
+
+		def.configModifier = func(config *container.Config) {
+			if originalModifier == nil {
+				modifier(config)
+				return
+			}
+
+			originalModifier(config)
+			modifier(config)
+		}
+
+		return nil
+	}
+}
+
 // WithEndpointSettingsModifier allows to override the default endpoint settings
 func WithEndpointSettingsModifier(modifier func(settings map[string]*apinetwork.EndpointSettings)) CustomizeDefinitionOption {
 	return func(def *Definition) error {
 		def.endpointSettingsModifier = modifier
+
+		return nil
+	}
+}
+
+// WithAdditionalEndpointSettingsModifier allows to add additional endpoint settings to the container.
+// It will merge the additional endpoint settings with the existing endpoint settings.
+func WithAdditionalEndpointSettingsModifier(modifier func(settings map[string]*apinetwork.EndpointSettings)) CustomizeDefinitionOption {
+	return func(def *Definition) error {
+		originalModifier := def.endpointSettingsModifier
+
+		def.endpointSettingsModifier = func(settings map[string]*apinetwork.EndpointSettings) {
+			if originalModifier == nil {
+				modifier(settings)
+				return
+			}
+
+			// Apply the original modifier first
+			originalModifier(settings)
+
+			// Save copies of what the original modifier produced
+			originalSettings := make(map[string]*apinetwork.EndpointSettings, len(settings))
+			for k, v := range settings {
+				originalSettings[k] = v.Copy()
+			}
+
+			// Apply the user's modifier
+			modifier(settings)
+
+			// For any network that had original settings, merge them with current settings
+			for networkName, originalES := range originalSettings {
+				if currentES, exists := settings[networkName]; exists {
+					if currentES == nil {
+						// Restore the original settings, as additions shouldn't delete
+						settings[networkName] = originalES
+						continue
+					}
+
+					// Merge original into current to preserve original values
+					// while allowing user additions to take effect
+					if err := mergo.Merge(currentES, originalES, mergo.WithOverride); err != nil {
+						// Restore original for safety
+						log.Printf("failed to merge endpoint settings for network %q: %v, restoring original", networkName, err)
+						settings[networkName] = originalES
+						continue
+					}
+					settings[networkName] = currentES
+				} else {
+					// Network was removed by user modifier, restore it
+					settings[networkName] = originalES
+				}
+			}
+		}
 
 		return nil
 	}
@@ -82,11 +160,32 @@ func WithHostConfigModifier(modifier func(hostConfig *container.HostConfig)) Cus
 	}
 }
 
+// WithAdditionalHostConfigModifier allows to add additional host config to the container.
+// It applies the additional host config after the original host config.
+func WithAdditionalHostConfigModifier(modifier func(hostConfig *container.HostConfig)) CustomizeDefinitionOption {
+	return func(def *Definition) error {
+		originalModifier := def.hostConfigModifier
+
+		def.hostConfigModifier = func(hostConfig *container.HostConfig) {
+			if originalModifier == nil {
+				modifier(hostConfig)
+				return
+			}
+
+			originalModifier(hostConfig)
+			modifier(hostConfig)
+		}
+
+		return nil
+	}
+}
+
 // WithName will set the name of the container.
+// It returns an error if the container name is empty.
 func WithName(containerName string) CustomizeDefinitionOption {
 	return func(def *Definition) error {
 		if containerName == "" {
-			return ErrReuseEmptyName
+			return ErrContainerNameEmpty
 		}
 		def.name = containerName
 		return nil
@@ -411,6 +510,15 @@ func WithDefinition(def *Definition) CustomizeDefinitionOption {
 
 		// return the definition to the caller
 		*def = *d
+		return nil
+	}
+}
+
+// WithPullOptions is an adapter for the [image.WithPullHandler] option.
+// It allows to change the default behavior for the pull-image operation.
+func WithPullHandler(handler func(r io.ReadCloser) error) CustomizeDefinitionOption {
+	return func(d *Definition) error {
+		d.pullOptions = append(d.pullOptions, image.WithPullHandler(handler))
 		return nil
 	}
 }

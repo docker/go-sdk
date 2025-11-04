@@ -39,6 +39,8 @@ readonly CURRENT_DIR="$(get_script_dir)"
 readonly ROOT_DIR="$(dirname $(dirname "${CURRENT_DIR}"))"
 readonly BUILD_DIR="${ROOT_DIR}/.github/scripts/.build"
 readonly GITHUB_REPO="github.com/docker/go-sdk"
+readonly EXPECTED_ORIGIN_SSH="git@github.com:docker/go-sdk.git"
+readonly EXPECTED_ORIGIN_HTTPS="https://${GITHUB_REPO}.git"
 readonly DRY_RUN="${DRY_RUN:-true}"
 
 # This function is used to trigger the Go proxy to fetch the module.
@@ -67,6 +69,34 @@ execute_or_echo() {
   fi
 }
 
+# Validate that git remote origin points to the correct repository
+# This prevents accidentally pushing to the wrong remote
+validate_git_remote() {
+  local actual_origin="$(git -C "${ROOT_DIR}" remote get-url origin 2>/dev/null || echo "")"
+
+  if [[ -z "$actual_origin" ]]; then
+    echo "❌ Error: No 'origin' remote found"
+    echo "Please configure the origin remote first:"
+    echo "  git remote add origin ${EXPECTED_ORIGIN_SSH}"
+    exit 1
+  fi
+
+  # Accept both SSH and HTTPS formats for the docker/go-sdk repository
+  if [[ "$actual_origin" != "$EXPECTED_ORIGIN_SSH" ]] && \
+     [[ "$actual_origin" != "$EXPECTED_ORIGIN_HTTPS" ]]; then
+    echo "❌ Error: Git remote 'origin' points to the wrong repository"
+    echo "  Expected: ${EXPECTED_ORIGIN_SSH}"
+    echo "            (or ${EXPECTED_ORIGIN_HTTPS})"
+    echo "  Actual:   ${actual_origin}"
+    echo ""
+    echo "To fix this, update your origin remote:"
+    echo "  git remote set-url origin ${EXPECTED_ORIGIN_SSH}"
+    exit 1
+  fi
+
+  echo "✅ Git remote validation passed: origin → ${actual_origin}"
+}
+
 # Function to get modules from go.work
 get_modules() {
   go work edit -json | jq -r '.Use[] | "\(.DiskPath | ltrimstr("./"))"' | tr '\n' ' ' && echo
@@ -85,11 +115,20 @@ get_next_tag() {
   echo "${next_tag_path}"
 }
 
+# Extract version string from a version.go file
+# Usage: get_version_from_file <path_to_version.go>
+# Returns: version string (e.g., "0.1.0-alpha011")
+get_version_from_file() {
+  local file="$1"
+  # Use pattern that allows arbitrary whitespace around = sign
+  grep -o 'version[[:space:]]*=[[:space:]]*"[^"]*"' "$file" | cut -d'"' -f2
+}
+
 # Portable in-place sed editing that works on both BSD (macOS) and GNU (Linux) sed
 portable_sed() {
   local pattern="$1"
   local file="$2"
-  
+
   # Detect sed version and use appropriate syntax
   if sed --version >/dev/null 2>&1; then
     # GNU sed (Linux)

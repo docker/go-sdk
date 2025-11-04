@@ -8,7 +8,7 @@ require (
 	github.com/cenkalti/backoff/v4 v4.2.1
 	github.com/containerd/errdefs v1.0.0
 	github.com/docker/docker v28.3.2+incompatible
-	github.com/docker/go-sdk/client v0.1.0-alpha010
+	github.com/docker/go-sdk/client v0.1.0-alpha011
 	github.com/moby/go-archive v0.1.0
 	github.com/moby/patternmatcher v0.6.0
 	github.com/moby/term v0.5.2

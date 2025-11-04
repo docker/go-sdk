@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/containerd/errdefs"
 	"github.com/stretchr/testify/require"
 
 	"github.com/docker/docker/api/types/filters"
@@ -33,6 +34,12 @@ func TestByID(t *testing.T) {
 		require.Equal(t, v.ClusterVolume, vol.ClusterVolume)
 	})
 
+	t.Run("does-not-exist", func(t *testing.T) {
+		vol, err := volume.FindByID(context.Background(), "does-not-exist")
+		require.ErrorIs(t, err, errdefs.ErrNotFound)
+		require.Nil(t, vol)
+	})
+
 	t.Run("with-find-client", func(t *testing.T) {
 		client, err := client.New(context.Background())
 		require.NoError(t, err)
@@ -58,15 +65,20 @@ func TestList(t *testing.T) {
 	})
 
 	t.Run("multiple-volumes", func(t *testing.T) {
+		vols, err := volume.List(context.Background())
+		require.NoError(t, err)
+
+		initialCount := len(vols)
+
 		for i := range 10 {
 			v, err := volume.New(context.Background(), volume.WithName(fmt.Sprintf("test-volume-%d", i)))
 			volume.Cleanup(t, v)
 			require.NoError(t, err)
 		}
 
-		vols, err := volume.List(context.Background())
+		vols, err = volume.List(context.Background())
 		require.NoError(t, err)
-		require.Len(t, vols, 10)
+		require.Len(t, vols, initialCount+10)
 
 		names := make([]string, len(vols))
 		for i, v := range vols {

@@ -302,10 +302,18 @@ var defaultPullHook = []DefinitionHook{
 		}
 
 		if shouldPullImage {
+			pullOpts := []image.PullOption{image.WithPullClient(def.dockerClient)}
+
+			// the caller can pass pull options to the definition to customize the pull behavior
+			pullOpts = append(pullOpts, def.pullOptions...)
+
+			// apply platform last
 			pullOpt := apiimage.PullOptions{
 				Platform: def.imagePlatform, // may be empty
 			}
-			if err := image.Pull(ctx, def.image, image.WithPullClient(def.dockerClient), image.WithPullOptions(pullOpt)); err != nil {
+			pullOpts = append(pullOpts, image.WithPullOptions(pullOpt))
+
+			if err := image.Pull(ctx, def.image, pullOpts...); err != nil {
 				return err
 			}
 		}

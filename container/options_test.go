@@ -3,14 +3,120 @@ package container
 import (
 	"bytes"
 	"errors"
+	"io"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/docker/docker/api/types/container"
+	apinetwork "github.com/docker/docker/api/types/network"
 	"github.com/docker/go-sdk/container/exec"
 	"github.com/docker/go-sdk/container/wait"
 )
+
+func TestWithAdditionalHostConfigModifier(t *testing.T) {
+	t.Run("add-to-existing", func(t *testing.T) {
+		def := Definition{
+			image: "alpine",
+			hostConfigModifier: func(hostConfig *container.HostConfig) {
+				hostConfig.ContainerIDFile = "container-id-file"
+			},
+		}
+
+		opt := WithAdditionalHostConfigModifier(func(hostConfig *container.HostConfig) {
+			hostConfig.Binds = append(hostConfig.Binds, "/host/path:/container/path")
+		})
+		require.NoError(t, opt.Customize(&def))
+
+		hc := container.HostConfig{}
+
+		def.hostConfigModifier(&hc)
+		require.Equal(t, "container-id-file", hc.ContainerIDFile)
+		require.Equal(t, []string{"/host/path:/container/path"}, hc.Binds)
+	})
+
+	t.Run("nil-original", func(t *testing.T) {
+		def := Definition{}
+
+		opt := WithAdditionalHostConfigModifier(func(hostConfig *container.HostConfig) {
+			hostConfig.Binds = append(hostConfig.Binds, "/host/path:/container/path")
+		})
+		require.NoError(t, opt.Customize(&def))
+	})
+}
+
+func TestWithAdditionalConfigModifier(t *testing.T) {
+	t.Run("add-to-existing", func(t *testing.T) {
+		def := Definition{
+			image: "alpine",
+			configModifier: func(config *container.Config) {
+				config.Env = append(config.Env, "ENV1=value1", "ENV2=value2")
+				config.Hostname = "test-hostname-1"
+			},
+		}
+
+		opt := WithAdditionalConfigModifier(func(config *container.Config) {
+			config.Env = append(config.Env, "ENV3=value3", "ENV4=value4")
+			config.Hostname = "test-hostname-2"
+		})
+		require.NoError(t, opt.Customize(&def))
+
+		config := container.Config{}
+
+		def.configModifier(&config)
+		require.Equal(t, []string{"ENV1=value1", "ENV2=value2", "ENV3=value3", "ENV4=value4"}, config.Env)
+		require.Equal(t, "test-hostname-2", config.Hostname)
+	})
+
+	t.Run("nil-original", func(t *testing.T) {
+		def := Definition{}
+
+		opt := WithAdditionalConfigModifier(func(config *container.Config) {
+			config.Env = append(config.Env, "ENV3=value3", "ENV4=value4")
+			config.Hostname = "test-hostname-2"
+		})
+		require.NoError(t, opt.Customize(&def))
+	})
+}
+
+func TestWithAdditionalEndpointSettingsModifier(t *testing.T) {
+	t.Run("add-to-existing", func(t *testing.T) {
+		def := Definition{
+			image: "alpine",
+			endpointSettingsModifier: func(settings map[string]*apinetwork.EndpointSettings) {
+				settings["test-network"] = &apinetwork.EndpointSettings{
+					Aliases: []string{"alias1", "alias2"},
+				}
+			},
+		}
+
+		opt := WithAdditionalEndpointSettingsModifier(func(settings map[string]*apinetwork.EndpointSettings) {
+			settings["test-network"] = &apinetwork.EndpointSettings{
+				Links: []string{"link1:alias1", "link2:alias2"},
+			}
+		})
+		require.NoError(t, opt.Customize(&def))
+
+		endpointSettings := map[string]*apinetwork.EndpointSettings{}
+
+		def.endpointSettingsModifier(endpointSettings)
+		require.Contains(t, endpointSettings, "test-network")
+		require.Equal(t, []string{"alias1", "alias2"}, endpointSettings["test-network"].Aliases)
+		require.Equal(t, []string{"link1:alias1", "link2:alias2"}, endpointSettings["test-network"].Links)
+	})
+
+	t.Run("nil-original", func(t *testing.T) {
+		def := Definition{}
+
+		opt := WithAdditionalEndpointSettingsModifier(func(settings map[string]*apinetwork.EndpointSettings) {
+			settings["test-network"] = &apinetwork.EndpointSettings{
+				Aliases: []string{"alias1", "alias2"},
+			}
+		})
+		require.NoError(t, opt.Customize(&def))
+	})
+}
 
 func TestWithStartupCommand(t *testing.T) {
 	def := Definition{
@@ -390,7 +496,7 @@ func TestWithName(t *testing.T) {
 		def := Definition{}
 
 		opt := WithName("")
-		require.ErrorIs(t, opt.Customize(&def), ErrReuseEmptyName)
+		require.ErrorIs(t, opt.Customize(&def), ErrContainerNameEmpty)
 	})
 }
 
@@ -587,4 +693,14 @@ func TestWithDefinition(t *testing.T) {
 	require.NoError(t, opt.Customize(&def1))
 	require.Equal(t, "alpine", def1.image)
 	require.Equal(t, "alpine", def2.image)
+}
+
+func TestWithPullHandler(t *testing.T) {
+	def := Definition{}
+
+	opt := WithPullHandler(func(_ io.ReadCloser) error {
+		return nil
+	})
+	require.NoError(t, opt.Customize(&def))
+	require.Len(t, def.pullOptions, 1)
 }

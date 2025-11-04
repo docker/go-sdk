@@ -9,13 +9,14 @@ replace (
 )
 
 require (
+	dario.cat/mergo v1.0.2
 	github.com/containerd/errdefs v1.0.0
 	github.com/containerd/platforms v0.2.1
 	github.com/docker/docker v28.3.2+incompatible
 	github.com/docker/go-connections v0.5.0
-	github.com/docker/go-sdk/client v0.1.0-alpha010
-	github.com/docker/go-sdk/image v0.1.0-alpha011
-	github.com/docker/go-sdk/network v0.1.0-alpha010
+	github.com/docker/go-sdk/client v0.1.0-alpha011
+	github.com/docker/go-sdk/image v0.1.0-alpha012
+	github.com/docker/go-sdk/network v0.1.0-alpha011
 	github.com/stretchr/testify v1.11.1
 	golang.org/x/sys v0.35.0
 )

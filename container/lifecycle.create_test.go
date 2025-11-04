@@ -3,6 +3,7 @@ package container
 import (
 	"bytes"
 	"context"
+	"io"
 	"log/slog"
 	"regexp"
 	"testing"
@@ -436,4 +437,35 @@ func testCreateNetwork(t *testing.T, networkName string) network.CreateResponse 
 	})
 
 	return nw
+}
+
+func TestLifecycleHooks_withPullOptions(t *testing.T) {
+	ctx := context.Background()
+
+	cli, err := client.New(ctx)
+	require.NoError(t, err)
+
+	pullBuffer := bytes.NewBuffer(nil)
+
+	c, err := Run(ctx,
+		WithClient(cli),
+		WithImage(nginxAlpineImage),
+		WithAlwaysPull(),
+		WithImagePlatform("linux/amd64"),
+		WithPullHandler(func(r io.ReadCloser) error {
+			_, err := io.Copy(pullBuffer, r)
+			return err
+		}),
+	)
+	Cleanup(t, c)
+	require.NoError(t, err)
+	require.NotNil(t, c)
+
+	// the image should be pulled with the platform
+	require.Contains(t, pullBuffer.String(), "Pulling from library/nginx")
+
+	resp, err := cli.ImageInspect(ctx, nginxAlpineImage)
+	require.NoError(t, err)
+	require.Equal(t, "amd64", resp.Architecture)
+	require.NotEqual(t, "arm64", resp.Architecture)
 }

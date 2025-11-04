@@ -14,6 +14,8 @@ Each module's version is defined in the `version.go` file at the root of the mod
 
 The primary way to perform releases is through GitHub Actions workflows.
 
+**Important**: GitHub Actions release workflows can only be run from the `main` branch. The workflows will automatically be skipped if triggered from any other branch. This is a safety measure to ensure releases are only performed from the primary branch.
+
 #### Releasing All Modules
 
 1. Go to the [Actions tab](../../actions) in the GitHub repository
@@ -43,6 +45,8 @@ The primary way to perform releases is through GitHub Actions workflows.
 
 If you need to perform releases manually or troubleshoot issues:
 
+**Note**: Manual releases using `make` commands can technically be run from any branch, but should be run from the `main` branch for consistency with the GitHub Actions workflows.
+
 #### Prerequisites
 - Docker installed (for semver-tool)
 - jq installed (`brew install jq` on macOS)
@@ -51,15 +55,20 @@ If you need to perform releases manually or troubleshoot issues:
 
 #### Releasing All Modules
 ```bash
-# Dry run to preview changes (no git changes made)
-DRY_RUN=true make release-all
+# Step 1: Dry run to preview version changes (no build files created)
+DRY_RUN=true make pre-release-all  # Explicit dry run, safe to run
 
-# Actual release (creates commits, tags, and pushes)
+# Step 2: Prepare release for real (creates build files in .github/scripts/.build/)
+DRY_RUN=false make pre-release-all
+
+# Step 3: Actual release (automatically checks pre-release, creates commits, tags, and pushes)
 DRY_RUN=false make release-all
 
 # With specific bump type
 BUMP_TYPE=patch DRY_RUN=false make release-all
 ```
+
+**Note**: The `release-all` target automatically runs `check-pre-release` for all modules to verify that `pre-release-all` was completed successfully (with `DRY_RUN=false`). If you try to run `release-all` without first running `pre-release-all` with `DRY_RUN=false`, it will fail with an error.
 
 #### Releasing a Single Module
 ```bash
@@ -107,19 +116,44 @@ DRY_RUN=false ./.github/scripts/release.sh container
 
 ## What Happens During Release
 
-### 1. Version Calculation
+### 1. Pre-Release Phase
+The `pre-release-all` or `pre-release` command must be run first:
 - Finds latest tag for each module
 - Uses semver-tool to calculate next version
 - Handles prerelease numbering with leading zeros
+- Writes the next version to a file in the build directory, located at `.github/scripts/.build/<module>-next-tag`
 
-### 2. File Updates
+### 2. Release Validation Checks
+Before creating any commits or tags, the release script performs the following validation checks:
+
+**Git Remote Validation:**
+- Verifies that the `origin` remote points to `git@github.com:docker/go-sdk.git` (or HTTPS equivalent)
+- Prevents accidentally pushing releases to forks or personal repositories
+- If validation fails, the script aborts immediately with instructions to fix the remote
+
+**Pre-Release Verification:**
+- The `release-all` command automatically runs `check-pre-release` for all modules
+- Verifies the `.github/scripts/.build` directory exists
+- Checks each module has a corresponding `<module>-next-tag` file
+- Validates the version in `<module>-next-tag` matches the version in `<module>/version.go`
+- If any checks fail, the release is aborted with an error message
+- Implemented in `.github/scripts/check-pre-release.sh`
+- Ensures `pre-release-all` was completed successfully (with `DRY_RUN=false`)
+
+You can manually run the check for a specific module:
+```bash
+make -C client check-pre-release
+# or
+cd client && make check-pre-release
+```
+
+### 3. File Updates
 For each module:
-- Writes the next version to a file in the build directory, located at `.github/scripts/.build/<module>-next-tag`. This is a temporary file that is used to store the next version for the module.
 - Updates `<module>/version.go` with new version
 - Updates all `go.mod` files with new cross-module dependencies
 - Runs `go mod tidy` to update `go.sum` files
 
-### 3. Git Operations
+### 4. Git Operations
 When `DRY_RUN=false`:
 - Creates a single commit with all version changes
 - Creates git tags for each module (e.g., `client/v0.1.0-alpha006`)
@@ -131,7 +165,7 @@ When `DRY_RUN=true`:
 - Shows diffs of version files
 - Completely safe to run multiple times
 
-### 4. Go Proxy Registration
+### 5. Go Proxy Registration
 When `DRY_RUN=false`:
 - Triggers Go proxy to fetch new module versions
 - Makes modules immediately available for download via `go get`

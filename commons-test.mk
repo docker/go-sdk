@@ -86,6 +86,14 @@ pre-release:
 	@echo "Releasing version for module: $(MODULE_DIR)"
 	@$(ROOT_DIR)/.github/scripts/pre-release.sh "$(MODULE_DIR)"
 
+.PHONY: check-pre-release
+check-pre-release:
+	@if [ -z "$(MODULE_DIR)" ]; then \
+		echo "Usage: make check-pre-release, from one of the module directories (e.g. make check-pre-release from client/ directory)"; \
+		exit 1; \
+	fi
+	@$(ROOT_DIR)/.github/scripts/check-pre-release.sh "$(MODULE_DIR)"
+
 .PHONY: release
 release:
 	@if [ -z "$(MODULE_DIR)" ]; then \
@@ -94,3 +102,11 @@ release:
 	fi
 	@echo "Finalizing release for module: $(MODULE_DIR)"
 	@$(ROOT_DIR)/.github/scripts/release.sh "$(MODULE_DIR)"
+
+.PHONY: refresh-proxy
+refresh-proxy:
+	@if [ -z "$(MODULE_DIR)" ]; then \
+		echo "Usage: make refresh-proxy, from one of the module directories (e.g. make refresh-proxy from client/ directory)"; \
+		exit 1; \
+	fi
+	@$(ROOT_DIR)/.github/scripts/refresh-proxy.sh "$(MODULE_DIR)"

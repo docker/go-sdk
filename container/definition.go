@@ -11,6 +11,7 @@ import (
 	"github.com/docker/docker/api/types/network"
 	"github.com/docker/go-sdk/client"
 	"github.com/docker/go-sdk/container/wait"
+	"github.com/docker/go-sdk/image"
 )
 
 var (
@@ -86,6 +87,9 @@ type Definition struct {
 
 	// alwaysPullImage whether to always pull the image
 	alwaysPullImage bool
+
+	// pullOptions are used to change the pull image behavior.
+	pullOptions []image.PullOption
 
 	// started whether to auto-start the container.
 	started bool

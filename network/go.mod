@@ -7,7 +7,7 @@ replace github.com/docker/go-sdk/client => ../client
 require (
 	github.com/containerd/errdefs v1.0.0
 	github.com/docker/docker v28.3.2+incompatible
-	github.com/docker/go-sdk/client v0.1.0-alpha010
+	github.com/docker/go-sdk/client v0.1.0-alpha011
 	github.com/google/uuid v1.6.0
 	github.com/stretchr/testify v1.11.1
 )
@@ -67,5 +67,4 @@ require (
 	google.golang.org/grpc v1.75.0 // indirect
 	google.golang.org/protobuf v1.36.8 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
-	gotest.tools/v3 v3.5.2 // indirect
 )
