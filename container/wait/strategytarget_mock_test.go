@@ -285,7 +285,7 @@ func (_c *mockStrategyTarget_Inspect_Call) RunAndReturn(run func(context.Context
 	return _c
 }
 
-// Logger provides a mock function with given fields:
+// Logger provides a mock function with no fields
 func (_m *mockStrategyTarget) Logger() *slog.Logger {
 	ret := _m.Called()
 

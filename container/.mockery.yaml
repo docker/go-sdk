@@ -1,5 +1,7 @@
-quiet: True
+log-level: "info"
 disable-version-string: True
+resolve-type-alias: False
+issue-845-fix: True
 with-expecter: True
 mockname: "mock{{.InterfaceName}}"
 filename: "{{ .InterfaceName | lower }}_mock_test.go"

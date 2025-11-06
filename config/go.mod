@@ -1,6 +1,6 @@
 module github.com/docker/go-sdk/config
 
-go 1.23.6
+go 1.24
 
 require (
 	github.com/distribution/reference v0.6.0
@@ -10,6 +10,7 @@ require (
 
 require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
+	github.com/google/go-cmp v0.7.0 // indirect
 	github.com/kr/pretty v0.3.1 // indirect
 	github.com/opencontainers/go-digest v1.0.0 // indirect
 	github.com/opencontainers/image-spec v1.1.1 // indirect
