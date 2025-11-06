@@ -71,7 +71,7 @@ jobs:
       - name: Decide if Sonar must be run
         if: ${{ matrix.platform == 'ubuntu-latest' }}
         run: |
-          if [[ "1.23.x" == "${{ inputs.go-version }}" ]] && \
+          if [[ "1.24.x" == "${{ inputs.go-version }}" ]] && \
              [[ "main" == "${{ github.ref_name }}" ]] && \
              [[ "docker" == "${{ github.repository_owner }}" ]]; then
             echo "SHOULD_RUN_SONAR=true" >> $GITHUB_ENV
