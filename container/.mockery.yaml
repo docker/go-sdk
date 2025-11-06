@@ -7,7 +7,5 @@ outpkg: "{{.PackageName}}_test"
 dir: "{{.InterfaceDir}}"
 packages:
   github.com/docker/go-sdk/container/wait:
-    config:
-      keeptree: True
     interfaces:
       StrategyTarget:
