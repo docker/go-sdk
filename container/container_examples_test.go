@@ -167,6 +167,67 @@ func ExampleContainer_Exec() {
 	// <nil>
 }
 
+func ExampleFromID() {
+	// First, create a container using Run
+	ctr, err := container.Run(context.Background(), container.WithImage("alpine:latest"))
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	// Use the SDK client from the existing container
+	cli := ctr.Client()
+
+	// Now recreate the container using FromResponse with the container summary
+	// This is useful when you only have a container ID and need to perform operations on it
+	recreated, err := container.FromID(context.Background(), cli, ctr.ID())
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	fmt.Println("Container IDs match:", recreated.ID() == ctr.ID())
+
+	// Now you can use operations like CopyToContainer on the recreated container
+	content := []byte("Hello from FromID!")
+	if err := recreated.CopyToContainer(context.Background(), content, "/tmp/test.txt", 0o644); err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	// Verify the file was copied
+	rc, err := recreated.CopyFromContainer(context.Background(), "/tmp/test.txt")
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	buf := new(bytes.Buffer)
+	if _, err := io.Copy(buf, rc); err != nil {
+		fmt.Println(err)
+		return
+	}
+	fmt.Println("File content:", buf.String())
+
+	// Terminate the recreated container
+	err = recreated.Terminate(context.Background())
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	// Terminate the original container should fail
+	err = ctr.Terminate(context.Background())
+	if err == nil {
+		// Termination unexpectedly succeeded; a failure path for the example
+		return
+	}
+	fmt.Println("Container did not exist")
+
+	// Output:
+	// Container IDs match: true
+	// File content: Hello from FromID!
+	// Container did not exist
+}
+
 func ExampleFromResponse() {
 	// First, create a container using Run
 	ctr, err := container.Run(context.Background(), container.WithImage("alpine:latest"))
