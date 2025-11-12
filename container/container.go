@@ -98,7 +98,7 @@ func FromID(ctx context.Context, dockerClient client.SDKClient, containerID stri
 
 	response, err := dockerClient.ContainerList(ctx, container.ListOptions{All: true, Filters: filters.NewArgs(filters.Arg("id", containerID))})
 	if err != nil {
-		return nil, fmt.Errorf("inspect container: %w", err)
+		return nil, fmt.Errorf("list containers: %w", err)
 	}
 
 	if len(response) == 0 {
