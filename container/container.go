@@ -123,9 +123,12 @@ func FromResponse(ctx context.Context, dockerClient client.SDKClient, response c
 		dockerClient = sdk
 	}
 
-	exposedPorts := make([]string, len(response.Ports))
-	for i, port := range response.Ports {
-		exposedPorts[i] = fmt.Sprintf("%d/%s", port.PublicPort, port.Type)
+	exposedPorts := make([]string, 0, len(response.Ports))
+	for _, port := range response.Ports {
+		// Only include ports that are published to the host (PublicPort != 0)
+		if port.PublicPort != 0 {
+			exposedPorts = append(exposedPorts, fmt.Sprintf("%d/%s", port.PublicPort, port.Type))
+		}
 	}
 
 	shortID := response.ID
