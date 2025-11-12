@@ -105,6 +105,10 @@ func FromID(ctx context.Context, dockerClient client.SDKClient, containerID stri
 		return nil, fmt.Errorf("container %s not found", containerID)
 	}
 
+	if len(response) > 1 {
+		return nil, fmt.Errorf("multiple containers match ID %s", containerID)
+	}
+
 	return FromResponse(ctx, dockerClient, response[0])
 }
 
