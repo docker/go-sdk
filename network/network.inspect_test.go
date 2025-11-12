@@ -7,9 +7,9 @@ import (
 	"strings"
 	"testing"
 
+	dockerclient "github.com/moby/moby/client"
 	"github.com/stretchr/testify/require"
 
-	apinetwork "github.com/docker/docker/api/types/network"
 	"github.com/docker/go-sdk/client"
 	"github.com/docker/go-sdk/network"
 )
@@ -24,11 +24,11 @@ func TestInspect(t *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, inspect)
 
-		require.Contains(t, inspect.Labels, client.LabelBase)
-		require.Contains(t, inspect.Labels, client.LabelLang)
-		require.Contains(t, inspect.Labels, client.LabelVersion)
-		require.Contains(t, inspect.Labels, client.LabelBase+".network")
-		require.Equal(t, network.Version(), inspect.Labels[client.LabelBase+".network"])
+		require.Contains(t, inspect.Network.Labels, client.LabelBase)
+		require.Contains(t, inspect.Network.Labels, client.LabelLang)
+		require.Contains(t, inspect.Network.Labels, client.LabelVersion)
+		require.Contains(t, inspect.Network.Labels, client.LabelBase+".network")
+		require.Equal(t, network.Version(), inspect.Network.Labels[client.LabelBase+".network"])
 	})
 
 	t.Run("network-does-not-exist", func(t *testing.T) {
@@ -49,7 +49,7 @@ func TestInspect(t *testing.T) {
 			require.NoError(t, err)
 
 			// Create an invalid inspect option that will cause an error
-			invalidOption := network.WithInspectOptions(apinetwork.InspectOptions{
+			invalidOption := network.WithInspectOptions(dockerclient.NetworkInspectOptions{
 				Scope: "invalid-scope", // Using an invalid scope value
 			})
 

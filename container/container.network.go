@@ -1,40 +1,38 @@
 package container
 
-import "context"
+import (
+	"context"
+	"net/netip"
+)
 
 // ContainerIP gets the IP address of the primary network within the container.
 // If there are multiple networks, it returns an empty string.
-func (c *Container) ContainerIP(ctx context.Context) (string, error) {
+func (c *Container) ContainerIP(ctx context.Context) (netip.Addr, error) {
 	inspect, err := c.Inspect(ctx)
 	if err != nil {
-		return "", err
+		return netip.Addr{}, err
 	}
 
-	ip := inspect.NetworkSettings.IPAddress
-	if ip == "" {
-		// use IP from "Networks" if only single network defined
-		networks := inspect.NetworkSettings.Networks
-		if len(networks) == 1 {
-			for _, v := range networks {
-				ip = v.IPAddress
-			}
+	// use IP from "Networks" if only single network defined
+	var ip netip.Addr
+	networks := inspect.Container.NetworkSettings.Networks
+	if len(networks) == 1 {
+		for _, v := range networks {
+			ip = v.IPAddress
 		}
 	}
-
 	return ip, nil
 }
 
 // ContainerIPs gets the IP addresses of all the networks within the container.
-func (c *Container) ContainerIPs(ctx context.Context) ([]string, error) {
-	ips := make([]string, 0)
-
+func (c *Container) ContainerIPs(ctx context.Context) ([]netip.Addr, error) {
 	inspect, err := c.Inspect(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	networks := inspect.NetworkSettings.Networks
-	for _, nw := range networks {
+	ips := make([]netip.Addr, 0, len(inspect.Container.NetworkSettings.Networks))
+	for _, nw := range inspect.Container.NetworkSettings.Networks {
 		ips = append(ips, nw.IPAddress)
 	}
 
@@ -48,7 +46,7 @@ func (c *Container) NetworkAliases(ctx context.Context) (map[string][]string, er
 		return map[string][]string{}, err
 	}
 
-	networks := inspect.NetworkSettings.Networks
+	networks := inspect.Container.NetworkSettings.Networks
 
 	a := map[string][]string{}
 
@@ -66,9 +64,9 @@ func (c *Container) Networks(ctx context.Context) ([]string, error) {
 		return []string{}, err
 	}
 
-	networks := inspect.NetworkSettings.Networks
+	networks := inspect.Container.NetworkSettings.Networks
 
-	n := []string{}
+	var n []string
 
 	for k := range networks {
 		n = append(n, k)

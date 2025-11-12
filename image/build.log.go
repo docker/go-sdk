@@ -5,7 +5,7 @@ import (
 	"log/slog"
 	"strings"
 
-	"github.com/docker/docker/pkg/jsonmessage"
+	"github.com/moby/moby/api/types/jsonstream"
 )
 
 // loggerWriter is a custom writer that forwards to the slog.Logger
@@ -16,7 +16,7 @@ type loggerWriter struct {
 // Write writes the message to the logger.
 func (lw *loggerWriter) Write(p []byte) (int, error) {
 	// Try to parse as JSON message first
-	var msg jsonmessage.JSONMessage
+	var msg jsonstream.Message
 	if err := json.Unmarshal(p, &msg); err == nil {
 		// It's a JSON message, log it structured and there is no default case because
 		// empty JSON messages should not be logged, to avoid noise.

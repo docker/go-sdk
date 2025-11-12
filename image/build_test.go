@@ -4,18 +4,14 @@ import (
 	"bytes"
 	"context"
 	"errors"
-	"fmt"
 	"io"
 	"log/slog"
 	"path"
 	"testing"
 
+	dockerclient "github.com/moby/moby/client"
 	"github.com/stretchr/testify/require"
 
-	"github.com/docker/docker/api/types/build"
-	"github.com/docker/docker/api/types/container"
-	"github.com/docker/docker/api/types/filters"
-	dockerimage "github.com/docker/docker/api/types/image"
 	"github.com/docker/go-sdk/client"
 	"github.com/docker/go-sdk/image"
 )
@@ -116,9 +112,11 @@ func TestBuildFromDir(t *testing.T) {
 	})
 
 	t.Run("with-dockerfile/options-are-overridden", func(t *testing.T) {
-		tag, err := image.BuildFromDir(context.Background(), buildPath, "Dockerfile", "test:test", image.WithBuildOptions(build.ImageBuildOptions{
-			Dockerfile: "Dockerfile.custom",
-		}))
+		tag, err := image.BuildFromDir(context.Background(), buildPath, "Dockerfile", "test:test",
+			image.WithBuildOptions(dockerclient.ImageBuildOptions{
+				Dockerfile: "Dockerfile.custom",
+			}),
+		)
 		t.Cleanup(func() {
 			cleanup(t, tag)
 		})
@@ -163,7 +161,7 @@ func testBuild(tb testing.TB, b *testBuildInfo, opts ...image.BuildOption) {
 		require.NoError(tb, cli.Close())
 	})
 
-	buildOpts := build.ImageBuildOptions{
+	buildOpts := dockerclient.ImageBuildOptions{
 		// Used as a marker to identify the containers created by the test
 		// so it's possible to clean them up after the tests.
 		Labels: map[string]string{
@@ -203,20 +201,23 @@ func cleanup(tb testing.TB, tag string) {
 		require.NoError(tb, cli.Close())
 	})
 
-	_, err = image.Remove(context.Background(), tag, image.WithRemoveOptions(dockerimage.RemoveOptions{
+	_, err = image.Remove(context.Background(), tag, image.WithRemoveOptions(dockerclient.ImageRemoveOptions{
 		Force:         true,
 		PruneChildren: true,
 	}))
 	require.NoError(tb, err)
 
-	containers, err := cli.ContainerList(context.Background(), container.ListOptions{
-		Filters: filters.NewArgs(filters.Arg("status", "created"), filters.Arg("label", fmt.Sprintf("%s=%s", labelImageBuildTestKey, labelImageBuildTestValue))),
-		All:     true,
+	containers, err := cli.ContainerList(context.Background(), dockerclient.ContainerListOptions{
+		Filters: make(dockerclient.Filters).
+			Add("status", "created").
+			Add("label", labelImageBuildTestKey+"="+labelImageBuildTestValue),
+		All: true,
 	})
 	require.NoError(tb, err)
 
 	// force the removal of the intermediate containers, if any
-	for _, ctr := range containers {
-		require.NoError(tb, cli.ContainerRemove(context.Background(), ctr.ID, container.RemoveOptions{Force: true}))
+	for _, ctr := range containers.Items {
+		_, err := cli.ContainerRemove(context.Background(), ctr.ID, dockerclient.ContainerRemoveOptions{Force: true})
+		require.NoError(tb, err)
 	}
 }

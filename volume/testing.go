@@ -7,9 +7,9 @@ import (
 	"testing"
 
 	"github.com/containerd/errdefs"
+	"github.com/moby/moby/api/types/volume"
 	"github.com/stretchr/testify/require"
 
-	"github.com/docker/docker/api/types/volume"
 	"github.com/docker/go-sdk/client"
 )
 

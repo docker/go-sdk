@@ -9,7 +9,7 @@ import (
 	"io"
 	"log/slog"
 
-	"github.com/docker/docker/api/types/container"
+	"github.com/moby/moby/client"
 )
 
 // Logger returns the logger for the container.
@@ -20,7 +20,7 @@ func (c *Container) Logger() *slog.Logger {
 // Logs will fetch both STDOUT and STDERR from the current container. Returns a
 // ReadCloser and leaves it up to the caller to extract what it wants.
 func (c *Container) Logs(ctx context.Context) (io.ReadCloser, error) {
-	options := container.LogsOptions{
+	options := client.ContainerLogsOptions{
 		ShowStdout: true,
 		ShowStderr: true,
 	}
@@ -38,7 +38,7 @@ func (c *Container) Logs(ctx context.Context) (io.ReadCloser, error) {
 	}
 
 	// If TTY is enabled, logs are not multiplexed - return them directly
-	if inspect.Config.Tty {
+	if inspect.Container.Config.Tty {
 		return rc, nil
 	}
 

@@ -24,7 +24,7 @@ if err != nil {
 The Pull operation can be customized using functional options. The following options are available:
 
 - `WithPullClient(cli client.SDKClient) image.PullOption`: The client to use to pull the image. If not provided, the default client will be used.
-- `WithPullOptions(options apiimage.PullOptions) image.PullOption`: The options to use to pull the image. The type of the options is "github.com/docker/docker/api/types/image".
+- `WithPullOptions(options apiimage.PullOptions) image.PullOption`: The options to use to pull the image. The type of the options is "github.com/moby/moby/api/types/image".
 - `WithPullHandler(pullHandler func(r io.ReadCloser) error) image.PullOption`: The handler to use to pull the image, which acts as a callback to the pull operation.
 
 First, you need to import the following packages:
@@ -33,7 +33,7 @@ First, you need to import the following packages:
 import (
 	"context"
 
-    apiimage "github.com/docker/docker/api/types/image"
+    apiimage "github.com/moby/moby/api/types/image"
 	"github.com/docker/go-sdk/client"
 	"github.com/docker/go-sdk/image"
 )
@@ -79,7 +79,7 @@ if err != nil {
 The Remove operation can be customized using functional options. The following options are available:
 
 - `WithRemoveClient(cli client.SDKClient) image.RemoveOption`: The client to use to remove the image. If not provided, the default client will be used.
-- `WithRemoveOptions(options dockerimage.RemoveOptions) image.RemoveOption`: The options to use to remove the image. The type of the options is "github.com/docker/docker/api/types/image".
+- `WithRemoveOptions(options dockerimage.RemoveOptions) image.RemoveOption`: The options to use to remove the image. The type of the options is "github.com/moby/moby/api/types/image".
 
 First, you need to import the following packages:
 
@@ -87,7 +87,7 @@ First, you need to import the following packages:
 import (
 	"context"
 
-    dockerimage "github.com/docker/docker/api/types/image"
+    dockerimage "github.com/moby/moby/api/types/image"
 	"github.com/docker/go-sdk/client"
 	"github.com/docker/go-sdk/image"
 )
@@ -172,7 +172,7 @@ The Build operation can be customized using functional options. The following op
 
 - `WithBuildClient(cli client.SDKClient) image.BuildOption`: The client to use to build the image. If not provided, the default client will be used.
 - `WithLogWriter(writer io.Writer) image.BuildOption`: The writer to use to write the build output. If not provided, the build output will be written to the standard output.
-- `WithBuildOptions(options build.ImageBuildOptions) image.BuildOption`: The options to use to build the image. The type of the options is "github.com/docker/docker/api/types/build". If set, the tag and context reader will be overridden with the arguments passed to the `Build` function.
+- `WithBuildOptions(options build.ImageBuildOptions) image.BuildOption`: The options to use to build the image. The type of the options is "github.com/moby/moby/api/types/build". If set, the tag and context reader will be overridden with the arguments passed to the `Build` function.
 
 First, you need to import the following packages:
 
@@ -180,7 +180,7 @@ First, you need to import the following packages:
 import (
 	"context"
 
-    "github.com/docker/docker/api/types/build"
+    "github.com/moby/moby/api/types/build"
 	"github.com/docker/go-sdk/client"
 	"github.com/docker/go-sdk/image"
 )

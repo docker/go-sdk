@@ -9,10 +9,11 @@ import (
 	"testing"
 	"time"
 
+	"github.com/moby/moby/api/types/container"
+	"github.com/moby/moby/api/types/network"
+	"github.com/moby/moby/client"
 	"github.com/stretchr/testify/require"
 
-	"github.com/docker/docker/api/types/container"
-	"github.com/docker/go-connections/nat"
 	"github.com/docker/go-sdk/container/exec"
 	"github.com/docker/go-sdk/container/wait"
 )
@@ -29,11 +30,11 @@ func (st mockExecTarget) Host(_ context.Context) (string, error) {
 	return "", errors.New("not implemented")
 }
 
-func (st mockExecTarget) Inspect(_ context.Context) (*container.InspectResponse, error) {
-	return nil, errors.New("not implemented")
+func (st mockExecTarget) Inspect(_ context.Context) (client.ContainerInspectResult, error) {
+	return client.ContainerInspectResult{}, errors.New("not implemented")
 }
 
-func (st mockExecTarget) MappedPort(_ context.Context, n nat.Port) (nat.Port, error) {
+func (st mockExecTarget) MappedPort(_ context.Context, n network.Port) (network.Port, error) {
 	return n, errors.New("not implemented")
 }
 

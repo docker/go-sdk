@@ -4,9 +4,9 @@ import (
 	"context"
 	"testing"
 
+	dockerclient "github.com/moby/moby/client"
 	"github.com/stretchr/testify/require"
 
-	dockerclient "github.com/docker/docker/client"
 	"github.com/docker/go-sdk/client"
 )
 

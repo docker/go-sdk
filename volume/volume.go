@@ -4,7 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/docker/docker/api/types/volume"
+	dockerclient "github.com/moby/moby/client"
+
 	"github.com/docker/go-sdk/client"
 )
 
@@ -32,7 +33,7 @@ func New(ctx context.Context, opts ...Option) (*Volume, error) {
 
 	volumeOptions.labels[moduleLabel] = Version()
 
-	v, err := volumeOptions.client.VolumeCreate(ctx, volume.CreateOptions{
+	v, err := volumeOptions.client.VolumeCreate(ctx, dockerclient.VolumeCreateOptions{
 		Name:   volumeOptions.name,
 		Labels: volumeOptions.labels,
 	})
@@ -41,7 +42,7 @@ func New(ctx context.Context, opts ...Option) (*Volume, error) {
 	}
 
 	return &Volume{
-		Volume:       &v,
+		Volume:       &v.Volume,
 		dockerClient: volumeOptions.client,
 	}, nil
 }

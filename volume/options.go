@@ -1,7 +1,10 @@
 package volume
 
 import (
-	"github.com/docker/docker/api/types/filters"
+	"maps"
+
+	dockerclient "github.com/moby/moby/client"
+
 	"github.com/docker/go-sdk/client"
 )
 
@@ -54,7 +57,7 @@ func WithForce() TerminateOption {
 
 type findOptions struct {
 	client  client.SDKClient
-	filters filters.Args
+	filters dockerclient.Filters
 }
 
 // FindOptions is a function that modifies the find options
@@ -70,9 +73,9 @@ func WithFindClient(dockerClient client.SDKClient) FindOptions {
 }
 
 // WithFilters sets the filters to be used to filter the volumes.
-func WithFilters(filters filters.Args) FindOptions {
+func WithFilters(filters dockerclient.Filters) FindOptions {
 	return func(opts *findOptions) error {
-		opts.filters = filters
+		opts.filters = maps.Clone(filters)
 		return nil
 	}
 }

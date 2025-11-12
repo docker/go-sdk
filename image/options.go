@@ -5,10 +5,9 @@ import (
 	"fmt"
 	"io"
 
+	dockerclient "github.com/moby/moby/client"
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
 
-	"github.com/docker/docker/api/types/build"
-	"github.com/docker/docker/api/types/image"
 	"github.com/docker/go-sdk/client"
 	"github.com/docker/go-sdk/config"
 )
@@ -18,7 +17,7 @@ type BuildOption func(*buildOptions) error
 
 type buildOptions struct {
 	client client.SDKClient
-	opts   build.ImageBuildOptions
+	opts   dockerclient.ImageBuildOptions
 }
 
 // WithBuildClient sets the build client used to build the image.
@@ -31,7 +30,7 @@ func WithBuildClient(buildClient client.SDKClient) BuildOption {
 
 // WithBuildOptions sets the build options used to build the image.
 // If set, the tag and context reader will be ignored.
-func WithBuildOptions(options build.ImageBuildOptions) BuildOption {
+func WithBuildOptions(options dockerclient.ImageBuildOptions) BuildOption {
 	return func(opts *buildOptions) error {
 		opts.opts = options
 		return nil
@@ -43,7 +42,7 @@ type PullOption func(*pullOptions) error
 
 type pullOptions struct {
 	client        client.SDKClient
-	pullOptions   image.PullOptions
+	pullOptions   dockerclient.ImagePullOptions
 	pullHandler   func(r io.ReadCloser) error
 	credentialsFn func(string) (string, string, error)
 }
@@ -86,7 +85,7 @@ func WithPullClient(pullClient client.SDKClient) PullOption {
 }
 
 // WithPullOptions sets the pull options used to pull the image.
-func WithPullOptions(imagePullOptions image.PullOptions) PullOption {
+func WithPullOptions(imagePullOptions dockerclient.ImagePullOptions) PullOption {
 	return func(opts *pullOptions) error {
 		opts.pullOptions = imagePullOptions
 		return nil
@@ -111,7 +110,7 @@ type RemoveOption func(*removeOptions) error
 
 type removeOptions struct {
 	client        client.SDKClient
-	removeOptions image.RemoveOptions
+	removeOptions dockerclient.ImageRemoveOptions
 }
 
 // WithRemoveClient sets the remove client used to remove the image.
@@ -123,7 +122,7 @@ func WithRemoveClient(removeClient client.SDKClient) RemoveOption {
 }
 
 // WithRemoveOptions sets the remove options used to remove the image.
-func WithRemoveOptions(options image.RemoveOptions) RemoveOption {
+func WithRemoveOptions(options dockerclient.ImageRemoveOptions) RemoveOption {
 	return func(opts *removeOptions) error {
 		opts.removeOptions = options
 		return nil

@@ -4,12 +4,12 @@ import (
 	"context"
 	"errors"
 
-	"github.com/docker/docker/api/types/network"
+	"github.com/moby/moby/client"
 )
 
 type inspectOptions struct {
 	cache   bool
-	options network.InspectOptions
+	options client.NetworkInspectOptions
 }
 
 // InspectOptions is a function that modifies the inspect options.
@@ -26,7 +26,7 @@ func WithNoCache() InspectOptions {
 }
 
 // WithInspectOptions returns an InspectOptions that sets the inspect options.
-func WithInspectOptions(opts network.InspectOptions) InspectOptions {
+func WithInspectOptions(opts client.NetworkInspectOptions) InspectOptions {
 	return func(o *inspectOptions) error {
 		o.options = opts
 		return nil
@@ -34,10 +34,9 @@ func WithInspectOptions(opts network.InspectOptions) InspectOptions {
 }
 
 // Inspect inspects the network, caching the results.
-func (n *Network) Inspect(ctx context.Context, opts ...InspectOptions) (network.Inspect, error) {
-	var zero network.Inspect
+func (n *Network) Inspect(ctx context.Context, opts ...InspectOptions) (client.NetworkInspectResult, error) {
 	if n.dockerClient == nil {
-		return zero, errors.New("docker client is not initialized")
+		return client.NetworkInspectResult{}, errors.New("docker client is not initialized")
 	}
 
 	inspectOptions := &inspectOptions{
@@ -45,13 +44,13 @@ func (n *Network) Inspect(ctx context.Context, opts ...InspectOptions) (network.
 	}
 	for _, opt := range opts {
 		if err := opt(inspectOptions); err != nil {
-			return zero, err
+			return client.NetworkInspectResult{}, err
 		}
 	}
 
 	if inspectOptions.cache {
 		// if the result was already cached, return it
-		if n.inspect.ID != "" {
+		if n.inspect.Network.ID != "" {
 			return n.inspect, nil
 		}
 
@@ -61,7 +60,7 @@ func (n *Network) Inspect(ctx context.Context, opts ...InspectOptions) (network.
 
 	inspect, err := n.dockerClient.NetworkInspect(ctx, n.ID(), inspectOptions.options)
 	if err != nil {
-		return zero, err
+		return client.NetworkInspectResult{}, err
 	}
 
 	// cache the result for subsequent calls

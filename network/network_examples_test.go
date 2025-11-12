@@ -5,7 +5,8 @@ import (
 	"fmt"
 	"runtime"
 
-	apinetwork "github.com/docker/docker/api/types/network"
+	dockerclient "github.com/moby/moby/client"
+
 	"github.com/docker/go-sdk/client"
 	"github.com/docker/go-sdk/network"
 )
@@ -79,7 +80,7 @@ func ExampleNetwork_Inspect() {
 
 	inspect, err := nw.Inspect(context.Background())
 	fmt.Println(err)
-	fmt.Println(inspect.Name)
+	fmt.Println(inspect.Network.Name)
 
 	err = nw.Terminate(context.Background())
 	fmt.Println(err)
@@ -99,13 +100,13 @@ func ExampleNetwork_Inspect_withOptions() {
 	inspect, err := nw.Inspect(
 		context.Background(),
 		network.WithNoCache(),
-		network.WithInspectOptions(apinetwork.InspectOptions{
+		network.WithInspectOptions(dockerclient.NetworkInspectOptions{
 			Verbose: true,
 			Scope:   "local",
 		}),
 	)
 	fmt.Println(err)
-	fmt.Println(inspect.Name)
+	fmt.Println(inspect.Network.Name)
 
 	err = nw.Terminate(context.Background())
 	fmt.Println(err)

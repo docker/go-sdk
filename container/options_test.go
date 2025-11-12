@@ -7,10 +7,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/moby/moby/api/types/container"
+	apinetwork "github.com/moby/moby/api/types/network"
 	"github.com/stretchr/testify/require"
 
-	"github.com/docker/docker/api/types/container"
-	apinetwork "github.com/docker/docker/api/types/network"
 	"github.com/docker/go-sdk/container/exec"
 	"github.com/docker/go-sdk/container/wait"
 )

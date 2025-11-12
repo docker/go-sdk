@@ -23,7 +23,7 @@ Convert SDK auth config to Docker Engine API format:
 
 ```go
 import (
-    "github.com/docker/docker/api/types/registry"
+    "github.com/moby/moby/api/types/registry"
     "github.com/docker/go-sdk/config"
     legacyconfig "github.com/docker/go-sdk/legacyadapters/config"
 )

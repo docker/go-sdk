@@ -6,7 +6,8 @@ import (
 	"io"
 	"time"
 
-	"github.com/docker/docker/api/types/container"
+	"github.com/moby/moby/client"
+
 	"github.com/docker/go-sdk/container/exec"
 )
 
@@ -16,7 +17,7 @@ import (
 // may result in unexpected bytes due to custom stream multiplexing headers.
 // Use [cexec.Multiplexed] option to read the combined output without the multiplexing headers.
 // Alternatively, to separate the stdout and stderr from [io.Reader] and interpret these headers properly,
-// [github.com/docker/docker/pkg/stdcopy.StdCopy] from the Docker API should be used.
+// [github.com/moby/moby/api/pkg/stdcopy.StdCopy] from the Docker API should be used.
 func (c *Container) Exec(ctx context.Context, cmd []string, options ...exec.ProcessOption) (int, io.Reader, error) {
 	processOptions := exec.NewProcessOptions(cmd)
 
@@ -26,12 +27,12 @@ func (c *Container) Exec(ctx context.Context, cmd []string, options ...exec.Proc
 		o.Apply(processOptions)
 	}
 
-	response, err := c.dockerClient.ContainerExecCreate(ctx, c.ID(), processOptions.ExecConfig)
+	response, err := c.dockerClient.ExecCreate(ctx, c.ID(), processOptions.ExecConfig)
 	if err != nil {
 		return 0, nil, fmt.Errorf("container exec create: %w", err)
 	}
 
-	hijack, err := c.dockerClient.ContainerExecAttach(ctx, response.ID, container.ExecAttachOptions{})
+	hijack, err := c.dockerClient.ExecAttach(ctx, response.ID, client.ExecAttachOptions{})
 	if err != nil {
 		return 0, nil, fmt.Errorf("container exec attach: %w", err)
 	}
@@ -46,7 +47,7 @@ func (c *Container) Exec(ctx context.Context, cmd []string, options ...exec.Proc
 
 	var exitCode int
 	for {
-		execResp, err := c.dockerClient.ContainerExecInspect(ctx, response.ID)
+		execResp, err := c.dockerClient.ExecInspect(ctx, response.ID, client.ExecInspectOptions{})
 		if err != nil {
 			return 0, nil, fmt.Errorf("container exec inspect: %w", err)
 		}

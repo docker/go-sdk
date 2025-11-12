@@ -1,13 +1,14 @@
 package volume
 
 import (
-	"github.com/docker/docker/api/types/volume"
+	dockervolume "github.com/moby/moby/api/types/volume"
+
 	"github.com/docker/go-sdk/client"
 )
 
 // Volume represents a Docker volume.
 type Volume struct {
-	*volume.Volume
+	*dockervolume.Volume
 	dockerClient client.SDKClient
 }
 

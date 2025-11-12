@@ -2,12 +2,13 @@ package network_test
 
 import (
 	"context"
+	"net/netip"
 	"runtime"
 	"testing"
 
+	apinetwork "github.com/moby/moby/api/types/network"
 	"github.com/stretchr/testify/require"
 
-	apinetwork "github.com/docker/docker/api/types/network"
 	"github.com/docker/go-sdk/client"
 	"github.com/docker/go-sdk/network"
 )
@@ -66,8 +67,8 @@ func newNetworkSuite(t *testing.T, dockerClient client.SDKClient) {
 			Driver: "default",
 			Config: []apinetwork.IPAMConfig{
 				{
-					Subnet:  "10.1.1.0/24",
-					Gateway: "10.1.1.254",
+					Subnet:  netip.MustParsePrefix("10.1.1.0/24"),
+					Gateway: netip.MustParseAddr("10.1.1.254"),
 				},
 			},
 			Options: map[string]string{
@@ -134,9 +135,9 @@ func newNetworkSuite(t *testing.T, dockerClient client.SDKClient) {
 		require.NoError(t, err)
 		require.NotNil(t, inspect)
 
-		require.Contains(t, inspect.Labels, client.LabelBase)
-		require.Contains(t, inspect.Labels, client.LabelLang)
-		require.Contains(t, inspect.Labels, client.LabelVersion)
+		require.Contains(t, inspect.Network.Labels, client.LabelBase)
+		require.Contains(t, inspect.Network.Labels, client.LabelLang)
+		require.Contains(t, inspect.Network.Labels, client.LabelVersion)
 	})
 }
 

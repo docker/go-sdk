@@ -5,8 +5,9 @@ import (
 	"fmt"
 	"log/slog"
 
-	"github.com/docker/docker/api/types/container"
-	"github.com/docker/docker/api/types/filters"
+	"github.com/moby/moby/api/types/container"
+	dockerclient "github.com/moby/moby/client"
+
 	"github.com/docker/go-sdk/client"
 	"github.com/docker/go-sdk/container/wait"
 )
@@ -96,20 +97,23 @@ func FromID(ctx context.Context, dockerClient client.SDKClient, containerID stri
 		dockerClient = sdk
 	}
 
-	response, err := dockerClient.ContainerList(ctx, container.ListOptions{All: true, Filters: filters.NewArgs(filters.Arg("id", containerID))})
+	response, err := dockerClient.ContainerList(ctx, dockerclient.ContainerListOptions{
+		All:     true,
+		Filters: make(dockerclient.Filters).Add("id", containerID),
+	})
 	if err != nil {
 		return nil, fmt.Errorf("list containers: %w", err)
 	}
 
-	if len(response) == 0 {
+	if len(response.Items) == 0 {
 		return nil, fmt.Errorf("container %s not found", containerID)
 	}
 
-	if len(response) > 1 {
+	if len(response.Items) > 1 {
 		return nil, fmt.Errorf("multiple containers match ID %s", containerID)
 	}
 
-	return FromResponse(ctx, dockerClient, response[0])
+	return FromResponse(ctx, dockerClient, response.Items[0])
 }
 
 // FromResponse builds a container struct from the response of the Docker API.

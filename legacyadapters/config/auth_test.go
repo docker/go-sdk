@@ -3,11 +3,11 @@ package config
 import (
 	"testing"
 
+	"github.com/moby/moby/api/types/registry"
 	"github.com/stretchr/testify/require"
 
 	"github.com/docker/cli/cli/config/configfile"
 	"github.com/docker/cli/cli/config/types"
-	"github.com/docker/docker/api/types/registry"
 	"github.com/docker/go-sdk/config"
 )
 
@@ -18,11 +18,9 @@ func TestToRegistryAuthConfig(t *testing.T) {
 		expected registry.AuthConfig
 	}{
 		{
-			name:  "empty config",
-			input: registry.AuthConfig{},
-			expected: registry.AuthConfig{
-				Email: "",
-			},
+			name:     "empty config",
+			input:    registry.AuthConfig{},
+			expected: registry.AuthConfig{},
 		},
 		{
 			name: "basic username and password",
@@ -33,7 +31,6 @@ func TestToRegistryAuthConfig(t *testing.T) {
 			expected: registry.AuthConfig{
 				Username: "testuser",
 				Password: "testpass",
-				Email:    "",
 			},
 		},
 		{
@@ -47,7 +44,6 @@ func TestToRegistryAuthConfig(t *testing.T) {
 				Username: "user",
 				Password: "pass",
 				Auth:     "dXNlcjpwYXNz",
-				Email:    "",
 			},
 		},
 		{
@@ -60,7 +56,6 @@ func TestToRegistryAuthConfig(t *testing.T) {
 			expected: registry.AuthConfig{
 				Username:      "user",
 				Password:      "pass",
-				Email:         "",
 				ServerAddress: "registry.example.com",
 			},
 		},
@@ -72,7 +67,6 @@ func TestToRegistryAuthConfig(t *testing.T) {
 			},
 			expected: registry.AuthConfig{
 				Username:      "user",
-				Email:         "",
 				IdentityToken: "identity-token-123",
 			},
 		},
@@ -84,7 +78,6 @@ func TestToRegistryAuthConfig(t *testing.T) {
 			},
 			expected: registry.AuthConfig{
 				Username:      "user",
-				Email:         "",
 				RegistryToken: "registry-token-456",
 			},
 		},
@@ -102,7 +95,6 @@ func TestToRegistryAuthConfig(t *testing.T) {
 				Username:      "testuser",
 				Password:      "testpass",
 				Auth:          "dGVzdHVzZXI6dGVzdHBhc3M=",
-				Email:         "",
 				ServerAddress: "registry.example.com",
 				IdentityToken: "identity-token-123",
 				RegistryToken: "registry-token-456",
@@ -116,17 +108,6 @@ func TestToRegistryAuthConfig(t *testing.T) {
 			require.Equal(t, tc.expected, result)
 		})
 	}
-}
-
-func TestToRegistryAuthConfig_EmailAlwaysEmpty(t *testing.T) {
-	// Test that Email field is always set to empty string, regardless of input
-	input := registry.AuthConfig{
-		Username: "user",
-		Password: "pass",
-	}
-
-	result := ToRegistryAuthConfig(input)
-	require.Empty(t, result.Email, "Email field should always be empty")
 }
 
 func TestConfigToConfigFile(t *testing.T) {

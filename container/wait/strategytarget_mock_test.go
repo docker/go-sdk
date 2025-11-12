@@ -3,9 +3,10 @@
 package wait_test
 
 import (
-	context "context"
+	container "github.com/moby/moby/api/types/container"
+	client "github.com/moby/moby/client"
 
-	container "github.com/docker/docker/api/types/container"
+	context "context"
 
 	exec "github.com/docker/go-sdk/container/exec"
 
@@ -13,7 +14,7 @@ import (
 
 	mock "github.com/stretchr/testify/mock"
 
-	nat "github.com/docker/go-connections/nat"
+	network "github.com/moby/moby/api/types/network"
 
 	slog "log/slog"
 )
@@ -228,24 +229,22 @@ func (_c *mockStrategyTarget_Host_Call) RunAndReturn(run func(context.Context) (
 }
 
 // Inspect provides a mock function with given fields: _a0
-func (_m *mockStrategyTarget) Inspect(_a0 context.Context) (*container.InspectResponse, error) {
+func (_m *mockStrategyTarget) Inspect(_a0 context.Context) (client.ContainerInspectResult, error) {
 	ret := _m.Called(_a0)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Inspect")
 	}
 
-	var r0 *container.InspectResponse
+	var r0 client.ContainerInspectResult
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context) (*container.InspectResponse, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context) (client.ContainerInspectResult, error)); ok {
 		return rf(_a0)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context) *container.InspectResponse); ok {
+	if rf, ok := ret.Get(0).(func(context.Context) client.ContainerInspectResult); ok {
 		r0 = rf(_a0)
 	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*container.InspectResponse)
-		}
+		r0 = ret.Get(0).(client.ContainerInspectResult)
 	}
 
 	if rf, ok := ret.Get(1).(func(context.Context) error); ok {
@@ -275,12 +274,12 @@ func (_c *mockStrategyTarget_Inspect_Call) Run(run func(_a0 context.Context)) *m
 	return _c
 }
 
-func (_c *mockStrategyTarget_Inspect_Call) Return(_a0 *container.InspectResponse, _a1 error) *mockStrategyTarget_Inspect_Call {
+func (_c *mockStrategyTarget_Inspect_Call) Return(_a0 client.ContainerInspectResult, _a1 error) *mockStrategyTarget_Inspect_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *mockStrategyTarget_Inspect_Call) RunAndReturn(run func(context.Context) (*container.InspectResponse, error)) *mockStrategyTarget_Inspect_Call {
+func (_c *mockStrategyTarget_Inspect_Call) RunAndReturn(run func(context.Context) (client.ContainerInspectResult, error)) *mockStrategyTarget_Inspect_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -391,25 +390,25 @@ func (_c *mockStrategyTarget_Logs_Call) RunAndReturn(run func(context.Context) (
 }
 
 // MappedPort provides a mock function with given fields: _a0, _a1
-func (_m *mockStrategyTarget) MappedPort(_a0 context.Context, _a1 nat.Port) (nat.Port, error) {
+func (_m *mockStrategyTarget) MappedPort(_a0 context.Context, _a1 network.Port) (network.Port, error) {
 	ret := _m.Called(_a0, _a1)
 
 	if len(ret) == 0 {
 		panic("no return value specified for MappedPort")
 	}
 
-	var r0 nat.Port
+	var r0 network.Port
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, nat.Port) (nat.Port, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, network.Port) (network.Port, error)); ok {
 		return rf(_a0, _a1)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, nat.Port) nat.Port); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, network.Port) network.Port); ok {
 		r0 = rf(_a0, _a1)
 	} else {
-		r0 = ret.Get(0).(nat.Port)
+		r0 = ret.Get(0).(network.Port)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, nat.Port) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, network.Port) error); ok {
 		r1 = rf(_a0, _a1)
 	} else {
 		r1 = ret.Error(1)
@@ -425,24 +424,24 @@ type mockStrategyTarget_MappedPort_Call struct {
 
 // MappedPort is a helper method to define mock.On call
 //   - _a0 context.Context
-//   - _a1 nat.Port
+//   - _a1 network.Port
 func (_e *mockStrategyTarget_Expecter) MappedPort(_a0 interface{}, _a1 interface{}) *mockStrategyTarget_MappedPort_Call {
 	return &mockStrategyTarget_MappedPort_Call{Call: _e.mock.On("MappedPort", _a0, _a1)}
 }
 
-func (_c *mockStrategyTarget_MappedPort_Call) Run(run func(_a0 context.Context, _a1 nat.Port)) *mockStrategyTarget_MappedPort_Call {
+func (_c *mockStrategyTarget_MappedPort_Call) Run(run func(_a0 context.Context, _a1 network.Port)) *mockStrategyTarget_MappedPort_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(nat.Port))
+		run(args[0].(context.Context), args[1].(network.Port))
 	})
 	return _c
 }
 
-func (_c *mockStrategyTarget_MappedPort_Call) Return(_a0 nat.Port, _a1 error) *mockStrategyTarget_MappedPort_Call {
+func (_c *mockStrategyTarget_MappedPort_Call) Return(_a0 network.Port, _a1 error) *mockStrategyTarget_MappedPort_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *mockStrategyTarget_MappedPort_Call) RunAndReturn(run func(context.Context, nat.Port) (nat.Port, error)) *mockStrategyTarget_MappedPort_Call {
+func (_c *mockStrategyTarget_MappedPort_Call) RunAndReturn(run func(context.Context, network.Port) (network.Port, error)) *mockStrategyTarget_MappedPort_Call {
 	_c.Call.Return(run)
 	return _c
 }

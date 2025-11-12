@@ -5,6 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
+
+	"github.com/moby/moby/client"
 )
 
 // TerminableNetwork is a network that can be terminated.
@@ -18,7 +20,7 @@ func (n *Network) Terminate(ctx context.Context) error {
 		return errors.New("docker client is not initialized")
 	}
 
-	if err := n.dockerClient.NetworkRemove(ctx, n.ID()); err != nil {
+	if _, err := n.dockerClient.NetworkRemove(ctx, n.ID(), client.NetworkRemoveOptions{}); err != nil {
 		return fmt.Errorf("terminate network: %w", err)
 	}
 

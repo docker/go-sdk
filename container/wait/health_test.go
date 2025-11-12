@@ -9,11 +9,11 @@ import (
 	"testing"
 	"time"
 
+	"github.com/moby/moby/api/types/container"
+	"github.com/moby/moby/api/types/network"
+	"github.com/moby/moby/client"
 	"github.com/stretchr/testify/require"
 
-	"github.com/docker/docker/api/types"
-	"github.com/docker/docker/api/types/container"
-	"github.com/docker/go-connections/nat"
 	"github.com/docker/go-sdk/container/exec"
 )
 
@@ -26,11 +26,11 @@ func (st *healthStrategyTarget) Host(_ context.Context) (string, error) {
 	return "", nil
 }
 
-func (st *healthStrategyTarget) Inspect(_ context.Context) (*container.InspectResponse, error) {
-	return nil, nil
+func (st *healthStrategyTarget) Inspect(_ context.Context) (client.ContainerInspectResult, error) {
+	return client.ContainerInspectResult{}, nil
 }
 
-func (st *healthStrategyTarget) MappedPort(_ context.Context, n nat.Port) (nat.Port, error) {
+func (st *healthStrategyTarget) MappedPort(_ context.Context, n network.Port) (network.Port, error) {
 	return n, nil
 }
 
@@ -72,7 +72,7 @@ func TestWaitForHealthTimesOutForUnhealthy(t *testing.T) {
 	target := &healthStrategyTarget{
 		state: &container.State{
 			Running: true,
-			Health:  &container.Health{Status: types.Unhealthy},
+			Health:  &container.Health{Status: container.Unhealthy},
 		},
 	}
 	wg := NewHealthStrategy().WithTimeout(100 * time.Millisecond)
@@ -87,7 +87,7 @@ func TestWaitForHealthSucceeds(t *testing.T) {
 	target := &healthStrategyTarget{
 		state: &container.State{
 			Running: true,
-			Health:  &container.Health{Status: types.Healthy},
+			Health:  &container.Health{Status: container.Healthy},
 		},
 	}
 	wg := NewHealthStrategy().WithTimeout(100 * time.Millisecond)
@@ -113,7 +113,7 @@ func TestWaitForHealthWithNil(t *testing.T) {
 		// wait a bit to simulate startup time and give check time to at least
 		// try a few times with a nil Health
 		time.Sleep(200 * time.Millisecond)
-		target.setState(&container.Health{Status: types.Healthy})
+		target.setState(&container.Health{Status: container.Healthy})
 	}(target)
 
 	err := wg.WaitUntilReady(context.Background(), target)

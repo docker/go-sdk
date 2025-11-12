@@ -3,7 +3,8 @@ package network
 import (
 	"errors"
 
-	"github.com/docker/docker/api/types/network"
+	"github.com/moby/moby/api/types/network"
+
 	"github.com/docker/go-sdk/client"
 )
 
