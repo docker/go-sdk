@@ -6,8 +6,9 @@ import (
 	"io"
 	"testing"
 
-	"github.com/docker/go-sdk/container"
 	"github.com/stretchr/testify/require"
+
+	"github.com/docker/go-sdk/container"
 )
 
 func TestFromID(t *testing.T) {
@@ -18,7 +19,7 @@ func TestFromID(t *testing.T) {
 	// Use the SDK client from the existing container
 	cli := ctr.Client()
 
-	// Now recreate the container using FromResponse with the container summary
+	// Now recreate the container using FromID with the container ID
 	// This is useful when you only have a container ID and need to perform operations on it
 	recreated, err := container.FromID(context.Background(), cli, ctr.ID())
 	require.NoError(t, err)
