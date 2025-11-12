@@ -6,6 +6,7 @@ import (
 	"log/slog"
 
 	"github.com/docker/docker/api/types/container"
+	"github.com/docker/docker/api/types/filters"
 	"github.com/docker/go-sdk/client"
 	"github.com/docker/go-sdk/container/wait"
 )
@@ -84,26 +85,61 @@ func (c *Container) Host(ctx context.Context) (string, error) {
 	return host, nil
 }
 
+// FromID builds a container struct from a container ID, using the Docker API to inspect the container.
+// If dockerClient is nil, a new client will be created using the default configuration.
+func FromID(ctx context.Context, dockerClient client.SDKClient, containerID string) (*Container, error) {
+	if dockerClient == nil {
+		sdk, err := client.New(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("new docker client: %w", err)
+		}
+		dockerClient = sdk
+	}
+
+	response, err := dockerClient.ContainerList(ctx, container.ListOptions{All: true, Filters: filters.NewArgs(filters.Arg("id", containerID))})
+	if err != nil {
+		return nil, fmt.Errorf("list containers: %w", err)
+	}
+
+	if len(response) == 0 {
+		return nil, fmt.Errorf("container %s not found", containerID)
+	}
+
+	if len(response) > 1 {
+		return nil, fmt.Errorf("multiple containers match ID %s", containerID)
+	}
+
+	return FromResponse(ctx, dockerClient, response[0])
+}
+
 // FromResponse builds a container struct from the response of the Docker API.
 // If dockerClient is nil, a new client will be created using the default configuration.
 func FromResponse(ctx context.Context, dockerClient client.SDKClient, response container.Summary) (*Container, error) {
 	if dockerClient == nil {
 		sdk, err := client.New(ctx)
 		if err != nil {
-			return nil, fmt.Errorf("failed to create docker client: %w", err)
+			return nil, fmt.Errorf("new docker client: %w", err)
 		}
 		dockerClient = sdk
 	}
 
-	exposedPorts := make([]string, len(response.Ports))
-	for i, port := range response.Ports {
-		exposedPorts[i] = fmt.Sprintf("%d/%s", port.PublicPort, port.Type)
+	exposedPorts := make([]string, 0, len(response.Ports))
+	for _, port := range response.Ports {
+		// Only include ports that are published to the host (PublicPort != 0)
+		if port.PublicPort != 0 {
+			exposedPorts = append(exposedPorts, fmt.Sprintf("%d/%s", port.PublicPort, port.Type))
+		}
+	}
+
+	shortID := response.ID
+	if len(response.ID) >= 12 {
+		shortID = response.ID[:12]
 	}
 
 	ctr := &Container{
 		dockerClient: dockerClient,
 		containerID:  response.ID,
-		shortID:      response.ID[:12],
+		shortID:      shortID,
 		image:        response.Image,
 		isRunning:    response.State == "running",
 		exposedPorts: exposedPorts,
