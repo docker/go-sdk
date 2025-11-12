@@ -124,10 +124,15 @@ func FromResponse(ctx context.Context, dockerClient client.SDKClient, response c
 		exposedPorts[i] = fmt.Sprintf("%d/%s", port.PublicPort, port.Type)
 	}
 
+	shortID := response.ID
+	if len(response.ID) >= 12 {
+		shortID = response.ID[:12]
+	}
+
 	ctr := &Container{
 		dockerClient: dockerClient,
 		containerID:  response.ID,
-		shortID:      response.ID[:12],
+		shortID:      shortID,
 		image:        response.Image,
 		isRunning:    response.State == "running",
 		exposedPorts: exposedPorts,
