@@ -6,7 +6,9 @@ import (
 	"log/slog"
 	"sync"
 
+	"github.com/docker/cli/cli/config/configfile"
 	"github.com/docker/docker/api/types/container"
+	"github.com/docker/docker/api/types/registry"
 	"github.com/docker/docker/api/types/system"
 	"github.com/docker/docker/client"
 )
@@ -26,6 +28,10 @@ type SDKClient interface {
 
 	// FindContainerByName finds a container by name.
 	FindContainerByName(ctx context.Context, name string) (*container.Summary, error)
+
+	AuthConfigForImage(image string) (string, registry.AuthConfig, error)
+
+	AuthConfigForHostname(host string) (registry.AuthConfig, error)
 }
 
 var _ client.APIClient = &sdkClient{}
@@ -33,18 +39,13 @@ var _ client.APIClient = &sdkClient{}
 // sdkClient is a type that represents a client for interacting with containers.
 type sdkClient struct {
 	client.APIClient
+	config *configfile.ConfigFile
 
 	// log is the logger for the client.
 	log *slog.Logger
 
 	// mtx is a mutex for synchronizing access to the fields below.
 	mtx sync.RWMutex
-
-	// cfg is the configuration for the client, obtained from the environment variables.
-	cfg *config
-
-	// err is used to store errors that occur during the client's initialization.
-	err error
 
 	// dockerOpts are options to be passed to the docker client.
 	dockerOpts []client.Opt

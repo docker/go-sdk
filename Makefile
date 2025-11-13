@@ -12,6 +12,10 @@ lint-all:
 	$(call for-all-modules,make lint)
 
 tidy-all:
+	@echo "Running lint in all modules..."
+	$(call for-all-modules,go mod tidy)
+
+tidy-all:
 	@echo "Running tidy in all modules..."
 	$(call for-all-modules,go mod tidy)
 

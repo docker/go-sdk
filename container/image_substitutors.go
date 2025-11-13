@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"net/url"
 
-	"github.com/docker/go-sdk/config/auth"
+	"github.com/docker/go-sdk/client/registry"
 )
 
 // ImageSubstitutor represents a way to substitute container image names
@@ -36,26 +36,26 @@ func (c CustomHubSubstitutor) Description() string {
 // Substitute replaces the hub of the image with the provided one, with certain conditions:
 //   - if the hub is empty, the image is returned as is.
 //   - if the image already contains a registry, the image is returned as is.
-func (c CustomHubSubstitutor) Substitute(image string) (string, error) {
-	ref, err := auth.ParseImageRef(image)
+func (c CustomHubSubstitutor) Substitute(img string) (string, error) {
+	ref, err := registry.ParseImageRef(img)
 	if err != nil {
 		return "", err
 	}
 
-	registry := ref.Registry
+	domain := ref.Registry
 
 	exclusions := []func() bool{
 		func() bool { return c.hub == "" },
-		func() bool { return registry != auth.DockerRegistry },
+		func() bool { return domain != registry.DockerRegistry },
 	}
 
 	for _, exclusion := range exclusions {
 		if exclusion() {
-			return image, nil
+			return img, nil
 		}
 	}
 
-	result, err := url.JoinPath(c.hub, image)
+	result, err := url.JoinPath(c.hub, img)
 	if err != nil {
 		return "", err
 	}
@@ -86,27 +86,27 @@ func (p prependHubRegistry) Description() string {
 //   - if the image is a non-hub image (e.g. where another registry is set), the image is returned as is.
 //   - if the image is a Docker Hub image where the hub registry is explicitly part of the name
 //     (i.e. anything with a registry.hub.docker.com host part), the image is returned as is.
-func (p prependHubRegistry) Substitute(image string) (string, error) {
-	ref, err := auth.ParseImageRef(image)
+func (p prependHubRegistry) Substitute(img string) (string, error) {
+	ref, err := registry.ParseImageRef(img)
 	if err != nil {
 		return "", err
 	}
 
-	registry := ref.Registry
+	domain := ref.Registry
 
 	// add the exclusions in the right order
 	exclusions := []func() bool{
-		func() bool { return p.prefix == "" },                  // no prefix set at the configuration level
-		func() bool { return registry != auth.DockerRegistry }, // explicitly including Docker's URLs
+		func() bool { return p.prefix == "" },                    // no prefix set at the configuration level
+		func() bool { return domain != registry.DockerRegistry }, // explicitly including Docker's URLs
 	}
 
 	for _, exclusion := range exclusions {
 		if exclusion() {
-			return image, nil
+			return img, nil
 		}
 	}
 
-	result, err := url.JoinPath(p.prefix, image)
+	result, err := url.JoinPath(p.prefix, img)
 	if err != nil {
 		return "", err
 	}
