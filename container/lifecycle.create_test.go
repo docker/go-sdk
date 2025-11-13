@@ -60,7 +60,7 @@ func TestMergePortBindings(t *testing.T) {
 				exposedPorts: nil,
 			},
 			expected: map[nat.Port][]nat.PortBinding{
-				"80/tcp": {{HostIP: "", HostPort: ""}},
+				"80/tcp": {{HostIP: "", HostPort: "0"}},
 			},
 		},
 		{
@@ -75,7 +75,7 @@ func TestMergePortBindings(t *testing.T) {
 				exposedPorts: nil,
 			},
 			expected: map[nat.Port][]nat.PortBinding{
-				"80/tcp": {{HostIP: "", HostPort: ""}},
+				"80/tcp": {{HostIP: "", HostPort: "0"}},
 			},
 		},
 		{
@@ -95,7 +95,7 @@ func TestMergePortBindings(t *testing.T) {
 			expected: map[nat.Port][]nat.PortBinding{
 				"70/tcp": {{HostIP: "1", HostPort: "2"}},
 				"80/tcp": {{HostIP: "1", HostPort: "2"}},
-				"90/tcp": {{HostIP: "", HostPort: ""}},
+				"90/tcp": {{HostIP: "", HostPort: "0"}},
 			},
 		},
 	}
