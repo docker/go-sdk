@@ -4,14 +4,14 @@ import (
 	"context"
 	"errors"
 	"io"
+	"iter"
 	"log/slog"
 	"testing"
 
+	"github.com/moby/moby/api/types/jsonstream"
+	"github.com/moby/moby/client"
 	"github.com/stretchr/testify/require"
 
-	"github.com/docker/docker/api/types"
-	"github.com/docker/docker/api/types/image"
-	"github.com/docker/docker/client"
 	sdkclient "github.com/docker/go-sdk/client"
 )
 
@@ -19,19 +19,19 @@ import (
 type mockImagePullClient struct {
 	client.APIClient
 	*testLogger
-	pullFunc func(ctx context.Context, image string, options image.PullOptions) (io.ReadCloser, error)
+	pullFunc func(ctx context.Context, image string, options client.ImagePullOptions) (client.ImagePullResponse, error)
 }
 
 func (m *mockImagePullClient) Close() error {
 	return nil
 }
 
-func (m *mockImagePullClient) ImagePull(ctx context.Context, image string, options image.PullOptions) (io.ReadCloser, error) {
+func (m *mockImagePullClient) ImagePull(ctx context.Context, image string, options client.ImagePullOptions) (client.ImagePullResponse, error) {
 	return m.pullFunc(ctx, image, options)
 }
 
-func (m *mockImagePullClient) Ping(_ context.Context) (types.Ping, error) {
-	return types.Ping{}, nil
+func (m *mockImagePullClient) Ping(_ context.Context, _ client.PingOptions) (client.PingResult, error) {
+	return client.PingResult{}, nil
 }
 
 func setupPullBenchmark(b *testing.B) *mockImagePullClient {
@@ -39,23 +39,35 @@ func setupPullBenchmark(b *testing.B) *mockImagePullClient {
 
 	return &mockImagePullClient{
 		testLogger: newTestLogger(b),
-		pullFunc: func(_ context.Context, _ string, _ image.PullOptions) (io.ReadCloser, error) {
-			return io.NopCloser(io.Reader(io.MultiReader())), nil
+		pullFunc: func(_ context.Context, _ string, _ client.ImagePullOptions) (client.ImagePullResponse, error) {
+			return mockImagePullResponse{io.NopCloser(io.MultiReader())}, nil
 		},
 	}
+}
+
+type mockImagePullResponse struct {
+	io.ReadCloser
+}
+
+func (f mockImagePullResponse) JSONMessages(_ context.Context) iter.Seq2[jsonstream.Message, error] {
+	return nil
+}
+
+func (f mockImagePullResponse) Wait(_ context.Context) error {
+	return nil
 }
 
 func BenchmarkPull(b *testing.B) {
 	ctx := context.Background()
 	imageName := "test/image:latest"
-	pullOpt := image.PullOptions{}
+	pullOpt := client.ImagePullOptions{}
 
 	b.Run("pull-without-auth", func(b *testing.B) {
-		client := setupPullBenchmark(b)
+		c := setupPullBenchmark(b)
 		b.ResetTimer()
 		b.ReportAllocs()
 
-		sdk, err := sdkclient.New(context.TODO(), sdkclient.WithDockerAPI(client))
+		sdk, err := sdkclient.New(context.TODO(), sdkclient.WithDockerAPI(c))
 		require.NoError(b, err)
 
 		for range b.N {
@@ -67,16 +79,16 @@ func BenchmarkPull(b *testing.B) {
 	})
 
 	b.Run("pull-with-auth", func(b *testing.B) {
-		client := setupPullBenchmark(b)
+		c := setupPullBenchmark(b)
 		// Mock registry credentials
-		client.pullFunc = func(_ context.Context, _ string, options image.PullOptions) (io.ReadCloser, error) {
+		c.pullFunc = func(_ context.Context, _ string, options client.ImagePullOptions) (client.ImagePullResponse, error) {
 			require.NotEmpty(b, options.RegistryAuth)
-			return io.NopCloser(io.Reader(io.MultiReader())), nil
+			return mockImagePullResponse{io.NopCloser(io.MultiReader())}, nil
 		}
 		b.ResetTimer()
 		b.ReportAllocs()
 
-		sdk, err := sdkclient.New(context.TODO(), sdkclient.WithDockerAPI(client))
+		sdk, err := sdkclient.New(context.TODO(), sdkclient.WithDockerAPI(c))
 		require.NoError(b, err)
 
 		for range b.N {
@@ -88,19 +100,19 @@ func BenchmarkPull(b *testing.B) {
 	})
 
 	b.Run("pull-with-retries", func(b *testing.B) {
-		client := setupPullBenchmark(b)
+		c := setupPullBenchmark(b)
 		attempts := 0
-		client.pullFunc = func(_ context.Context, _ string, _ image.PullOptions) (io.ReadCloser, error) {
+		c.pullFunc = func(_ context.Context, _ string, _ client.ImagePullOptions) (client.ImagePullResponse, error) {
 			attempts++
 			if attempts < 3 {
 				return nil, errors.New("temporary error")
 			}
-			return io.NopCloser(io.Reader(io.MultiReader())), nil
+			return mockImagePullResponse{io.NopCloser(io.MultiReader())}, nil
 		}
 		b.ResetTimer()
 		b.ReportAllocs()
 
-		sdk, err := sdkclient.New(context.TODO(), sdkclient.WithDockerAPI(client))
+		sdk, err := sdkclient.New(context.TODO(), sdkclient.WithDockerAPI(c))
 		require.NoError(b, err)
 
 		// Use a custom pull handler that discards output to avoid measuring display performance
@@ -119,16 +131,16 @@ func BenchmarkPull(b *testing.B) {
 	})
 
 	b.Run("with-pull-handler", func(b *testing.B) {
-		client := setupPullBenchmark(b)
+		c := setupPullBenchmark(b)
 		// Mock registry credentials
-		client.pullFunc = func(_ context.Context, _ string, options image.PullOptions) (io.ReadCloser, error) {
+		c.pullFunc = func(_ context.Context, _ string, options client.ImagePullOptions) (client.ImagePullResponse, error) {
 			require.NotEmpty(b, options.RegistryAuth)
-			return io.NopCloser(io.Reader(io.MultiReader())), nil
+			return mockImagePullResponse{io.NopCloser(io.MultiReader())}, nil
 		}
 		b.ResetTimer()
 		b.ReportAllocs()
 
-		sdk, err := sdkclient.New(context.TODO(), sdkclient.WithDockerAPI(client))
+		sdk, err := sdkclient.New(context.TODO(), sdkclient.WithDockerAPI(c))
 		require.NoError(b, err)
 
 		for range b.N {

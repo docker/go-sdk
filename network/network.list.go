@@ -4,9 +4,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"maps"
 
-	"github.com/docker/docker/api/types/filters"
-	"github.com/docker/docker/api/types/network"
+	"github.com/moby/moby/api/types/network"
+	dockerclient "github.com/moby/moby/client"
+
 	"github.com/docker/go-sdk/client"
 )
 
@@ -20,7 +22,7 @@ const (
 
 type listOptions struct {
 	client  client.SDKClient
-	filters filters.Args
+	filters dockerclient.Filters
 }
 
 type ListOptions func(opts *listOptions) error
@@ -34,47 +36,47 @@ func WithListClient(client client.SDKClient) ListOptions {
 }
 
 // WithFilters sets the filters to be used to filter the networks.
-func WithFilters(filters filters.Args) ListOptions {
+func WithFilters(filters dockerclient.Filters) ListOptions {
 	return func(opts *listOptions) error {
-		opts.filters = filters
+		opts.filters = maps.Clone(filters)
 		return nil
 	}
 }
 
 // FindByID returns a network by its ID.
-func FindByID(ctx context.Context, id string, opts ...ListOptions) (network.Inspect, error) {
-	opts = append(opts, WithFilters(filters.NewArgs(filters.Arg(filterByID, id))))
+func FindByID(ctx context.Context, id string, opts ...ListOptions) (network.Summary, error) {
+	opts = append(opts, WithFilters(make(dockerclient.Filters).Add(filterByID, id)))
 
 	nws, err := list(ctx, opts...)
 	if err != nil {
-		return network.Inspect{}, err
+		return network.Summary{}, err
 	}
 
 	return nws[0], nil
 }
 
 // FindByName returns a network by its name.
-func FindByName(ctx context.Context, name string, opts ...ListOptions) (network.Inspect, error) {
-	opts = append(opts, WithFilters(filters.NewArgs(filters.Arg(filterByName, name))))
+func FindByName(ctx context.Context, name string, opts ...ListOptions) (network.Summary, error) {
+	opts = append(opts, WithFilters(make(dockerclient.Filters).Add(filterByName, name)))
 
 	nws, err := list(ctx, opts...)
 	if err != nil {
-		return network.Inspect{}, err
+		return network.Summary{}, err
 	}
 
 	return nws[0], nil
 }
 
 // List returns a list of networks.
-func List(ctx context.Context, opts ...ListOptions) ([]network.Inspect, error) {
+func List(ctx context.Context, opts ...ListOptions) ([]network.Summary, error) {
 	return list(ctx, opts...)
 }
 
-func list(ctx context.Context, opts ...ListOptions) ([]network.Inspect, error) {
-	var nws []network.Inspect // initialize to the zero value
+func list(ctx context.Context, opts ...ListOptions) ([]network.Summary, error) {
+	var nws []network.Summary // initialize to the zero value
 
 	initialOpts := &listOptions{
-		filters: filters.NewArgs(),
+		filters: make(dockerclient.Filters),
 	}
 	for _, opt := range opts {
 		if err := opt(initialOpts); err != nil {
@@ -82,8 +84,8 @@ func list(ctx context.Context, opts ...ListOptions) ([]network.Inspect, error) {
 		}
 	}
 
-	nwOpts := network.ListOptions{}
-	if initialOpts.filters.Len() > 0 {
+	nwOpts := dockerclient.NetworkListOptions{}
+	if len(initialOpts.filters) > 0 {
 		nwOpts.Filters = initialOpts.filters
 	}
 
@@ -100,11 +102,11 @@ func list(ctx context.Context, opts ...ListOptions) ([]network.Inspect, error) {
 		return nws, fmt.Errorf("failed to list networks: %w", err)
 	}
 
-	if len(list) == 0 {
+	if len(list.Items) == 0 {
 		return nws, errors.New("no networks found")
 	}
 
-	nws = append(nws, list...)
+	nws = append(nws, list.Items...)
 
 	return nws, nil
 }

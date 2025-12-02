@@ -7,9 +7,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/moby/moby/api/types/jsonstream"
 	"github.com/stretchr/testify/require"
-
-	"github.com/docker/docker/pkg/jsonmessage"
 )
 
 func TestLoggerWriter_Write(t *testing.T) {
@@ -55,8 +54,8 @@ func testLoggerWriterWithJSONError(t *testing.T) {
 	logger := slog.New(slog.NewTextHandler(buf, nil))
 	writer := &loggerWriter{logger: logger}
 
-	errorMsg := jsonmessage.JSONMessage{
-		Error: &jsonmessage.JSONError{
+	errorMsg := jsonstream.Message{
+		Error: &jsonstream.Error{
 			Message: "build failed",
 		},
 	}
@@ -80,7 +79,7 @@ func testLoggerWriterWithJSONStream(t *testing.T) {
 	logger := slog.New(slog.NewTextHandler(buf, nil))
 	writer := &loggerWriter{logger: logger}
 
-	streamMsg := jsonmessage.JSONMessage{
+	streamMsg := jsonstream.Message{
 		Stream: "Step 1/3 : FROM ubuntu:latest",
 	}
 	jsonData, err := json.Marshal(streamMsg)
@@ -102,7 +101,7 @@ func testLoggerWriterWithJSONStatus(t *testing.T) {
 	logger := slog.New(slog.NewTextHandler(buf, nil))
 	writer := &loggerWriter{logger: logger}
 
-	statusMsg := jsonmessage.JSONMessage{
+	statusMsg := jsonstream.Message{
 		Status: "Downloading",
 		ID:     "abc123",
 	}
@@ -177,7 +176,7 @@ func testLoggerWriterStreamWithNewline(t *testing.T) {
 	logger := slog.New(slog.NewTextHandler(buf, nil))
 	writer := &loggerWriter{logger: logger}
 
-	streamMsg := jsonmessage.JSONMessage{
+	streamMsg := jsonstream.Message{
 		Stream: "Step 1/3 : FROM ubuntu:latest\n",
 	}
 	jsonData, err := json.Marshal(streamMsg)
@@ -200,10 +199,10 @@ func testLoggerWriterStatusWithProgress(t *testing.T) {
 	logger := slog.New(slog.NewTextHandler(buf, nil))
 	writer := &loggerWriter{logger: logger}
 
-	statusMsg := jsonmessage.JSONMessage{
+	statusMsg := jsonstream.Message{
 		Status:   "Downloading",
 		ID:       "abc123",
-		Progress: &jsonmessage.JSONProgress{Current: 1024, Total: 2048},
+		Progress: &jsonstream.Progress{Current: 1024, Total: 2048},
 	}
 	jsonData, err := json.Marshal(statusMsg)
 	require.NoError(t, err)
@@ -275,7 +274,7 @@ func testLoggerWriterWithEmptyJSONFields(t *testing.T) {
 	logger := slog.New(slog.NewTextHandler(buf, nil))
 	writer := &loggerWriter{logger: logger}
 
-	emptyMsg := jsonmessage.JSONMessage{
+	emptyMsg := jsonstream.Message{
 		Stream: "",
 		Status: "",
 		ID:     "",

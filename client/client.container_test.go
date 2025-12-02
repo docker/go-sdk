@@ -8,11 +8,11 @@ import (
 	"testing"
 
 	"github.com/containerd/errdefs"
+	"github.com/moby/moby/api/types/container"
+	"github.com/moby/moby/api/types/network"
+	dockerclient "github.com/moby/moby/client"
 	"github.com/stretchr/testify/require"
 
-	"github.com/docker/docker/api/types/container"
-	"github.com/docker/docker/api/types/image"
-	"github.com/docker/go-connections/nat"
 	"github.com/docker/go-sdk/client"
 )
 
@@ -40,10 +40,10 @@ func TestContainerList(t *testing.T) {
 
 	wg.Wait()
 
-	containers, err := dockerClient.ContainerList(context.Background(), container.ListOptions{All: true})
+	containers, err := dockerClient.ContainerList(context.Background(), dockerclient.ContainerListOptions{All: true})
 	require.NoError(t, err)
-	require.NotEmpty(t, containers)
-	require.Len(t, containers, max)
+	require.NotEmpty(t, containers.Items)
+	require.Len(t, containers.Items, max)
 }
 
 func TestFindContainerByName(t *testing.T) {
@@ -84,31 +84,34 @@ func TestContainerPause(t *testing.T) {
 	pullImage(t, dockerClient, img)
 	createContainer(t, dockerClient, img, "nginx-test-pause")
 
-	err = dockerClient.ContainerStart(context.Background(), "nginx-test-pause", container.StartOptions{})
+	_, err = dockerClient.ContainerStart(context.Background(), "nginx-test-pause", dockerclient.ContainerStartOptions{})
 	require.NoError(t, err)
 
-	err = dockerClient.ContainerPause(context.Background(), "nginx-test-pause")
+	_, err = dockerClient.ContainerPause(context.Background(), "nginx-test-pause", dockerclient.ContainerPauseOptions{})
 	require.NoError(t, err)
 
-	err = dockerClient.ContainerUnpause(context.Background(), "nginx-test-pause")
+	_, err = dockerClient.ContainerUnpause(context.Background(), "nginx-test-pause", dockerclient.ContainerUnpauseOptions{})
 	require.NoError(t, err)
 }
 
 func createContainer(tb testing.TB, dockerClient client.SDKClient, img string, name string) {
 	tb.Helper()
 
-	resp, err := dockerClient.ContainerCreate(context.Background(), &container.Config{
-		Image: img,
-		ExposedPorts: nat.PortSet{
-			"80/tcp": {},
+	resp, err := dockerClient.ContainerCreate(context.Background(), dockerclient.ContainerCreateOptions{
+		Config: &container.Config{
+			Image: img,
+			ExposedPorts: network.PortSet{
+				network.MustParsePort("80/tcp"): {},
+			},
 		},
-	}, nil, nil, nil, name)
+		Name: name,
+	})
 	require.NoError(tb, err)
 	require.NotNil(tb, resp)
 	require.NotEmpty(tb, resp.ID)
 
 	tb.Cleanup(func() {
-		err := dockerClient.ContainerRemove(context.Background(), resp.ID, container.RemoveOptions{Force: true})
+		_, err := dockerClient.ContainerRemove(context.Background(), resp.ID, dockerclient.ContainerRemoveOptions{Force: true})
 		require.NoError(tb, err)
 	})
 }
@@ -116,7 +119,7 @@ func createContainer(tb testing.TB, dockerClient client.SDKClient, img string, n
 func pullImage(tb testing.TB, client client.SDKClient, img string) {
 	tb.Helper()
 
-	r, err := client.ImagePull(context.Background(), img, image.PullOptions{})
+	r, err := client.ImagePull(context.Background(), img, dockerclient.ImagePullOptions{})
 	require.NoError(tb, err)
 	defer r.Close()
 

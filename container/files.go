@@ -13,7 +13,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/docker/docker/api/types/container"
+	"github.com/moby/moby/client"
 )
 
 // File represents a file that will be copied when container starts
@@ -66,12 +66,14 @@ func (fc *FileFromContainer) Close() error {
 
 // CopyFromContainer copies a file from the container to the local filesystem.
 func (c *Container) CopyFromContainer(ctx context.Context, containerFilePath string) (io.ReadCloser, error) {
-	r, _, err := c.dockerClient.CopyFromContainer(ctx, c.ID(), containerFilePath)
+	r, err := c.dockerClient.CopyFromContainer(ctx, c.ID(), client.CopyFromContainerOptions{
+		SourcePath: containerFilePath,
+	})
 	if err != nil {
 		return nil, err
 	}
 
-	tarReader := tar.NewReader(r)
+	tarReader := tar.NewReader(r.Content)
 
 	// if we got here we have exactly one file in the TAR-stream
 	// so we advance the index by one so the next call to Read will start reading it
@@ -81,7 +83,7 @@ func (c *Container) CopyFromContainer(ctx context.Context, containerFilePath str
 	}
 
 	ret := &FileFromContainer{
-		underlying: &r,
+		underlying: &r.Content,
 		tarreader:  tarReader,
 	}
 
@@ -109,7 +111,10 @@ func (c *Container) CopyDirToContainer(ctx context.Context, hostDirPath string, 
 	// create the directory under its parent
 	parent := filepath.Dir(containerFilePath)
 
-	err = c.dockerClient.CopyToContainer(ctx, c.ID(), parent, buffer, container.CopyToContainerOptions{})
+	_, err = c.dockerClient.CopyToContainer(ctx, c.ID(), client.CopyToContainerOptions{
+		DestinationPath: parent,
+		Content:         buffer,
+	})
 	if err != nil {
 		return fmt.Errorf("copy to container: %w", err)
 	}
@@ -129,7 +134,10 @@ func (c *Container) CopyToContainer(ctx context.Context, fileContent []byte, con
 		return fmt.Errorf("tar file: %w", err)
 	}
 
-	err = c.dockerClient.CopyToContainer(ctx, c.ID(), "/", buffer, container.CopyToContainerOptions{})
+	_, err = c.dockerClient.CopyToContainer(ctx, c.ID(), client.CopyToContainerOptions{
+		DestinationPath: "/",
+		Content:         buffer,
+	})
 	if err != nil {
 		return fmt.Errorf("copy to container: %w", err)
 	}

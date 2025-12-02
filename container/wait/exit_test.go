@@ -8,10 +8,11 @@ import (
 	"testing"
 	"time"
 
+	"github.com/moby/moby/api/types/container"
+	"github.com/moby/moby/api/types/network"
+	"github.com/moby/moby/client"
 	"github.com/stretchr/testify/require"
 
-	"github.com/docker/docker/api/types/container"
-	"github.com/docker/go-connections/nat"
 	"github.com/docker/go-sdk/container/exec"
 )
 
@@ -23,11 +24,11 @@ func (st *exitStrategyTarget) Host(_ context.Context) (string, error) {
 	return "", nil
 }
 
-func (st *exitStrategyTarget) Inspect(_ context.Context) (*container.InspectResponse, error) {
-	return nil, nil
+func (st *exitStrategyTarget) Inspect(_ context.Context) (client.ContainerInspectResult, error) {
+	return client.ContainerInspectResult{}, nil
 }
 
-func (st *exitStrategyTarget) MappedPort(_ context.Context, n nat.Port) (nat.Port, error) {
+func (st *exitStrategyTarget) MappedPort(_ context.Context, n network.Port) (network.Port, error) {
 	return n, nil
 }
 

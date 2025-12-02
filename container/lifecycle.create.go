@@ -5,11 +5,13 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"net/netip"
 	"os"
-	"strings"
 
-	"github.com/docker/docker/api/types/container"
-	"github.com/docker/docker/api/types/network"
+	"github.com/moby/moby/api/types/container"
+	"github.com/moby/moby/api/types/network"
+	dockerclient "github.com/moby/moby/client"
+
 	"github.com/docker/go-connections/nat"
 	"github.com/docker/go-sdk/client"
 )
@@ -131,19 +133,23 @@ func (c *Container) createdHook(ctx context.Context) error {
 	})
 }
 
-func mergePortBindings(configPortMap, exposedPortMap nat.PortMap, exposedPorts []string) nat.PortMap {
+func mergePortBindings(configPortMap, exposedPortMap network.PortMap, exposedPorts []string) network.PortMap {
 	if exposedPortMap == nil {
-		exposedPortMap = make(map[nat.Port][]nat.PortBinding)
+		exposedPortMap = make(network.PortMap)
 	}
 
-	mappedPorts := make(map[string]struct{}, len(exposedPorts))
+	mappedPorts := make(network.PortSet, len(exposedPorts))
 	for _, p := range exposedPorts {
-		p = strings.Split(p, "/")[0]
-		mappedPorts[p] = struct{}{}
+		port, err := network.ParsePort(p)
+		if err != nil {
+			// TODO(robmry) - handle/log?
+			continue
+		}
+		mappedPorts[port] = struct{}{}
 	}
 
 	for k, v := range configPortMap {
-		if _, ok := mappedPorts[k.Port()]; ok {
+		if _, ok := mappedPorts[k]; ok {
 			exposedPortMap[k] = v
 		}
 	}
@@ -171,20 +177,20 @@ func preCreateContainerHook(ctx context.Context, dockerClient client.SDKClient, 
 	if len(def.networks) > 0 {
 		attachContainerTo := def.networks[0]
 
-		nwInspect, err := dockerClient.NetworkInspect(ctx, def.networks[0], network.InspectOptions{
+		nwInspect, err := dockerClient.NetworkInspect(ctx, def.networks[0], dockerclient.NetworkInspectOptions{
 			Verbose: true,
 		})
 		if err != nil {
 			return fmt.Errorf("network inspect: %w", err)
 		}
 
-		aliases := []string{}
+		var aliases []string
 		if _, ok := def.networkAliases[attachContainerTo]; ok {
 			aliases = def.networkAliases[attachContainerTo]
 		}
 		endpointSetting := network.EndpointSettings{
 			Aliases:   aliases,
-			NetworkID: nwInspect.ID,
+			NetworkID: nwInspect.Network.ID,
 		}
 		endpointSettings[attachContainerTo] = &endpointSetting
 
@@ -210,7 +216,7 @@ func preCreateContainerHook(ctx context.Context, dockerClient client.SDKClient, 
 		hostConfig.PublishAllPorts = true
 	}
 
-	exposedPortSet, exposedPortMap, err := nat.ParsePortSpecs(exposedPorts)
+	exposedPortSet, exposedPortMap, err := parsePortSpecs(exposedPorts)
 	if err != nil {
 		return err
 	}
@@ -225,4 +231,45 @@ func preCreateContainerHook(ctx context.Context, dockerClient client.SDKClient, 
 	}
 
 	return nil
+}
+
+// TODO(robmry) - migrate away from nat.ParsePortSpecs
+func parsePortSpecs(exposedPorts []string) (network.PortSet, network.PortMap, error) {
+	p, b, err := nat.ParsePortSpecs(exposedPorts)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	ports := network.PortSet{}
+	for portStr := range p {
+		port, err := network.ParsePort(string(portStr))
+		if err != nil {
+			return nil, nil, err
+		}
+		ports[port] = struct{}{}
+	}
+	bindings := network.PortMap{}
+	for portStr, natBs := range b {
+		port, err := network.ParsePort(string(portStr))
+		if err != nil {
+			return nil, nil, err
+		}
+		bs := make([]network.PortBinding, 0, len(natBs))
+		for _, nb := range natBs {
+			var addr netip.Addr
+			if nb.HostIP != "" {
+				var err error
+				addr, err = netip.ParseAddr(nb.HostIP)
+				if err != nil {
+					return nil, nil, err
+				}
+			}
+			bs = append(bs, network.PortBinding{
+				HostIP:   addr,
+				HostPort: nb.HostPort,
+			})
+		}
+		bindings[port] = bs
+	}
+	return ports, bindings, nil
 }

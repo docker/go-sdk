@@ -10,10 +10,10 @@ import (
 	"time"
 
 	"github.com/containerd/errdefs"
+	"github.com/moby/moby/api/types/container"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
-	"github.com/docker/docker/api/types/container"
 	"github.com/docker/go-sdk/container/wait"
 )
 

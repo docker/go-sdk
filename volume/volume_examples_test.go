@@ -5,7 +5,8 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/docker/docker/api/types/filters"
+	"github.com/moby/moby/client"
+
 	"github.com/docker/go-sdk/volume"
 )
 
@@ -67,7 +68,7 @@ func ExampleList() {
 		}
 	}()
 
-	vols, err := volume.List(context.Background(), volume.WithFilters(filters.NewArgs(filters.Arg("label", "volume.type=example-test"))))
+	vols, err := volume.List(context.Background(), volume.WithFilters(make(client.Filters).Add("label", "volume.type=example-test")))
 	if err != nil {
 		log.Println(err)
 		return

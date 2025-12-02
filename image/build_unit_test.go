@@ -10,9 +10,9 @@ import (
 	"time"
 
 	"github.com/containerd/errdefs"
+	dockerclient "github.com/moby/moby/client"
 	"github.com/stretchr/testify/require"
 
-	"github.com/docker/docker/api/types/build"
 	"github.com/docker/go-sdk/client"
 )
 
@@ -36,7 +36,7 @@ func TestBuild_withRetries(t *testing.T) {
 		tag, err := Build(
 			ctx, contextArchive, "test",
 			WithBuildClient(sdk),
-			WithBuildOptions(build.ImageBuildOptions{
+			WithBuildOptions(dockerclient.ImageBuildOptions{
 				Dockerfile: "Dockerfile",
 			}),
 		)

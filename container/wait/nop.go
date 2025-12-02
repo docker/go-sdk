@@ -6,8 +6,10 @@ import (
 	"log/slog"
 	"time"
 
-	"github.com/docker/docker/api/types/container"
-	"github.com/docker/go-connections/nat"
+	"github.com/moby/moby/api/types/container"
+	"github.com/moby/moby/api/types/network"
+	"github.com/moby/moby/client"
+
 	"github.com/docker/go-sdk/container/exec"
 )
 
@@ -57,11 +59,11 @@ func (st *NopStrategyTarget) Host(_ context.Context) (string, error) {
 	return "", nil
 }
 
-func (st *NopStrategyTarget) Inspect(_ context.Context) (*container.InspectResponse, error) {
-	return nil, nil
+func (st *NopStrategyTarget) Inspect(_ context.Context) (client.ContainerInspectResult, error) {
+	return client.ContainerInspectResult{}, nil
 }
 
-func (st *NopStrategyTarget) MappedPort(_ context.Context, n nat.Port) (nat.Port, error) {
+func (st *NopStrategyTarget) MappedPort(_ context.Context, n network.Port) (network.Port, error) {
 	return n, nil
 }
 

@@ -8,7 +8,9 @@ import (
 	"log"
 	"strings"
 
-	apiimage "github.com/docker/docker/api/types/image"
+	dockerclient "github.com/moby/moby/client"
+	v1 "github.com/opencontainers/image-spec/specs-go/v1"
+
 	"github.com/docker/go-sdk/client"
 	"github.com/docker/go-sdk/image"
 )
@@ -39,9 +41,12 @@ func ExamplePull_withClient() {
 }
 
 func ExamplePull_withPullOptions() {
-	opts := apiimage.PullOptions{
-		Platform: "linux/amd64",
-	}
+	opts := dockerclient.ImagePullOptions{Platforms: []v1.Platform{
+		{
+			OS:           "linux",
+			Architecture: "amd64",
+		},
+	}}
 
 	err := image.Pull(context.Background(), "alpine:3.22", image.WithPullOptions(opts))
 
@@ -52,9 +57,12 @@ func ExamplePull_withPullOptions() {
 }
 
 func ExamplePull_withPullHandler() {
-	opts := apiimage.PullOptions{
-		Platform: "linux/amd64",
-	}
+	opts := dockerclient.ImagePullOptions{Platforms: []v1.Platform{
+		{
+			OS:           "linux",
+			Architecture: "amd64",
+		},
+	}}
 
 	buff := &bytes.Buffer{}
 

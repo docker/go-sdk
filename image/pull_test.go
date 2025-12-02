@@ -7,9 +7,9 @@ import (
 	"io"
 	"testing"
 
+	dockerclient "github.com/moby/moby/client"
 	"github.com/stretchr/testify/require"
 
-	apiimage "github.com/docker/docker/api/types/image"
 	"github.com/docker/go-sdk/client"
 	"github.com/docker/go-sdk/image"
 )
@@ -23,7 +23,7 @@ func TestPull(t *testing.T) {
 		t.Helper()
 
 		opts = append(opts, image.WithPullClient(dockerClient))
-		opts = append(opts, image.WithPullOptions(apiimage.PullOptions{}))
+		opts = append(opts, image.WithPullOptions(dockerclient.ImagePullOptions{}))
 
 		ctx := context.Background()
 

@@ -4,9 +4,9 @@ import (
 	"context"
 	"testing"
 
+	dockerclient "github.com/moby/moby/client"
 	"github.com/stretchr/testify/require"
 
-	"github.com/docker/docker/api/types/filters"
 	"github.com/docker/go-sdk/client"
 	"github.com/docker/go-sdk/network"
 )
@@ -58,7 +58,9 @@ func TestList(t *testing.T) {
 	})
 
 	t.Run("with-filters", func(t *testing.T) {
-		nws, err = network.List(context.Background(), network.WithFilters(filters.NewArgs(filters.Arg("driver", "bridge"))))
+		nws, err = network.List(context.Background(),
+			network.WithFilters(make(dockerclient.Filters).Add("driver", "bridge")),
+		)
 		require.NoError(t, err)
 		require.Len(t, nws, 1)
 	})

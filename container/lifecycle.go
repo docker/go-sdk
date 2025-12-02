@@ -12,8 +12,8 @@ import (
 
 	"github.com/containerd/errdefs"
 	"github.com/containerd/platforms"
+	dockerclient "github.com/moby/moby/client"
 
-	apiimage "github.com/docker/docker/api/types/image"
 	"github.com/docker/go-sdk/container/exec"
 	"github.com/docker/go-sdk/container/wait"
 	"github.com/docker/go-sdk/image"
@@ -308,8 +308,13 @@ var defaultPullHook = []DefinitionHook{
 			pullOpts = append(pullOpts, def.pullOptions...)
 
 			// apply platform last
-			pullOpt := apiimage.PullOptions{
-				Platform: def.imagePlatform, // may be empty
+			var pullOpt dockerclient.ImagePullOptions
+			if def.imagePlatform != "" {
+				p, err := platforms.Parse(def.imagePlatform)
+				if err != nil {
+					return fmt.Errorf("invalid platform %s: %w", def.imagePlatform, err)
+				}
+				pullOpt.Platforms = append(pullOpt.Platforms, p)
 			}
 			pullOpts = append(pullOpts, image.WithPullOptions(pullOpt))
 

@@ -5,8 +5,10 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/docker/docker/api/types/container"
-	apinetwork "github.com/docker/docker/api/types/network"
+	"github.com/moby/moby/api/types/container"
+	apinetwork "github.com/moby/moby/api/types/network"
+	dockerclient "github.com/moby/moby/client"
+
 	"github.com/docker/go-sdk/client"
 )
 
@@ -112,7 +114,13 @@ func Run(ctx context.Context, opts ...ContainerCustomizer) (*Container, error) {
 	// as it could have been overridden in there.
 	dockerInput.Image = def.image
 
-	resp, err := def.dockerClient.ContainerCreate(ctx, dockerInput, hostConfig, networkingConfig, def.platform, def.name)
+	resp, err := def.dockerClient.ContainerCreate(ctx, dockerclient.ContainerCreateOptions{
+		Config:           dockerInput,
+		HostConfig:       hostConfig,
+		NetworkingConfig: networkingConfig,
+		Platform:         def.platform,
+		Name:             def.name,
+	})
 	if err != nil {
 		return nil, fmt.Errorf("container create: %w", err)
 	}
@@ -136,7 +144,7 @@ func Run(ctx context.Context, opts ...ContainerCustomizer) (*Container, error) {
 	// If there is more than one network specified in the request attach newly created container to them one by one
 	if len(def.networks) > 1 {
 		for _, n := range def.networks[1:] {
-			nwInspect, err := ctr.dockerClient.NetworkInspect(ctx, n, apinetwork.InspectOptions{
+			nwInspect, err := ctr.dockerClient.NetworkInspect(ctx, n, dockerclient.NetworkInspectOptions{
 				Verbose: true,
 			})
 			if err != nil {
@@ -146,8 +154,10 @@ func Run(ctx context.Context, opts ...ContainerCustomizer) (*Container, error) {
 			endpointSetting := apinetwork.EndpointSettings{
 				Aliases: def.networkAliases[n],
 			}
-			err = ctr.dockerClient.NetworkConnect(ctx, nwInspect.ID, resp.ID, &endpointSetting)
-			if err != nil {
+			if _, err = ctr.dockerClient.NetworkConnect(ctx, nwInspect.Network.ID, dockerclient.NetworkConnectOptions{
+				Container:      resp.ID,
+				EndpointConfig: &endpointSetting,
+			}); err != nil {
 				return ctr, fmt.Errorf("network connect: %w", err)
 			}
 		}

@@ -8,8 +8,10 @@ import (
 	"log/slog"
 	"time"
 
-	"github.com/docker/docker/api/types/container"
-	"github.com/docker/go-connections/nat"
+	"github.com/moby/moby/api/types/container"
+	"github.com/moby/moby/api/types/network"
+	dockerclient "github.com/moby/moby/client"
+
 	"github.com/docker/go-sdk/container/exec"
 )
 
@@ -25,8 +27,8 @@ type StrategyTimeout interface {
 
 type StrategyTarget interface {
 	Host(context.Context) (string, error)
-	Inspect(context.Context) (*container.InspectResponse, error)
-	MappedPort(context.Context, nat.Port) (nat.Port, error)
+	Inspect(context.Context) (dockerclient.ContainerInspectResult, error)
+	MappedPort(context.Context, network.Port) (network.Port, error)
 	Logs(context.Context) (io.ReadCloser, error)
 	Exec(context.Context, []string, ...exec.ProcessOption) (int, io.Reader, error)
 	State(context.Context) (*container.State, error)

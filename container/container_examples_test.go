@@ -7,7 +7,9 @@ import (
 	"io"
 	"strings"
 
-	containertypes "github.com/docker/docker/api/types/container"
+	containertypes "github.com/moby/moby/api/types/container"
+	dockerclient "github.com/moby/moby/client"
+
 	"github.com/docker/go-sdk/container"
 	"github.com/docker/go-sdk/container/exec"
 )
@@ -73,7 +75,7 @@ func ExampleContainer_Inspect() {
 
 	inspect, err := ctr.Inspect(context.Background())
 	fmt.Println(err)
-	fmt.Println(inspect.ID != "")
+	fmt.Println(inspect.Container.ID != "")
 
 	err = ctr.Terminate(context.Background())
 	fmt.Println(err)
@@ -240,7 +242,7 @@ func ExampleFromResponse() {
 	cli := ctr.Client()
 
 	// List containers to get the Summary (this is what you'd typically get from the Docker API)
-	containers, err := cli.ContainerList(context.Background(), containertypes.ListOptions{All: true})
+	containers, err := cli.ContainerList(context.Background(), dockerclient.ContainerListOptions{All: true})
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -248,7 +250,7 @@ func ExampleFromResponse() {
 
 	// Find our container in the list
 	var summary containertypes.Summary
-	for _, c := range containers {
+	for _, c := range containers.Items {
 		if c.ID == ctr.ID() {
 			summary = c
 			break

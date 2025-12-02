@@ -8,8 +8,8 @@ import (
 	"log/slog"
 	"path"
 
-	"github.com/docker/docker/api/types/build"
-	dockerimage "github.com/docker/docker/api/types/image"
+	dockerclient "github.com/moby/moby/client"
+
 	"github.com/docker/go-sdk/client"
 	"github.com/docker/go-sdk/image"
 )
@@ -41,7 +41,7 @@ func ExampleBuild() {
 
 	tag, err := image.Build(
 		context.Background(), contextArchive, "example:test",
-		image.WithBuildOptions(build.ImageBuildOptions{
+		image.WithBuildOptions(dockerclient.ImageBuildOptions{
 			Dockerfile: "Dockerfile",
 		}),
 	)
@@ -50,7 +50,7 @@ func ExampleBuild() {
 		return
 	}
 	defer func() {
-		_, err = image.Remove(context.Background(), tag, image.WithRemoveOptions(dockerimage.RemoveOptions{
+		_, err = image.Remove(context.Background(), tag, image.WithRemoveOptions(dockerclient.ImageRemoveOptions{
 			Force:         true,
 			PruneChildren: true,
 		}))
@@ -86,7 +86,7 @@ func ExampleBuildFromDir() {
 
 	tag, err := image.BuildFromDir(
 		context.Background(), buildPath, "Dockerfile", "example:test",
-		image.WithBuildOptions(build.ImageBuildOptions{
+		image.WithBuildOptions(dockerclient.ImageBuildOptions{
 			Dockerfile: "Dockerfile",
 		}),
 	)
@@ -95,7 +95,7 @@ func ExampleBuildFromDir() {
 		return
 	}
 	defer func() {
-		_, err = image.Remove(context.Background(), tag, image.WithRemoveOptions(dockerimage.RemoveOptions{
+		_, err = image.Remove(context.Background(), tag, image.WithRemoveOptions(dockerclient.ImageRemoveOptions{
 			Force:         true,
 			PruneChildren: true,
 		}))

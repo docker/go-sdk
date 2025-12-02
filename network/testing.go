@@ -6,9 +6,9 @@ import (
 	"testing"
 
 	"github.com/containerd/errdefs"
+	dockerclient "github.com/moby/moby/client"
 	"github.com/stretchr/testify/require"
 
-	"github.com/docker/docker/api/types/network"
 	"github.com/docker/go-sdk/client"
 )
 
@@ -61,7 +61,7 @@ func CleanupByID(tb testing.TB, id string) {
 
 	// synthetic network using a new docker client.
 	nw := &Network{
-		response: network.CreateResponse{
+		response: dockerclient.NetworkCreateResult{
 			ID: id,
 		},
 		dockerClient: dockerClient,

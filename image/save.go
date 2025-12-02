@@ -6,9 +6,9 @@ import (
 	"fmt"
 	"os"
 
+	dockerclient "github.com/moby/moby/client"
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
 
-	dockerclient "github.com/docker/docker/client"
 	"github.com/docker/go-sdk/client"
 )
 
