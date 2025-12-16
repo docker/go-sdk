@@ -10,7 +10,7 @@ replace (
 
 require (
 	github.com/containerd/errdefs v1.0.0
-	github.com/docker/go-sdk/client v0.1.0-alpha011
+	github.com/docker/go-sdk/client v0.1.0-alpha012
 	github.com/google/uuid v1.6.0
 	github.com/moby/moby/api v1.52.0
 	github.com/moby/moby/client v0.1.0
@@ -24,8 +24,8 @@ require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/distribution/reference v0.6.0 // indirect
 	github.com/docker/go-connections v0.6.0 // indirect
-	github.com/docker/go-sdk/config v0.1.0-alpha011 // indirect
-	github.com/docker/go-sdk/context v0.1.0-alpha011 // indirect
+	github.com/docker/go-sdk/config v0.1.0-alpha012 // indirect
+	github.com/docker/go-sdk/context v0.1.0-alpha012 // indirect
 	github.com/docker/go-units v0.5.0 // indirect
 	github.com/felixge/httpsnoop v1.0.4 // indirect
 	github.com/go-logr/logr v1.4.3 // indirect
