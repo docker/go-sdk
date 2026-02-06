@@ -10,6 +10,9 @@ import (
 )
 
 // ContainerCreate creates a new container.
+//
+// Note: options.Config must not be nil. The SDK assumes a valid container
+// configuration and does not perform nil checks.
 func (c *sdkClient) ContainerCreate(ctx context.Context, options client.ContainerCreateOptions) (client.ContainerCreateResult, error) {
 	// Add the labels that identify this as a container created by the SDK.
 	AddSDKLabels(options.Config.Labels)
