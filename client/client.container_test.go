@@ -126,3 +126,18 @@ func pullImage(tb testing.TB, client client.SDKClient, img string) {
 	_, err = io.ReadAll(r)
 	require.NoError(tb, err)
 }
+
+func TestContainerCreate_NilConfig(t *testing.T) {
+	dockerClient, err := client.New(context.Background())
+	require.NoError(t, err)
+	require.NotNil(t, dockerClient)
+
+	_, err = dockerClient.ContainerCreate(context.Background(), dockerclient.ContainerCreateOptions{
+		Image: "nginx:alpine",
+		Name:  "nil-config-test",
+	})
+
+	require.Error(t, err)
+	require.True(t, errdefs.IsInvalidArgument(err))
+	require.Equal(t, "config is nil", err.Error())
+}

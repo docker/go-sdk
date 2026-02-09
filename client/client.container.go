@@ -11,6 +11,10 @@ import (
 
 // ContainerCreate creates a new container.
 func (c *sdkClient) ContainerCreate(ctx context.Context, options client.ContainerCreateOptions) (client.ContainerCreateResult, error) {
+	if options.Config == nil {
+		return client.ContainerCreateResult{}, errdefs.ErrInvalidArgument.WithMessage("config is nil")
+	}
+
 	// Add the labels that identify this as a container created by the SDK.
 	AddSDKLabels(options.Config.Labels)
 
