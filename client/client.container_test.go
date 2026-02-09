@@ -141,3 +141,43 @@ func TestContainerCreate_NilConfig(t *testing.T) {
 	require.True(t, errdefs.IsInvalidArgument(err))
 	require.Equal(t, "config is nil", err.Error())
 }
+
+func TestFindContainerByID(t *testing.T) {
+	dockerClient, err := client.New(context.Background())
+	require.NoError(t, err)
+	require.NotNil(t, dockerClient)
+
+	resp, err := dockerClient.ContainerCreate(context.Background(), dockerclient.ContainerCreateOptions{
+		Image:  "nginx:alpine",
+		Name:   "find-by-id-test",
+		Config: &container.Config{},
+	})
+
+	require.NoError(t, err)
+	require.NotNil(t, resp)
+
+	t.Run("found", func(t *testing.T) {
+		found, err := dockerClient.FindContainerByID(context.Background(), resp.ID)
+		require.NoError(t, err)
+		require.NotNil(t, found)
+		require.Equal(t, "/find-by-id-test", found.Names[0])
+		require.Equal(t, "nginx:alpine", found.Image)
+	})
+
+	t.Run("not-found", func(t *testing.T) {
+		found, err := dockerClient.FindContainerByID(context.Background(), "non-existent-id")
+		require.ErrorIs(t, err, errdefs.ErrNotFound)
+		require.Nil(t, found)
+	})
+
+	t.Run("empty-name", func(t *testing.T) {
+		found, err := dockerClient.FindContainerByID(context.Background(), "")
+		require.ErrorIs(t, err, errdefs.ErrInvalidArgument)
+		require.Nil(t, found)
+	})
+
+	t.Cleanup(func() {
+		_, err := dockerClient.ContainerRemove(context.Background(), resp.ID, dockerclient.ContainerRemoveOptions{Force: true})
+		require.NoError(t, err)
+	})
+}
