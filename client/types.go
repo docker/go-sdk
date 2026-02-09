@@ -25,6 +25,9 @@ type SDKClient interface {
 
 	// FindContainerByName finds a container by name.
 	FindContainerByName(ctx context.Context, name string) (*container.Summary, error)
+
+	// FindContainerByID finds a container by ID.
+	FindContainerByID(ctx context.Context, containerID string) (*container.Summary, error)
 }
 
 var _ client.APIClient = &sdkClient{}
