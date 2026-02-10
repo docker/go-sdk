@@ -40,7 +40,7 @@ func TestContainerList(t *testing.T) {
 
 	wg.Wait()
 
-	containers, err := dockerClient.ContainerList(context.Background(), dockerclient.ContainerListOptions{All: true, Filters: make(dockerclient.Filters).Add("label", "test=TestingContainer")})
+	containers, err := dockerClient.ContainerList(context.Background(), dockerclient.ContainerListOptions{All: true, Filters: make(dockerclient.Filters).Add("label", client.LabelBase+".integration-test=TestingContainer")})
 	require.NoError(t, err)
 	require.NotEmpty(t, containers.Items)
 	require.Len(t, containers.Items, max)
@@ -103,7 +103,7 @@ func createContainer(tb testing.TB, dockerClient client.SDKClient, img string, n
 			ExposedPorts: network.PortSet{
 				network.MustParsePort("80/tcp"): {},
 			},
-			Labels: map[string]string{"test": "TestingContainer"},
+			Labels: map[string]string{client.LabelBase + ".integration-test": "TestingContainer"},
 		},
 		Name: name,
 	})
