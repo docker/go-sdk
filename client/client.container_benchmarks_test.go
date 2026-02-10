@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"math/rand"
-	"sync"
 	"testing"
 
 	dockerclient "github.com/moby/moby/client"
@@ -24,18 +23,12 @@ func BenchmarkContainerList(b *testing.B) {
 
 	max := 5
 
-	wg := sync.WaitGroup{}
-	wg.Add(max)
+	containers := make([]string, 0, max)
 
 	for i := range max {
-		go func(i int) {
-			defer wg.Done()
-
-			createContainer(b, dockerClient, img, fmt.Sprintf("nginx-test-name-%d", i))
-		}(i)
+		id := createContainer(b, dockerClient, img, fmt.Sprintf("nginx-test-name-%d", i))
+		containers = append(containers, id)
 	}
-
-	wg.Wait()
 
 	b.Run("container-list", func(b *testing.B) {
 		b.ResetTimer()
@@ -54,6 +47,17 @@ func BenchmarkContainerList(b *testing.B) {
 		b.RunParallel(func(pb *testing.PB) {
 			for pb.Next() {
 				_, err := dockerClient.FindContainerByName(context.Background(), fmt.Sprintf("nginx-test-name-%d", rand.Intn(max)))
+				require.NoError(b, err)
+			}
+		})
+	})
+
+	b.Run("find-container-by-id", func(b *testing.B) {
+		b.ResetTimer()
+		b.ReportAllocs()
+		b.RunParallel(func(pb *testing.PB) {
+			for pb.Next() {
+				_, err := dockerClient.FindContainerByID(context.Background(), containers[rand.Intn(max)])
 				require.NoError(b, err)
 			}
 		})
