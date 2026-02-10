@@ -148,9 +148,10 @@ func TestFindContainerByID(t *testing.T) {
 	require.NotNil(t, dockerClient)
 
 	resp, err := dockerClient.ContainerCreate(context.Background(), dockerclient.ContainerCreateOptions{
-		Image:  "nginx:alpine",
-		Name:   "find-by-id-test",
-		Config: &container.Config{},
+		Name: "find-by-id-test",
+		Config: &container.Config{
+			Image: "nginx:alpine",
+		},
 	})
 
 	require.NoError(t, err)
@@ -170,7 +171,7 @@ func TestFindContainerByID(t *testing.T) {
 		require.Nil(t, found)
 	})
 
-	t.Run("empty-name", func(t *testing.T) {
+	t.Run("empty-id", func(t *testing.T) {
 		found, err := dockerClient.FindContainerByID(context.Background(), "")
 		require.ErrorIs(t, err, errdefs.ErrInvalidArgument)
 		require.Nil(t, found)
