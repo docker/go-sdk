@@ -46,6 +46,11 @@ func ExampleSDKClient_FindContainerByID() {
 		log.Printf("error creating container: %s", err)
 		return
 	}
+	defer func() {
+		if _, err := cli.ContainerRemove(context.Background(), res.ID, dockerclient.ContainerRemoveOptions{Force: true}); err != nil {
+			log.Printf("error removing container: %s", err)
+		}
+	}()
 
 	container, err := cli.FindContainerByID(context.Background(), res.ID)
 	if err != nil {
