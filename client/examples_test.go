@@ -31,44 +31,29 @@ func ExampleNew() {
 }
 
 func ExampleSDKClient_FindContainerByID() {
-	ctx := context.Background()
-
-	cli, err := client.New(ctx)
+	cli, err := client.New(context.Background())
 	if err != nil {
-		fmt.Println("skip")
+		log.Printf("error creating client: %s", err)
 		return
 	}
 
-	if _, err := cli.Ping(ctx, dockerclient.PingOptions{}); err != nil {
-		fmt.Println("skip")
-		return
-	}
-
-	res, err := cli.ContainerCreate(ctx, dockerclient.ContainerCreateOptions{
+	res, err := cli.ContainerCreate(context.Background(), dockerclient.ContainerCreateOptions{
 		Config: &container.Config{
 			Image: "nginx:alpine",
 		},
 	})
 	if err != nil {
-		fmt.Println("skip")
+		log.Printf("error creating container: %s", err)
 		return
 	}
-	defer func() {
-		_, err := cli.ContainerRemove(ctx, res.ID, dockerclient.ContainerRemoveOptions{
-			Force: true,
-		})
-		if err != nil {
-			fmt.Println("error removing container")
-		}
-	}()
 
-	c, err := cli.FindContainerByID(ctx, res.ID)
+	container, err := cli.FindContainerByID(context.Background(), res.ID)
 	if err != nil {
-		fmt.Println("error finding container by ID")
+		log.Printf("error finding container by ID: %s", err)
 		return
 	}
 
-	fmt.Println(c.ID == res.ID)
+	fmt.Println(container.ID == res.ID)
 
 	// Output:
 	// true
