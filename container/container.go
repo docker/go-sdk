@@ -100,7 +100,9 @@ func FromID(ctx context.Context, dockerClient client.SDKClient, containerID stri
 	if err != nil {
 		return nil, fmt.Errorf("find container by ID: %w", err)
 	}
-
+	if summary == nil {
+		return nil, fmt.Errorf("find container by ID: container %s not found", containerID)
+	}
 	return FromResponse(ctx, dockerClient, *summary)
 }
 
