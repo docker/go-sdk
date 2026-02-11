@@ -52,13 +52,13 @@ func ExampleSDKClient_FindContainerByName() {
 		}
 	}()
 
-	container, err := cli.FindContainerByName(context.Background(), "container-by-name-example")
+	found, err := cli.FindContainerByName(context.Background(), "container-by-name-example")
 	if err != nil {
 		log.Printf("error finding container: %s", err)
 		return
 	}
 
-	fmt.Println(container.Names[0])
+	fmt.Println(found.Names[0])
 
 	// Output:
 	// /container-by-name-example
