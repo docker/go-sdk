@@ -42,3 +42,31 @@ func (c *sdkClient) FindContainerByName(ctx context.Context, name string) (*cont
 
 	return nil, errdefs.ErrNotFound.WithMessage(fmt.Sprintf("container %s not found", name))
 }
+
+// FindContainerByID finds a container by ID. The ID filter uses an exact match to find the container.
+func (c *sdkClient) FindContainerByID(ctx context.Context, containerID string) (*container.Summary, error) {
+	if containerID == "" {
+		return nil, errdefs.ErrInvalidArgument.WithMessage("id is empty")
+	}
+	response, err := c.ContainerList(ctx, client.ContainerListOptions{
+		All:     true,
+		Filters: make(client.Filters).Add("id", containerID),
+	})
+	if err != nil {
+		return nil, fmt.Errorf("container list: %w", err)
+	}
+
+	if len(response.Items) == 0 {
+		return nil, errdefs.ErrNotFound.WithMessage(fmt.Sprintf("container %s not found", containerID))
+	}
+
+	if len(response.Items) > 1 {
+		return nil, fmt.Errorf("multiple containers match ID %s", containerID)
+	}
+
+	if response.Items[0].ID != containerID {
+		return nil, errdefs.ErrNotFound.WithMessage(fmt.Sprintf("container %s not found", containerID))
+	}
+
+	return &response.Items[0], nil
+}

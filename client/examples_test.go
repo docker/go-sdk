@@ -63,3 +63,37 @@ func ExampleSDKClient_FindContainerByName() {
 	// Output:
 	// /container-by-name-example
 }
+
+func ExampleSDKClient_FindContainerByID() {
+	cli, err := client.New(context.Background())
+	if err != nil {
+		log.Printf("error creating client: %s", err)
+		return
+	}
+
+	res, err := cli.ContainerCreate(context.Background(), dockerclient.ContainerCreateOptions{
+		Config: &container.Config{
+			Image: "nginx:alpine",
+		},
+	})
+	if err != nil {
+		log.Printf("error creating container: %s", err)
+		return
+	}
+	defer func() {
+		if _, err := cli.ContainerRemove(context.Background(), res.ID, dockerclient.ContainerRemoveOptions{Force: true}); err != nil {
+			log.Printf("error removing container: %s", err)
+		}
+	}()
+
+	container, err := cli.FindContainerByID(context.Background(), res.ID)
+	if err != nil {
+		log.Printf("error finding container by ID: %s", err)
+		return
+	}
+
+	fmt.Println(container.ID == res.ID)
+
+	// Output:
+	// true
+}
