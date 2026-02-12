@@ -148,11 +148,16 @@ func FromResponse(ctx context.Context, dockerClient client.SDKClient, response c
 		shortID = response.ID[:12]
 	}
 
+	name := ""
+	if len(response.Names) > 0 {
+		name = response.Names[0] // Docker API returns a list of names, and the current container name is the first one in the list
+	}
+
 	ctr := &Container{
 		dockerClient: dockerClient,
 		containerID:  response.ID,
 		shortID:      shortID,
-		name:         response.Names[0], // Docker API returns a list of names, and the current container name is the first one in the list
+		name:         name,
 		image:        response.Image,
 		isRunning:    response.State == "running",
 		exposedPorts: exposedPorts,
