@@ -8,6 +8,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/docker/go-sdk/client"
 	"github.com/docker/go-sdk/container"
 )
 
@@ -47,10 +48,8 @@ func TestFromID(t *testing.T) {
 }
 
 func TestFromID_Errors(t *testing.T) {
-	ctr, err := container.Run(context.Background(), container.WithImage("alpine:latest"))
+	cli, err := client.New(context.Background())
 	require.NoError(t, err)
-
-	cli := ctr.Client()
 
 	// Attempt to create a container with an invalid ID
 	recreated, err := container.FromID(context.Background(), cli, "invalid-id")
