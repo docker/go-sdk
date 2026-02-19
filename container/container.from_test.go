@@ -8,6 +8,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/docker/go-sdk/client"
 	"github.com/docker/go-sdk/container"
 )
 
@@ -44,4 +45,21 @@ func TestFromID(t *testing.T) {
 	// Terminate the original container should fail
 	err = ctr.Terminate(context.Background())
 	require.Error(t, err)
+}
+
+func TestFromID_Errors(t *testing.T) {
+	cli, err := client.New(context.Background())
+	require.NoError(t, err)
+
+	// Attempt to create a container with an invalid ID
+	recreated, err := container.FromID(context.Background(), cli, "invalid-id")
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "not found")
+	require.Nil(t, recreated)
+
+	// Attempt to create a container with an empty ID
+	recreated, err = container.FromID(context.Background(), cli, "")
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "id is empty")
+	require.Nil(t, recreated)
 }
