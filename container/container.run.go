@@ -130,6 +130,7 @@ func Run(ctx context.Context, opts ...ContainerCustomizer) (*Container, error) {
 		dockerClient:   def.dockerClient,
 		containerID:    resp.ID,
 		shortID:        resp.ID[:12],
+		name:           "/" + def.name,
 		waitingFor:     def.waitingFor,
 		image:          def.image,
 		exposedPorts:   def.exposedPorts,
