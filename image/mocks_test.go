@@ -18,6 +18,7 @@ type errMockCli struct {
 	err             error
 	imageBuildCount int
 	imagePullCount  int
+	lastPullOptions client.ImagePullOptions
 }
 
 func (f *errMockCli) Ping(_ context.Context, _ client.PingOptions) (client.PingResult, error) {
@@ -36,8 +37,9 @@ func (f *errMockCli) ImageBuild(_ context.Context, _ io.Reader, _ client.ImageBu
 	return client.ImageBuildResult{Body: responseBody}, f.err
 }
 
-func (f *errMockCli) ImagePull(_ context.Context, _ string, _ client.ImagePullOptions) (client.ImagePullResponse, error) {
+func (f *errMockCli) ImagePull(_ context.Context, _ string, opts client.ImagePullOptions) (client.ImagePullResponse, error) {
 	f.imagePullCount++
+	f.lastPullOptions = opts
 	// Return mock JSON messages similar to real Docker pull output
 	mockPullOutput := `{"status":"Pulling from library/nginx","id":"latest"}
 {"status":"Pull complete","id":"abc123"}

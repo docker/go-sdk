@@ -15,6 +15,7 @@ import (
 	"github.com/moby/term"
 
 	"github.com/docker/go-sdk/client"
+	configauth "github.com/docker/go-sdk/config/auth"
 )
 
 // DisplayProgress creates a pull handler that displays formatted pull progress to the given writer.
@@ -46,7 +47,7 @@ var defaultPullHandler = DisplayProgress(os.Stdout)
 // Pull pulls an image from a remote registry, retrying on non-permanent errors.
 // See [client.IsPermanentClientError] for the list of non-permanent errors.
 // It first extracts the registry credentials from the image name, and sets them in the pull options.
-// It needs to be called with a valid image name, and optional pull  options, see [PullOption].
+// It needs to be called with a valid image name, and optional pull options, see [PullOption].
 // It's possible to override the default pull handler function by using the [WithPullHandler] option.
 func Pull(ctx context.Context, imageName string, opts ...PullOption) error {
 	pullOpts := &pullOptions{
@@ -81,9 +82,15 @@ func Pull(ctx context.Context, imageName string, opts ...PullOption) error {
 		return fmt.Errorf("failed to retrieve registry credentials for %s: %w", imageName, err)
 	}
 
+	imgRef, err := configauth.ParseImageRef(imageName)
+	if err != nil {
+		pullOpts.client.Logger().Warn("failed to parse image reference, ServerAddress will be empty", "image", imageName, "error", err)
+	}
+
 	authConfig := registry.AuthConfig{
-		Username: username,
-		Password: password,
+		Username:      username,
+		Password:      password,
+		ServerAddress: imgRef.Registry,
 	}
 
 	pullOpts.pullOptions.RegistryAuth, err = authconfig.Encode(authConfig)
@@ -118,5 +125,5 @@ func Pull(ctx context.Context, imageName string, opts ...PullOption) error {
 		return fmt.Errorf("pull handler: %w", err)
 	}
 
-	return err
+	return nil
 }

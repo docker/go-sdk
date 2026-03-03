@@ -9,11 +9,38 @@ import (
 	"time"
 
 	"github.com/containerd/errdefs"
+	"github.com/moby/moby/api/pkg/authconfig"
 	dockerclient "github.com/moby/moby/client"
 	"github.com/stretchr/testify/require"
 
 	sdkclient "github.com/docker/go-sdk/client"
 )
+
+func TestPullRegistryAuth(t *testing.T) {
+	mockCli := &errMockCli{}
+	sdk, err := sdkclient.New(context.TODO(), sdkclient.WithDockerAPI(mockCli))
+	require.NoError(t, err)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
+	defer cancel()
+
+	imageName := "myregistry.example.com/myimage:tag"
+	err = Pull(ctx, imageName,
+		WithPullOptions(dockerclient.ImagePullOptions{}),
+		WithCredentialsFn(func(_ string) (string, string, error) {
+			return "user", "pass", nil
+		}),
+		WithPullClient(sdk),
+	)
+	require.NoError(t, err)
+
+	// Decode the RegistryAuth header and verify ServerAddress is set from the image name.
+	decoded, err := authconfig.Decode(mockCli.lastPullOptions.RegistryAuth)
+	require.NoError(t, err)
+	require.Equal(t, "user", decoded.Username)
+	require.Equal(t, "pass", decoded.Password)
+	require.Equal(t, "myregistry.example.com", decoded.ServerAddress)
+}
 
 func TestPull(t *testing.T) {
 	defaultPullOpts := []PullOption{WithPullOptions(dockerclient.ImagePullOptions{})}

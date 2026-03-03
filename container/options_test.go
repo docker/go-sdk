@@ -704,3 +704,13 @@ func TestWithPullHandler(t *testing.T) {
 	require.NoError(t, opt.Customize(&def))
 	require.Len(t, def.pullOptions, 1)
 }
+
+func TestWithCredentialsFn(t *testing.T) {
+	def := Definition{}
+
+	opt := WithCredentialsFn(func(_ string) (string, string, error) {
+		return "user", "pass", nil
+	})
+	require.NoError(t, opt.Customize(&def))
+	require.Len(t, def.pullOptions, 1)
+}

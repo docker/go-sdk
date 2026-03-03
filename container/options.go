@@ -522,3 +522,14 @@ func WithPullHandler(handler func(r io.ReadCloser) error) CustomizeDefinitionOpt
 		return nil
 	}
 }
+
+// WithCredentialsFn is an adapter for the [image.WithCredentialsFn] option.
+// It allows customizing how credentials are retrieved when pulling the image.
+// The function receives the image name and must return the username and password for that registry.
+// It overrides the default behavior of reading credentials from the Docker CLI config.
+func WithCredentialsFn(credentialsFn func(string) (string, string, error)) CustomizeDefinitionOption {
+	return func(d *Definition) error {
+		d.pullOptions = append(d.pullOptions, image.WithCredentialsFn(credentialsFn))
+		return nil
+	}
+}
