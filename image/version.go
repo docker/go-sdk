@@ -3,7 +3,7 @@ package image
 import "github.com/docker/go-sdk/client"
 
 const (
-	version     = "0.1.0-alpha012"
+	version     = "0.1.0-alpha013"
 	moduleLabel = client.LabelBase + ".image"
 )
 

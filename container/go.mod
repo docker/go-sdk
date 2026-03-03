@@ -15,10 +15,10 @@ require (
 	github.com/containerd/errdefs v1.0.0
 	github.com/containerd/platforms v0.2.1
 	github.com/docker/go-connections v0.6.0
-	github.com/docker/go-sdk/client v0.1.0-alpha011
-	github.com/docker/go-sdk/config v0.1.0-alpha011
-	github.com/docker/go-sdk/image v0.1.0-alpha012
-	github.com/docker/go-sdk/network v0.1.0-alpha011
+	github.com/docker/go-sdk/client v0.1.0-alpha012
+	github.com/docker/go-sdk/config v0.1.0-alpha012
+	github.com/docker/go-sdk/image v0.1.0-alpha013
+	github.com/docker/go-sdk/network v0.1.0-alpha012
 	github.com/moby/moby/api v1.52.0
 	github.com/moby/moby/client v0.1.0
 	github.com/stretchr/testify v1.11.1
@@ -34,7 +34,7 @@ require (
 	github.com/containerd/log v0.1.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/distribution/reference v0.6.0 // indirect
-	github.com/docker/go-sdk/context v0.1.0-alpha011 // indirect
+	github.com/docker/go-sdk/context v0.1.0-alpha012 // indirect
 	github.com/docker/go-units v0.5.0 // indirect
 	github.com/felixge/httpsnoop v1.0.4 // indirect
 	github.com/go-logr/logr v1.4.3 // indirect

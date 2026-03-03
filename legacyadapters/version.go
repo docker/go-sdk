@@ -1,7 +1,7 @@
 package legacyadapters
 
 const (
-	version = "0.1.0-alpha003"
+	version = "0.1.0-alpha004"
 )
 
 // Version returns the version of the legacyadapters package.
