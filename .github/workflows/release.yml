@@ -162,7 +162,7 @@ jobs:
         #   - Squash merge: PR title is the subject line
         #   - Regular merge: PR title appears in the body
         #   - Rebase merge: original commit message is preserved
-        if echo "$COMMIT_MESSAGES" | grep -qE '^chore\((release|[a-z0-9_-]+)\): bump (module )?versions?[[:space:]]*$'; then
+        if echo "$COMMIT_MESSAGES" | grep -qE '^chore\((release|[a-z0-9_-]+)\): bump (module )?versions?([[:space:]]|\(#[0-9]+\))*$'; then
           echo "✅ Push contains a release commit — proceeding with tagging"
           echo "is_release=true" >> "$GITHUB_OUTPUT"
         else
