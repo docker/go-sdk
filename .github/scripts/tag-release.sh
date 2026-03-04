@@ -92,8 +92,8 @@ for m in $MODULES_TO_TAG; do
   TAG="${m}/${VERSION}"
 
   # Check if tag already exists on remote (the authoritative source)
-  # Use fixed-string match (-F) to avoid regex issues with dots in version numbers
-  if git ls-remote --tags origin 2>/dev/null | grep -Fq "refs/tags/${TAG}"; then
+  # Use exact ref lookup to avoid substring matches (e.g., v1.0.0 matching v1.0.0-alpha001)
+  if git ls-remote --tags origin "refs/tags/${TAG}" 2>/dev/null | grep -Fq "refs/tags/${TAG}"; then
     echo "⏭️  Skipping ${m}: tag ${TAG} already exists on remote"
     tags_skipped=$((tags_skipped + 1))
     continue
