@@ -1,12 +1,13 @@
 #!/bin/bash
 
 # =============================================================================
-# Release Finalizer
+# Release Committer
 # =============================================================================
-# Description: Commits and tags version changes for modules, then triggers
-#              Go proxy to make the new versions available for download
+# Description: Stages and commits version changes for modules.
 #              This script is typically run after pre-release.sh has
-#              updated module versions
+#              updated module versions. It creates a local commit only —
+#              pushing, tagging, and Go proxy notification are handled by
+#              prepare-release-pr.sh (Phase 1) and tag-release.sh (Phase 2).
 #
 # Usage: ./.github/scripts/release.sh [module]
 #

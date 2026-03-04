@@ -109,7 +109,11 @@ tag-release:
 		echo "Usage: make tag-release, from one of the module directories (e.g. make tag-release from client/ directory)"; \
 		exit 1; \
 	fi
-	@$(ROOT_DIR)/.github/scripts/tag-release.sh "$(MODULE_DIR)"
+	@if [ ! -f "$(ROOT_DIR)/$(MODULE_DIR)/version.go" ]; then \
+		echo "Error: $(MODULE_DIR)/version.go not found. Is this a valid module directory?"; \
+		exit 1; \
+	fi
+	@DRY_RUN=$(DRY_RUN) $(ROOT_DIR)/.github/scripts/tag-release.sh "$(MODULE_DIR)"
 
 .PHONY: refresh-proxy
 refresh-proxy:
