@@ -69,18 +69,24 @@ jobs:
         echo "  - Repository: ${{ github.repository }}"
         echo "  - Branch: ${{ github.ref_name }}"
 
-    - name: Validate module
-      if: ${{ inputs.module != '' }}
+    - name: Normalize and validate module
+      id: module
       run: |
-        AVAILABLE_MODULES=$(go work edit -json | jq -r '.Use[].DiskPath' | sed 's|^\./||')
-        if ! echo "$AVAILABLE_MODULES" | grep -Fxq "${{ inputs.module }}"; then
-          echo "❌ Error: Module '${{ inputs.module }}' not found in go.work"
-          echo ""
-          echo "Available modules:"
-          echo "$AVAILABLE_MODULES" | sed 's/^/  - /'
-          exit 1
+        # Normalize module name to lowercase
+        MODULE=$(echo "${{ inputs.module }}" | tr '[:upper:]' '[:lower:]')
+        echo "name=${MODULE}" >> "$GITHUB_OUTPUT"
+
+        if [[ -n "${MODULE}" ]]; then
+          AVAILABLE_MODULES=$(go work edit -json | jq -r '.Use[].DiskPath' | sed 's|^\./||')
+          if ! echo "$AVAILABLE_MODULES" | grep -Fxq "${MODULE}"; then
+            echo "❌ Error: Module '${MODULE}' not found in go.work"
+            echo ""
+            echo "Available modules:"
+            echo "$AVAILABLE_MODULES" | sed 's/^/  - /'
+            exit 1
+          fi
+          echo "✅ Module '${MODULE}' is valid"
         fi
-        echo "✅ Module '${{ inputs.module }}' is valid"
 
     - name: Dry run preview
       if: ${{ inputs.dry_run }}
@@ -89,8 +95,8 @@ jobs:
         BUMP_TYPE: ${{ inputs.bump_type }}
       run: |
         echo "=== Dry Run Preview ==="
-        if [[ -n "${{ inputs.module }}" ]]; then
-          ./.github/scripts/pre-release.sh "${{ inputs.module }}"
+        if [[ -n "${{ steps.module.outputs.name }}" ]]; then
+          ./.github/scripts/pre-release.sh "${{ steps.module.outputs.name }}"
         else
           make pre-release-all
         fi
@@ -104,8 +110,8 @@ jobs:
         BUMP_TYPE: ${{ inputs.bump_type }}
         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
-        if [[ -n "${{ inputs.module }}" ]]; then
-          ./.github/scripts/prepare-release-pr.sh "${{ inputs.module }}"
+        if [[ -n "${{ steps.module.outputs.name }}" ]]; then
+          ./.github/scripts/prepare-release-pr.sh "${{ steps.module.outputs.name }}"
         else
           ./.github/scripts/prepare-release-pr.sh
         fi
@@ -149,7 +155,7 @@ jobs:
         #   - Squash merge: PR title is the subject line
         #   - Regular merge: PR title appears in the body
         #   - Rebase merge: original commit message is preserved
-        if echo "$COMMIT_MESSAGES" | grep -qE '^chore\((release|[a-z0-9_-]+)\): bump (module )?versions?\s*$'; then
+        if echo "$COMMIT_MESSAGES" | grep -qE '^chore\((release|[a-z0-9_-]+)\): bump (module )?versions?[[:space:]]*$'; then
           echo "✅ Push contains a release commit — proceeding with tagging"
           echo "is_release=true" >> "$GITHUB_OUTPUT"
         else
