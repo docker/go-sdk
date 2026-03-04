@@ -32,12 +32,11 @@
 # Git Operations:
 #   - Adds all modified version.go and go.mod files
 #   - Creates commit with version bump message (e.g. chore(client): bump version to v0.1.0-alpha005)
-#   - Creates tag with module name and version (e.g. client/v0.1.0-alpha005)
-#   - Pushes changes and tags to origin
 #
-# Post-Release Operations:
-#   - Triggers Go proxy to fetch new module versions
-#   - Makes modules immediately available for download
+# Note: This script no longer pushes to main, creates tags, or triggers the
+#       Go proxy. Those operations are handled by the two-phase release process:
+#       - Phase 1: prepare-release-pr.sh (creates a PR)
+#       - Phase 2: tag-release.sh (tags after PR merge)
 #
 # =============================================================================
 
@@ -154,28 +153,18 @@ else
   exit 1 # exit with error code 1 to not proceed with the release
 fi
 
-# Create all tags after the single commit
-for m in $MODULES_TO_TAG; do
-  next_tag_path=$(get_next_tag "${m}")
-  if [[ -f "${next_tag_path}" ]]; then
-    nextTag=$(cat "${next_tag_path}")
-    execute_or_echo git tag "${m}/${nextTag}"
-  fi
-done
-
 echo ""
-echo "✅ Created commit and tags successfully"
+echo "✅ Created commit successfully"
 echo "Last commit:"
 git_log_format='%C(auto)%h%C(reset) %s%nAuthor: %an <%ae>%nDate:   %ad'
 execute_or_echo git -C "${ROOT_DIR}" --no-pager log -1 --pretty=format:"${git_log_format}" --date=iso-local
 echo ""
-execute_or_echo git -C "${ROOT_DIR}" --no-pager tag --list --points-at HEAD
+
 echo ""
-
-echo "Pushing changes and tags to remote repository..."
-execute_or_echo git push origin main --tags
-
-for m in $MODULES_TO_TAG; do
-  nextTag=$(cat $(get_next_tag "${m}"))
-  curlGolangProxy "${m}" "${nextTag}"
-done
+echo "=========================================="
+echo "NOTE: This script no longer pushes directly to main or creates tags."
+echo "Use the two-phase release process instead:"
+echo "  Phase 1: ./.github/scripts/prepare-release-pr.sh — creates a release PR"
+echo "  Phase 2: ./.github/scripts/tag-release.sh — auto-tags after PR merge"
+echo "See RELEASING.md for details."
+echo "=========================================="

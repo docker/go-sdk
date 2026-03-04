@@ -103,6 +103,14 @@ release:
 	@echo "Finalizing release for module: $(MODULE_DIR)"
 	@$(ROOT_DIR)/.github/scripts/release.sh "$(MODULE_DIR)"
 
+.PHONY: tag-release
+tag-release:
+	@if [ -z "$(MODULE_DIR)" ]; then \
+		echo "Usage: make tag-release, from one of the module directories (e.g. make tag-release from client/ directory)"; \
+		exit 1; \
+	fi
+	@$(ROOT_DIR)/.github/scripts/tag-release.sh "$(MODULE_DIR)"
+
 .PHONY: refresh-proxy
 refresh-proxy:
 	@if [ -z "$(MODULE_DIR)" ]; then \
