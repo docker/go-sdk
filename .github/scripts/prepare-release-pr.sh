@@ -33,7 +33,7 @@ source "${SCRIPT_DIR}/common.sh"
 # Validate git remote before doing anything
 validate_git_remote
 
-MODULE="${1:-}"
+MODULE=$(echo "${1:-}" | tr '[:upper:]' '[:lower:]')
 BUMP_TYPE="${BUMP_TYPE:-prerelease}"
 TIMESTAMP="$(date +%Y%m%d%H%M%S)"
 

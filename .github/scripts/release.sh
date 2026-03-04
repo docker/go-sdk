@@ -67,7 +67,6 @@ fi
 ALL_MODULES=$(get_modules)
 
 commit_body=""
-tags_to_create=""
 
 # Determine which modules to tag
 if [[ -n "${MODULE}" ]]; then
@@ -92,7 +91,6 @@ for m in $MODULES_TO_TAG; do
   nextTag=$(cat "${next_tag_path}")
   echo "Next tag for ${m}: ${nextTag}"
   commit_body="${commit_body}\n - ${m}: ${nextTag}"
-  tags_to_create="${tags_to_create} ${m}/${nextTag}"
 done
 
 # Stage go.mod and go.sum for ALL modules (they all need to reference the new version)
@@ -106,17 +104,12 @@ done
 if [[ "${DRY_RUN}" == "true" ]]; then
   echo ""
   echo "=========================================="
-  echo "DRY RUN MODE - No changes will be made"
+  echo "DRY RUN MODE - No git changes will be made"
   echo "=========================================="
   echo ""
-  echo "Would create commit:"
+  echo "Would create commit (local only, no push):"
   echo "  Title: ${commit_title}"
   echo "  Body: $(echo -e "${commit_body}")"
-  echo ""
-  echo "Would create tags:"
-  for t in $tags_to_create; do
-    echo "  ${t}"
-  done
   echo ""
   echo "Files that would be committed:"
   for m in $MODULES_TO_TAG; do
@@ -140,7 +133,11 @@ if [[ "${DRY_RUN}" == "true" ]]; then
   done
   echo ""
   echo "=========================================="
-  echo "To perform the actual release, run:"
+  echo "NOTE: This script only creates a local commit."
+  echo "Tags and pushing are handled by the two-phase release process."
+  echo "See RELEASING.md for details."
+  echo ""
+  echo "To perform the actual commit, run:"
   echo "  DRY_RUN=false $0 $@"
   echo "=========================================="
   exit 0

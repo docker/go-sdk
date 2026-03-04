@@ -20,6 +20,7 @@
 #
 # Dependencies:
 #   - git (configured with push permissions)
+#   - go (for go.work parsing via 'go work edit -json')
 #   - jq (for parsing go.work)
 #   - curl (for triggering Go proxy)
 #
