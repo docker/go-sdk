@@ -82,18 +82,33 @@ for m in $MODULES_TO_TAG; do
 
   TAG="${m}/${VERSION}"
 
-  # Check if tag already exists (locally or remotely)
+  # Check if tag already exists on remote (the authoritative source)
   # Use fixed-string match (-F) to avoid regex issues with dots in version numbers
-  if git tag --list | grep -Fxq "${TAG}" || git ls-remote --tags origin 2>/dev/null | grep -Fq "refs/tags/${TAG}"; then
-    echo "⏭️  Skipping ${m}: tag ${TAG} already exists"
+  if git ls-remote --tags origin 2>/dev/null | grep -Fq "refs/tags/${TAG}"; then
+    echo "⏭️  Skipping ${m}: tag ${TAG} already exists on remote"
     tags_skipped=$((tags_skipped + 1))
     continue
   fi
 
-  # Create tag on HEAD and push it individually
-  echo "🏷️  Creating tag: ${TAG}"
-  execute_or_echo git tag "${TAG}"
-  execute_or_echo git push origin "${TAG}"
+  # If the tag exists locally but not on remote (e.g., previous run failed to push),
+  # verify it points to HEAD and push it; otherwise recreate it
+  if git tag --list | grep -Fxq "${TAG}"; then
+    LOCAL_TAG_SHA=$(git rev-parse "${TAG}" 2>/dev/null)
+    HEAD_SHA=$(git rev-parse HEAD)
+    if [[ "${LOCAL_TAG_SHA}" == "${HEAD_SHA}" ]]; then
+      echo "🔁 Tag ${TAG} exists locally but not on remote — pushing existing tag"
+      execute_or_echo git push origin "${TAG}"
+    else
+      echo "⚠️  Local tag ${TAG} points to ${LOCAL_TAG_SHA}, not HEAD (${HEAD_SHA}) — recreating"
+      execute_or_echo git tag -f "${TAG}"
+      execute_or_echo git push origin "${TAG}"
+    fi
+  else
+    # Create tag on HEAD and push it
+    echo "🏷️  Creating tag: ${TAG}"
+    execute_or_echo git tag "${TAG}"
+    execute_or_echo git push origin "${TAG}"
+  fi
   tags_created=$((tags_created + 1))
 
   # Trigger Go proxy
