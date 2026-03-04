@@ -98,7 +98,7 @@ The commit message check works with all merge strategies:
 
 For each module:
 1. Reads the version from `version.go`
-2. Checks if tag `<module>/v<version>` already exists (locally and on remote)
+2. Checks if tag `<module>/v<version>` already exists on the remote
 3. Creates the tag on HEAD (the merge commit) if it doesn't exist
 4. Pushes each tag individually
 5. Triggers the Go proxy to index the new version
@@ -132,6 +132,7 @@ The script is idempotent — it skips tags that already exist.
 - `BUMP_TYPE`: `prerelease` (default), `patch`, `minor`, or `major`
   - Controls how the version number is incremented
   - Read more about semver [here](https://github.com/fsaintjacques/semver-tool)
+
 ## Release Types
 
 ### Prerelease

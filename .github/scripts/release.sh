@@ -17,7 +17,7 @@
 #
 # Environment Variables:
 #   DRY_RUN          - Enable dry run mode (default: true)
-#                      When true, shows what would be committed and tagged without actually doing it
+#                      When true, shows what would be committed without actually doing it
 #
 # Examples:
 #   ./.github/scripts/release.sh
@@ -68,7 +68,7 @@ ALL_MODULES=$(get_modules)
 
 commit_body=""
 
-# Determine which modules to tag
+# Determine which modules to process
 if [[ -n "${MODULE}" ]]; then
   MODULES_TO_TAG="${MODULE}"
 else

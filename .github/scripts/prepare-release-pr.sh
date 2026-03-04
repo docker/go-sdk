@@ -18,6 +18,7 @@
 #
 # Dependencies:
 #   - git (configured with push permissions, origin must point to docker/go-sdk)
+#   - go (for go.work parsing and go mod tidy)
 #   - gh (GitHub CLI, for creating PRs)
 #   - jq (for parsing go.work)
 #   - Docker (for semver-tool, used by pre-release.sh)
