@@ -30,6 +30,10 @@ release-all:
 	$(call for-all-modules,make check-pre-release)
 	@./.github/scripts/release.sh
 
+# Tag release for all modules (Phase 2 of release process)
+tag-release:
+	@./.github/scripts/tag-release.sh
+
 # Refresh Go proxy for all modules
 refresh-proxy-all:
 	@echo "Refreshing Go proxy for all modules..."

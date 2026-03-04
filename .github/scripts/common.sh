@@ -81,9 +81,18 @@ validate_git_remote() {
     exit 1
   fi
 
-  # Accept both SSH and HTTPS formats for the docker/go-sdk repository
-  if [[ "$actual_origin" != "$EXPECTED_ORIGIN_SSH" ]] && \
-     [[ "$actual_origin" != "$EXPECTED_ORIGIN_HTTPS" ]]; then
+  # Normalize the origin URL for comparison:
+  # - Strip credentials (e.g., x-access-token:***@ from CI)
+  # - Strip trailing .git suffix
+  # This handles SSH, HTTPS, and CI token-authenticated URLs
+  local normalized_origin
+  normalized_origin=$(echo "$actual_origin" | sed -E 's|https://[^@]+@|https://|' | sed 's|\.git$||')
+
+  local expected_normalized="https://github.com/docker/go-sdk"
+  local expected_ssh="git@github.com:docker/go-sdk"
+
+  if [[ "$normalized_origin" != "$expected_normalized" ]] && \
+     [[ "$normalized_origin" != "$expected_ssh" ]]; then
     echo "❌ Error: Git remote 'origin' points to the wrong repository"
     echo "  Expected: ${EXPECTED_ORIGIN_SSH}"
     echo "            (or ${EXPECTED_ORIGIN_HTTPS})"
