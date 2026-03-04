@@ -127,9 +127,16 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       with:
-        ref: main  # Ensure we're on the main branch, not detached HEAD
+        ref: ${{ github.sha }}  # Pin to the exact commit that triggered this workflow
         fetch-depth: 0  # Fetch all history and tags
         token: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Set up local main branch
+      run: |
+        # Create a local main branch at the event SHA so scripts that
+        # check "rev-parse --abbrev-ref HEAD == main" work correctly.
+        # This avoids races with later pushes to main.
+        git checkout -B main "${{ github.sha }}"
 
     - name: Verify commit is a release
       id: check

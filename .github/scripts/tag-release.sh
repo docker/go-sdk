@@ -65,6 +65,10 @@ for m in $MODULES_TO_TAG; do
   VERSION_FILE="${ROOT_DIR}/${m}/version.go"
 
   if [[ ! -f "${VERSION_FILE}" ]]; then
+    if [[ -n "${MODULE}" ]]; then
+      echo "❌ Error: Module '${m}' was specified, but ${VERSION_FILE} does not exist"
+      exit 1
+    fi
     echo "⚠️  Skipping ${m}: version.go not found"
     continue
   fi
@@ -72,6 +76,10 @@ for m in $MODULES_TO_TAG; do
   # Read version from version.go
   VERSION=$(get_version_from_file "${VERSION_FILE}")
   if [[ -z "${VERSION}" ]]; then
+    if [[ -n "${MODULE}" ]]; then
+      echo "❌ Error: Module '${m}' was specified, but could not extract version from ${VERSION_FILE}"
+      exit 1
+    fi
     echo "⚠️  Skipping ${m}: could not extract version from version.go"
     continue
   fi

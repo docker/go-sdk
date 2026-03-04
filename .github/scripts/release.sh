@@ -27,12 +27,12 @@
 #
 # Dependencies:
 #   - git (configured with push permissions)
+#   - go (for go.work parsing via 'go work edit -json')
 #   - jq (for parsing go.work)
-#   - curl (for triggering Go proxy)
 #
 # Git Operations:
 #   - Adds all modified version.go and go.mod files
-#   - Creates commit with version bump message (e.g. chore(client): bump version to v0.1.0-alpha005)
+#   - Creates commit with version bump message (e.g. chore(client): bump version)
 #
 # Note: This script no longer pushes to main, creates tags, or triggers the
 #       Go proxy. Those operations are handled by the two-phase release process:
