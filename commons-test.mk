@@ -113,7 +113,7 @@ tag-release:
 		echo "Error: $(MODULE_DIR)/version.go not found. Is this a valid module directory?"; \
 		exit 1; \
 	fi
-	@DRY_RUN=$(DRY_RUN) $(ROOT_DIR)/.github/scripts/tag-release.sh "$(MODULE_DIR)"
+	@$(ROOT_DIR)/.github/scripts/tag-release.sh "$(MODULE_DIR)"
 
 .PHONY: refresh-proxy
 refresh-proxy:

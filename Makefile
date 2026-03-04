@@ -31,9 +31,8 @@ release-all:
 	@./.github/scripts/release.sh
 
 # Tag release for all modules (Phase 2 of release process)
-# Requires DRY_RUN=false: make tag-release DRY_RUN=false
 tag-release:
-	@DRY_RUN=$(DRY_RUN) ./.github/scripts/tag-release.sh
+	@./.github/scripts/tag-release.sh
 
 # Refresh Go proxy for all modules
 refresh-proxy-all:

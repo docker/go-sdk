@@ -45,15 +45,6 @@ if [[ "${CURRENT_BRANCH}" != "main" ]]; then
   exit 1
 fi
 
-# This script creates and pushes tags — require explicit DRY_RUN=false
-if [[ "${DRY_RUN}" != "false" ]]; then
-  echo "❌ Error: tag-release.sh requires DRY_RUN=false to create and push tags"
-  echo ""
-  echo "Usage:"
-  echo "  DRY_RUN=false ./.github/scripts/tag-release.sh"
-  exit 1
-fi
-
 MODULE="${1:-}"
 
 echo "=== Phase 2: Tag Release ==="
@@ -100,8 +91,8 @@ for m in $MODULES_TO_TAG; do
 
   # Create tag on HEAD and push it individually
   echo "🏷️  Creating tag: ${TAG}"
-  git tag "${TAG}"
-  git push origin "${TAG}"
+  execute_or_echo git tag "${TAG}"
+  execute_or_echo git push origin "${TAG}"
   tags_created=$((tags_created + 1))
 
   # Trigger Go proxy
