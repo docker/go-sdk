@@ -1,0 +1,191 @@
+name: Release
+
+on:
+  # Phase 1: Manual trigger to prepare a release PR
+  workflow_dispatch:
+    inputs:
+      module:
+        description: 'Module to release (leave empty for all modules)'
+        required: false
+        default: ''
+        type: string
+      bump_type:
+        description: 'Type of version bump to perform'
+        required: false
+        default: 'prerelease'
+        type: choice
+        options:
+          - prerelease
+          - patch
+          - minor
+          - major
+      dry_run:
+        description: 'Perform a dry run without creating a PR'
+        required: false
+        default: true
+        type: boolean
+
+  # Phase 2: Auto-tag when version.go files change on main (after PR merge)
+  push:
+    branches:
+      - main
+    paths:
+      - '*/version.go'
+
+jobs:
+  # Phase 1: Prepare release PR (or dry run preview)
+  prepare-release:
+    if: ${{ github.event_name == 'workflow_dispatch' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write  # Required for applying labels via gh pr create --label
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      with:
+        ref: main  # Ensure we're on the main branch, not detached HEAD
+        fetch-depth: 0  # Fetch all history and tags
+        token: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Set up Go
+      uses: actions/setup-go@f111f3307d8850f501ac008e886eec1fd1932a34 # v5.3.0
+      with:
+        go-version-file: 'go.work'
+
+    - name: Configure Git
+      run: |
+        git config --global user.name "github-actions[bot]"
+        git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
+    - name: Display run configuration
+      run: |
+        echo "🚀 Release Configuration:"
+        echo "  - Module: ${{ inputs.module || 'all' }}"
+        echo "  - Dry Run: ${{ inputs.dry_run }}"
+        echo "  - Bump Type: ${{ inputs.bump_type }}"
+        echo "  - Repository: ${{ github.repository }}"
+        echo "  - Branch: ${{ github.ref_name }}"
+
+    - name: Normalize and validate module
+      id: module
+      run: |
+        # Normalize module name to lowercase
+        MODULE=$(echo "${{ inputs.module }}" | tr '[:upper:]' '[:lower:]')
+        echo "name=${MODULE}" >> "$GITHUB_OUTPUT"
+
+        if [[ -n "${MODULE}" ]]; then
+          AVAILABLE_MODULES=$(go work edit -json | jq -r '.Use[].DiskPath' | sed 's|^\./||')
+          if ! echo "$AVAILABLE_MODULES" | grep -Fxq "${MODULE}"; then
+            echo "❌ Error: Module '${MODULE}' not found in go.work"
+            echo ""
+            echo "Available modules:"
+            echo "$AVAILABLE_MODULES" | sed 's/^/  - /'
+            exit 1
+          fi
+          echo "✅ Module '${MODULE}' is valid"
+        fi
+
+    - name: Dry run preview
+      if: ${{ inputs.dry_run }}
+      env:
+        DRY_RUN: "true"
+        BUMP_TYPE: ${{ inputs.bump_type }}
+      run: |
+        echo "=== Dry Run Preview ==="
+        if [[ -n "${{ steps.module.outputs.name }}" ]]; then
+          ./.github/scripts/pre-release.sh "${{ steps.module.outputs.name }}"
+        else
+          make pre-release-all
+        fi
+        echo ""
+        echo "✅ Dry run completed. No git commits, pushes, or pull requests were created."
+        echo "To create a release PR, re-run with dry_run: false"
+
+    - name: Prepare release PR
+      if: ${{ !inputs.dry_run }}
+      env:
+        BUMP_TYPE: ${{ inputs.bump_type }}
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        if [[ -n "${{ steps.module.outputs.name }}" ]]; then
+          ./.github/scripts/prepare-release-pr.sh "${{ steps.module.outputs.name }}"
+        else
+          ./.github/scripts/prepare-release-pr.sh
+        fi
+
+  # Phase 2: Auto-tag after release PR is merged
+  tag-release:
+    if: ${{ github.event_name == 'push' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      with:
+        ref: ${{ github.sha }}  # Pin to the exact commit that triggered this workflow
+        fetch-depth: 0  # Fetch all history and tags
+        token: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Set up local main branch
+      run: |
+        # Create a local main branch at the event SHA so scripts that
+        # check "rev-parse --abbrev-ref HEAD == main" work correctly.
+        # This avoids races with later pushes to main.
+        git checkout -B main "${{ github.sha }}"
+
+    - name: Verify commit is a release
+      id: check
+      run: |
+        # Check all commits in this push, not just the tip.
+        # This handles rebase merges where multiple commits land at once.
+        # For squash/regular merges, there's only one commit to check.
+        BEFORE="${{ github.event.before }}"
+        if [[ -n "$BEFORE" ]] && [[ "$BEFORE" != "0000000000000000000000000000000000000000" ]]; then
+          COMMIT_MESSAGES=$(git log --pretty=%B "${BEFORE}..HEAD")
+        else
+          COMMIT_MESSAGES=$(git log -1 --pretty=%B)
+        fi
+
+        echo "Commit messages in push:"
+        echo "${COMMIT_MESSAGES}"
+        echo ""
+
+        # Only proceed if any commit message matches the release pattern
+        # produced by prepare-release-pr.sh: "chore(release): bump module versions"
+        # or "chore(<module>): bump version"
+        # We check the full message (%B = subject + body) so this works for:
+        #   - Squash merge: PR title is the subject line
+        #   - Regular merge: PR title appears in the body
+        #   - Rebase merge: original commit message is preserved
+        if echo "$COMMIT_MESSAGES" | grep -qE '^chore\((release|[a-z0-9_-]+)\): bump (module )?versions?[[:space:]]*$'; then
+          echo "✅ Push contains a release commit — proceeding with tagging"
+          echo "is_release=true" >> "$GITHUB_OUTPUT"
+        else
+          echo "⏭️ No release commit found in push — skipping tagging"
+          echo "is_release=false" >> "$GITHUB_OUTPUT"
+        fi
+
+    - name: Set up Go
+      if: steps.check.outputs.is_release == 'true'
+      uses: actions/setup-go@f111f3307d8850f501ac008e886eec1fd1932a34 # v5.3.0
+      with:
+        go-version-file: 'go.work'
+
+    - name: Configure Git
+      if: steps.check.outputs.is_release == 'true'
+      run: |
+        git config --global user.name "github-actions[bot]"
+        git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
+    - name: Create tags and trigger Go proxy
+      if: steps.check.outputs.is_release == 'true'
+      env:
+        DRY_RUN: "false"
+      run: |
+        echo "=== Phase 2: Auto-tagging after PR merge ==="
+        ./.github/scripts/tag-release.sh

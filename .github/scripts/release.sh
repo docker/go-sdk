@@ -1,12 +1,13 @@
 #!/bin/bash
 
 # =============================================================================
-# Release Finalizer
+# Release Committer
 # =============================================================================
-# Description: Commits and tags version changes for modules, then triggers
-#              Go proxy to make the new versions available for download
+# Description: Stages and commits version changes for modules.
 #              This script is typically run after pre-release.sh has
-#              updated module versions
+#              updated module versions. It creates a local commit only —
+#              pushing, tagging, and Go proxy notification are handled by
+#              prepare-release-pr.sh (Phase 1) and tag-release.sh (Phase 2).
 #
 # Usage: ./.github/scripts/release.sh [module]
 #
@@ -16,7 +17,7 @@
 #
 # Environment Variables:
 #   DRY_RUN          - Enable dry run mode (default: true)
-#                      When true, shows what would be committed and tagged without actually doing it
+#                      When true, shows what would be committed without actually doing it
 #
 # Examples:
 #   ./.github/scripts/release.sh
@@ -26,18 +27,17 @@
 #
 # Dependencies:
 #   - git (configured with push permissions)
+#   - go (for go.work parsing via 'go work edit -json')
 #   - jq (for parsing go.work)
-#   - curl (for triggering Go proxy)
 #
 # Git Operations:
 #   - Adds all modified version.go and go.mod files
-#   - Creates commit with version bump message (e.g. chore(client): bump version to v0.1.0-alpha005)
-#   - Creates tag with module name and version (e.g. client/v0.1.0-alpha005)
-#   - Pushes changes and tags to origin
+#   - Creates commit with version bump message (e.g. chore(client): bump version)
 #
-# Post-Release Operations:
-#   - Triggers Go proxy to fetch new module versions
-#   - Makes modules immediately available for download
+# Note: This script no longer pushes to main, creates tags, or triggers the
+#       Go proxy. Those operations are handled by the two-phase release process:
+#       - Phase 1: prepare-release-pr.sh (creates a PR)
+#       - Phase 2: tag-release.sh (tags after PR merge)
 #
 # =============================================================================
 
@@ -67,9 +67,8 @@ fi
 ALL_MODULES=$(get_modules)
 
 commit_body=""
-tags_to_create=""
 
-# Determine which modules to tag
+# Determine which modules to process
 if [[ -n "${MODULE}" ]]; then
   MODULES_TO_TAG="${MODULE}"
 else
@@ -92,7 +91,6 @@ for m in $MODULES_TO_TAG; do
   nextTag=$(cat "${next_tag_path}")
   echo "Next tag for ${m}: ${nextTag}"
   commit_body="${commit_body}\n - ${m}: ${nextTag}"
-  tags_to_create="${tags_to_create} ${m}/${nextTag}"
 done
 
 # Stage go.mod and go.sum for ALL modules (they all need to reference the new version)
@@ -106,17 +104,12 @@ done
 if [[ "${DRY_RUN}" == "true" ]]; then
   echo ""
   echo "=========================================="
-  echo "DRY RUN MODE - No changes will be made"
+  echo "DRY RUN MODE - No git changes will be made"
   echo "=========================================="
   echo ""
-  echo "Would create commit:"
+  echo "Would create commit (local only, no push):"
   echo "  Title: ${commit_title}"
   echo "  Body: $(echo -e "${commit_body}")"
-  echo ""
-  echo "Would create tags:"
-  for t in $tags_to_create; do
-    echo "  ${t}"
-  done
   echo ""
   echo "Files that would be committed:"
   for m in $MODULES_TO_TAG; do
@@ -140,7 +133,11 @@ if [[ "${DRY_RUN}" == "true" ]]; then
   done
   echo ""
   echo "=========================================="
-  echo "To perform the actual release, run:"
+  echo "NOTE: This script only creates a local commit."
+  echo "Tags and pushing are handled by the two-phase release process."
+  echo "See RELEASING.md for details."
+  echo ""
+  echo "To perform the actual commit, run:"
   echo "  DRY_RUN=false $0 $@"
   echo "=========================================="
   exit 0
@@ -154,28 +151,18 @@ else
   exit 1 # exit with error code 1 to not proceed with the release
 fi
 
-# Create all tags after the single commit
-for m in $MODULES_TO_TAG; do
-  next_tag_path=$(get_next_tag "${m}")
-  if [[ -f "${next_tag_path}" ]]; then
-    nextTag=$(cat "${next_tag_path}")
-    execute_or_echo git tag "${m}/${nextTag}"
-  fi
-done
-
 echo ""
-echo "✅ Created commit and tags successfully"
+echo "✅ Created commit successfully"
 echo "Last commit:"
 git_log_format='%C(auto)%h%C(reset) %s%nAuthor: %an <%ae>%nDate:   %ad'
 execute_or_echo git -C "${ROOT_DIR}" --no-pager log -1 --pretty=format:"${git_log_format}" --date=iso-local
 echo ""
-execute_or_echo git -C "${ROOT_DIR}" --no-pager tag --list --points-at HEAD
+
 echo ""
-
-echo "Pushing changes and tags to remote repository..."
-execute_or_echo git push origin main --tags
-
-for m in $MODULES_TO_TAG; do
-  nextTag=$(cat $(get_next_tag "${m}"))
-  curlGolangProxy "${m}" "${nextTag}"
-done
+echo "=========================================="
+echo "NOTE: This script no longer pushes directly to main or creates tags."
+echo "Use the two-phase release process instead:"
+echo "  Phase 1: ./.github/scripts/prepare-release-pr.sh — creates a release PR"
+echo "  Phase 2: ./.github/scripts/tag-release.sh — auto-tags after PR merge"
+echo "See RELEASING.md for details."
+echo "=========================================="
