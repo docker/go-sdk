@@ -125,22 +125,32 @@ jobs:
     - name: Verify commit is a release
       id: check
       run: |
-        COMMIT_MSG=$(git log -1 --pretty=%B)
-        echo "Commit message:"
-        echo "${COMMIT_MSG}"
+        # Check all commits in this push, not just the tip.
+        # This handles rebase merges where multiple commits land at once.
+        # For squash/regular merges, there's only one commit to check.
+        BEFORE="${{ github.event.before }}"
+        if [[ -n "$BEFORE" ]] && [[ "$BEFORE" != "0000000000000000000000000000000000000000" ]]; then
+          COMMIT_MESSAGES=$(git log --pretty=%B "${BEFORE}..HEAD")
+        else
+          COMMIT_MESSAGES=$(git log -1 --pretty=%B)
+        fi
+
+        echo "Commit messages in push:"
+        echo "${COMMIT_MESSAGES}"
         echo ""
-        # Only proceed if the commit message matches the release pattern
+
+        # Only proceed if any commit message matches the release pattern
         # produced by prepare-release-pr.sh: "chore(release): bump module versions"
         # or "chore(<module>): bump version"
         # We check the full message (%B = subject + body) so this works for:
         #   - Squash merge: PR title is the subject line
         #   - Regular merge: PR title appears in the body
         #   - Rebase merge: original commit message is preserved
-        if echo "$COMMIT_MSG" | grep -qE '^chore\((release|[a-z]+)\): bump (module )?version'; then
-          echo "✅ Commit matches release pattern — proceeding with tagging"
+        if echo "$COMMIT_MESSAGES" | grep -qE '^chore\((release|[a-z]+)\): bump (module )?version'; then
+          echo "✅ Push contains a release commit — proceeding with tagging"
           echo "is_release=true" >> "$GITHUB_OUTPUT"
         else
-          echo "⏭️ Commit does not match release pattern — skipping tagging"
+          echo "⏭️ No release commit found in push — skipping tagging"
           echo "is_release=false" >> "$GITHUB_OUTPUT"
         fi
 

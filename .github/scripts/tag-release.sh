@@ -34,6 +34,17 @@ source "${SCRIPT_DIR}/common.sh"
 # Validate git remote before doing anything
 validate_git_remote
 
+# Ensure we're on main — tags must point to commits reachable from main
+CURRENT_BRANCH=$(git -C "${ROOT_DIR}" rev-parse --abbrev-ref HEAD)
+if [[ "${CURRENT_BRANCH}" != "main" ]]; then
+  echo "❌ Error: Must be on the 'main' branch to create release tags"
+  echo "  Current branch: ${CURRENT_BRANCH}"
+  echo ""
+  echo "Switch to main first:"
+  echo "  git checkout main"
+  exit 1
+fi
+
 MODULE="${1:-}"
 
 echo "=== Phase 2: Tag Release ==="
