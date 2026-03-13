@@ -3,6 +3,7 @@ package config
 import (
 	_ "embed"
 	"encoding/json"
+	"errors"
 	"os"
 	"path/filepath"
 	"testing"
@@ -33,7 +34,7 @@ func TestLoad(t *testing.T) {
 			setupHome(t, "testdata", "not-found")
 
 			cfg, err := Load()
-			require.ErrorContains(t, err, "file does not exist")
+			require.NoError(t, err, "Load should return empty config when ~/.docker does not exist")
 			require.Empty(t, cfg)
 		})
 
@@ -117,7 +118,7 @@ func TestDir(t *testing.T) {
 			setupHome(t, "testdata", "not-found")
 
 			dir, err := Dir()
-			require.ErrorContains(t, err, "file does not exist")
+			require.True(t, errors.Is(err, os.ErrNotExist), "error should wrap os.ErrNotExist, got: %v", err)
 			require.Empty(t, dir)
 		})
 	})
@@ -136,7 +137,7 @@ func TestDir(t *testing.T) {
 			setupDockerConfigs(t, "testdata", "not-found")
 
 			dir, err := Dir()
-			require.ErrorContains(t, err, "file does not exist")
+			require.True(t, errors.Is(err, os.ErrNotExist), "error should wrap os.ErrNotExist, got: %v", err)
 			require.Empty(t, dir)
 		})
 	})

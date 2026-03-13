@@ -43,11 +43,15 @@ func getHomeDir() (string, error) {
 
 // Dir returns the directory the configuration file is stored in,
 // checking if the directory exists.
+//
+// When the directory does not exist the returned error wraps
+// [os.ErrNotExist] so that callers can detect the condition with
+// [errors.Is] or [os.IsNotExist].
 func Dir() (string, error) {
 	dir := os.Getenv(EnvOverrideDir)
 	if dir != "" {
-		if !fileExists(dir) {
-			return "", fmt.Errorf("file does not exist (%s)", dir)
+		if _, err := os.Stat(dir); err != nil {
+			return "", fmt.Errorf("config dir %s: %w", dir, err)
 		}
 		return dir, nil
 	}
@@ -58,23 +62,19 @@ func Dir() (string, error) {
 	}
 
 	configDir := filepath.Join(home, configFileDir)
-	if !fileExists(configDir) {
-		return "", fmt.Errorf("file does not exist (%s)", configDir)
+	if _, err := os.Stat(configDir); err != nil {
+		return "", fmt.Errorf("config dir %s: %w", configDir, err)
 	}
 
 	return configDir, nil
 }
 
-func fileExists(path string) bool {
-	if _, err := os.Stat(path); os.IsNotExist(err) {
-		return false
-	}
-
-	return true
-}
-
 // Filepath returns the path to the docker cli config file,
 // checking if the file exists.
+//
+// When the directory or file does not exist the returned error wraps
+// [os.ErrNotExist] so that callers can detect the condition with
+// [errors.Is] or [os.IsNotExist].
 func Filepath() (string, error) {
 	dir, err := Dir()
 	if err != nil {
@@ -82,8 +82,8 @@ func Filepath() (string, error) {
 	}
 
 	configFilePath := filepath.Join(dir, FileName)
-	if !fileExists(configFilePath) {
-		return "", fmt.Errorf("config file does not exist (%s)", configFilePath)
+	if _, err := os.Stat(configFilePath); err != nil {
+		return "", fmt.Errorf("config file %s: %w", configFilePath, err)
 	}
 
 	return configFilePath, nil
@@ -93,6 +93,11 @@ func Filepath() (string, error) {
 // 1. the DOCKER_AUTH_CONFIG environment variable, unmarshalling it into a Config
 // 2. the DOCKER_CONFIG environment variable, as the path to the config file
 // 3. else it will load the default config file, which is ~/.docker/config.json
+//
+// If the configuration directory or file does not exist, Load returns an
+// empty [Config] and a nil error.  This matches the behaviour of
+// [github.com/docker/cli/cli/config.Load] and allows callers to work on
+// systems where Docker has never been installed.
 func Load() (Config, error) {
 	if env := os.Getenv("DOCKER_AUTH_CONFIG"); env != "" {
 		var cfg Config
@@ -105,6 +110,9 @@ func Load() (Config, error) {
 	var cfg Config
 	p, err := Filepath()
 	if err != nil {
+		if errors.Is(err, os.ErrNotExist) {
+			return cfg, nil
+		}
 		return cfg, fmt.Errorf("config path: %w", err)
 	}
 

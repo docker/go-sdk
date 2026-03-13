@@ -203,7 +203,14 @@ func TestRegistryCredentialsForImage(t *testing.T) {
 
 	t.Run("config/not-found", func(t *testing.T) {
 		t.Setenv(EnvOverrideDir, filepath.Join("testdata", "missing"))
-		validateAuthForImage(t, "userpass.io/repo/image:tag", "", "", "", errors.New("file does not exist"))
+		// When the config directory does not exist, Load() returns an empty
+		// config (no error), so AuthConfigs returns no credentials.
+		authConfigs, err := AuthConfigs("userpass.io/repo/image:tag")
+		require.NoError(t, err)
+		for _, ac := range authConfigs {
+			require.Empty(t, ac.Username)
+			require.Empty(t, ac.Password)
+		}
 	})
 }
 
@@ -267,7 +274,12 @@ func TestRegistryCredentialsForHostname(t *testing.T) {
 
 	t.Run("config/not-found", func(t *testing.T) {
 		t.Setenv(EnvOverrideDir, filepath.Join("testdata", "missing"))
-		validateAuthForHostname(t, "userpass.io", "", "", errors.New("file does not exist"))
+		// When the config directory does not exist, Load() returns an empty
+		// config (no error), so AuthConfigForHostname returns empty results.
+		creds, err := AuthConfigForHostname("userpass.io")
+		require.NoError(t, err)
+		require.Empty(t, creds.Username)
+		require.Empty(t, creds.Password)
 	})
 }
 
