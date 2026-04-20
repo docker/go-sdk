@@ -87,10 +87,22 @@ func Pull(ctx context.Context, imageName string, opts ...PullOption) error {
 		pullOpts.client.Logger().Warn("failed to parse image reference, ServerAddress will be empty", "image", imageName, "error", err)
 	}
 
-	authConfig := registry.AuthConfig{
-		Username:      username,
-		Password:      password,
-		ServerAddress: imgRef.Registry,
+	// The Docker credential store convention uses "<token>" as the username
+	// to indicate the password is an identity/OAuth token, not a literal
+	// password. Map this to the IdentityToken field so the daemon handles
+	// it correctly (see docker/cli credentials/native_store.go).
+	var authConfig registry.AuthConfig
+	if username == "<token>" {
+		authConfig = registry.AuthConfig{
+			IdentityToken: password,
+			ServerAddress: imgRef.Registry,
+		}
+	} else {
+		authConfig = registry.AuthConfig{
+			Username:      username,
+			Password:      password,
+			ServerAddress: imgRef.Registry,
+		}
 	}
 
 	pullOpts.pullOptions.RegistryAuth, err = authconfig.Encode(authConfig)

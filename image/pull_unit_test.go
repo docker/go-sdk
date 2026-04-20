@@ -42,6 +42,34 @@ func TestPullRegistryAuth(t *testing.T) {
 	require.Equal(t, "myregistry.example.com", decoded.ServerAddress)
 }
 
+func TestPullRegistryAuth_TokenUsername(t *testing.T) {
+	mockCli := &errMockCli{}
+	sdk, err := sdkclient.New(context.TODO(), sdkclient.WithDockerAPI(mockCli))
+	require.NoError(t, err)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
+	defer cancel()
+
+	imageName := "docker/sandbox-templates:shell-docker"
+	err = Pull(ctx, imageName,
+		WithPullOptions(dockerclient.ImagePullOptions{}),
+		WithCredentialsFn(func(_ string) (string, string, error) {
+			return "<token>", "my-oauth-token", nil
+		}),
+		WithPullClient(sdk),
+	)
+	require.NoError(t, err)
+
+	// When username is "<token>", the token should be mapped to IdentityToken
+	// (not Username/Password), matching the Docker CLI credential store convention.
+	decoded, err := authconfig.Decode(mockCli.lastPullOptions.RegistryAuth)
+	require.NoError(t, err)
+	require.Empty(t, decoded.Username, "Username should be empty for token auth")
+	require.Empty(t, decoded.Password, "Password should be empty for token auth")
+	require.Equal(t, "my-oauth-token", decoded.IdentityToken)
+	require.Equal(t, "docker.io", decoded.ServerAddress)
+}
+
 func TestPull(t *testing.T) {
 	defaultPullOpts := []PullOption{WithPullOptions(dockerclient.ImagePullOptions{})}
 
