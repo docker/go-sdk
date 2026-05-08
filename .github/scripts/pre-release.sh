@@ -146,6 +146,11 @@ echo "${NEXT_vVERSION}" > "$(get_next_tag "${MODULE}")"
 
 for m in $MODULES; do
   portable_sed "s|${GITHUB_REPO}/${MODULE} v[^[:space:]]*|${GITHUB_REPO}/${MODULE} v${NEXT_VERSION}|g" "${ROOT_DIR}/${m}/go.mod"
-  # Update the go.sum file
-  (cd "${ROOT_DIR}/${m}" && go mod tidy)
+  # Update the go.sum file. Skip in dry-run: portable_sed was a no-op, so
+  # go.mod is unchanged and there's nothing for tidy to reconcile — and tidy
+  # itself can mutate go.mod/go.sum (checksums, unused requires, new imports),
+  # which would break the dry-run "no working-tree changes" guarantee.
+  if [[ "${DRY_RUN}" != "true" ]]; then
+    (cd "${ROOT_DIR}/${m}" && go mod tidy)
+  fi
 done
