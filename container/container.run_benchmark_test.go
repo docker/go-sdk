@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/docker/go-sdk/container"
+	"github.com/docker/go-sdk/container/exec"
 )
 
 // BenchmarkRun measures container creation time
@@ -88,6 +89,24 @@ func BenchmarkRun(b *testing.B) {
 					},
 				},
 			}),
+		})
+	})
+
+	b.Run("with-durable-startup-command", func(b *testing.B) {
+		benchmarkContainerRun(b, ctx, []container.ContainerCustomizer{
+			container.WithImage(nginxAlpineImage),
+			container.WithDurableStartupCommand(
+				exec.NewRawCommand([]string{"true"}),
+			),
+		})
+	})
+
+	b.Run("with-durable-startup-command-from-dir", func(b *testing.B) {
+		benchmarkContainerRun(b, ctx, []container.ContainerCustomizer{
+			container.WithImage(nginxAlpineImage),
+			container.WithDurableStartupCommandsFromDir("pg",
+				exec.NewRawCommand([]string{"true"}),
+			),
 		})
 	})
 }
