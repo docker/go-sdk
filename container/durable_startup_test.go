@@ -574,7 +574,9 @@ func TestRenderDurableScript(t *testing.T) {
 			require.NoError(t, err)
 			return out
 		}
-		require.Equal(t, mk(), mk())
+		first := mk()
+		second := mk()
+		require.Equal(t, first, second)
 	})
 }
 

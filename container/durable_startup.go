@@ -75,10 +75,13 @@ var ErrDurableStartupReservedNamespace = fmt.Errorf("durable startup namespace %
 // via [WithDurableStartupCommandsFromDir], because the default namespace
 // is reserved at index 000.
 //
-// Each [Executable]'s [exec.WithWorkingDir] and [exec.WithEnv] options are
-// translated into the rendered script. Other process options are ignored:
-// the script runs in whatever user/TTY context the dispatcher is invoked
-// under, not via a Docker exec.
+// Each [Executable]'s [exec.WithWorkingDir], [exec.WithEnv], and
+// [exec.WithUser] options are translated into the rendered script:
+// WithEnv as `export` lines, WithWorkingDir as a `cd`, and WithUser by
+// wrapping the body in `su -s /bin/sh -c '<body>' '<user>'`. The user
+// switch fails loud (set -e propagates) when the user does not exist or
+// `su` is unavailable. [exec.WithTTY] and other process options are
+// ignored: the script does not go through a Docker exec.
 //
 // Not safe to call concurrently on the same [Definition]: collect the
 // option values upstream and apply them serially.
@@ -101,7 +104,8 @@ func WithDurableStartupCommand(execs ...Executable) CustomizeDefinitionOption {
 // (which is reserved for [WithDurableStartupCommand]).
 //
 // See [WithDurableStartupCommand] for the broader contract around
-// persistence, dispatcher invocation, and translated process options.
+// persistence, dispatcher invocation, and translated process options
+// (including [exec.WithUser] / [exec.WithEnv] / [exec.WithWorkingDir]).
 //
 // Not safe to call concurrently on the same [Definition]: collect the
 // option values upstream and apply them serially.
@@ -243,9 +247,16 @@ func nextDurableCmdIndex(files []File, nsDir string) int {
 
 // renderDurableScript builds the contents of a single durable startup
 // script for the given [Executable]. The resulting POSIX shell script
-// honors [exec.WithEnv] (rendered as `export` lines) and
-// [exec.WithWorkingDir] (rendered as a `cd`); other process options are
+// honors [exec.WithEnv] (as `export` lines), [exec.WithWorkingDir] (as
+// a `cd`), and [exec.WithUser] (by wrapping the body in
+// `su -s /bin/sh -c '<body>' '<user>'`). Other process options are
 // not translated.
+//
+// When [exec.WithUser] is set, the body — env exports, cd, exec — runs
+// inside the inner shell launched by `su`, with its own `set -e` so
+// failures (cd into a missing dir, missing user, missing su binary) all
+// propagate via the exit code. The dispatcher's own `set -e` then
+// surfaces the failure to the consumer.
 func renderDurableScript(e Executable) (string, error) {
 	if e == nil {
 		return "", errors.New("executable is nil")
@@ -263,27 +274,44 @@ func renderDurableScript(e Executable) (string, error) {
 		opt.Apply(&po)
 	}
 
-	var b strings.Builder
-	b.WriteString("#!/bin/sh\n")
-	b.WriteString("set -e\n")
-
+	// Build the inner body: env exports, cd, exec. This is shared between
+	// the kitless path (inlined) and the WithUser path (passed as the -c
+	// arg to `su`, which runs it in a fresh shell).
+	var body strings.Builder
 	for _, env := range po.ExecConfig.Env {
 		eq := strings.IndexByte(env, '=')
 		if eq <= 0 {
 			continue
 		}
-		fmt.Fprintf(&b, "export %s=%s\n", env[:eq], shellSingleQuote(env[eq+1:]))
+		fmt.Fprintf(&body, "export %s=%s\n", env[:eq], shellSingleQuote(env[eq+1:]))
 	}
 	if po.ExecConfig.WorkingDir != "" {
-		fmt.Fprintf(&b, "cd %s\n", shellSingleQuote(po.ExecConfig.WorkingDir))
+		fmt.Fprintf(&body, "cd %s\n", shellSingleQuote(po.ExecConfig.WorkingDir))
 	}
-
-	b.WriteString("exec")
+	body.WriteString("exec")
 	for _, arg := range cmd {
-		b.WriteByte(' ')
-		b.WriteString(shellSingleQuote(arg))
+		body.WriteByte(' ')
+		body.WriteString(shellSingleQuote(arg))
 	}
-	b.WriteByte('\n')
+	body.WriteByte('\n')
+
+	var b strings.Builder
+	b.WriteString("#!/bin/sh\n")
+	b.WriteString("set -e\n")
+
+	if po.ExecConfig.User != "" {
+		// `su` spawns a fresh shell that does NOT inherit `set -e` from
+		// the outer script, so prepend `set -e` to the inner body. Order
+		// is options-first then USER (POSIX getopt-strict shells stop at
+		// the first non-option arg).
+		inner := "set -e\n" + body.String()
+		fmt.Fprintf(&b, "exec su -s /bin/sh -c %s %s\n",
+			shellSingleQuote(inner),
+			shellSingleQuote(po.ExecConfig.User),
+		)
+	} else {
+		b.WriteString(body.String())
+	}
 	return b.String(), nil
 }
 
@@ -309,7 +337,7 @@ done
 }
 
 // shellSingleQuote returns s wrapped in POSIX single quotes, with any
-// embedded single quotes escaped via the standard '\'' idiom. The result
+// embedded single quotes escaped via the standard '\” idiom. The result
 // is always a single shell word safe for substitution into a script.
 func shellSingleQuote(s string) string {
 	if s == "" {

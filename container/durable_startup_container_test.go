@@ -97,6 +97,188 @@ func TestDurableStartupCommand_inRunningContainer(t *testing.T) {
 	require.Equal(t, "pg-init\nhello|/etc\n", string(log))
 }
 
+// TestDurableStartupCommand_inRunningContainer_withUser exercises the
+// exec.WithUser path end-to-end. The script runs `id -un` and captures
+// the result to a marker file; we then verify the file was actually
+// written by the target user.
+func TestDurableStartupCommand_inRunningContainer_withUser(t *testing.T) {
+	ctx := context.Background()
+
+	c, err := container.Run(ctx,
+		container.WithImage(alpineLatest),
+		container.WithEntrypoint("tail", "-f", "/dev/null"),
+		container.WithDurableStartupCommand(
+			exec.NewRawCommand(
+				[]string{"sh", "-c", `id -un > /tmp/whoami`},
+				exec.WithUser("nobody"),
+			),
+		),
+		container.WithStartupCommand(exec.NewRawCommand(
+			[]string{"sh", container.DurableStartupDispatcherPath},
+		)),
+	)
+	container.Cleanup(t, c)
+	require.NoError(t, err)
+	require.NotNil(t, c)
+
+	_, r, err := c.Exec(ctx, []string{"cat", "/tmp/whoami"}, exec.Multiplexed())
+	require.NoError(t, err)
+	out, err := io.ReadAll(r)
+	require.NoError(t, err)
+	require.Equal(t, "nobody\n", string(out))
+
+	// And confirm the file's owner — su really switched user, didn't
+	// just simulate it. `stat -c %U` is busybox-compatible.
+	_, r, err = c.Exec(ctx, []string{"stat", "-c", "%U", "/tmp/whoami"}, exec.Multiplexed())
+	require.NoError(t, err)
+	owner, err := io.ReadAll(r)
+	require.NoError(t, err)
+	require.Equal(t, "nobody\n", string(owner))
+}
+
+// TestDurableStartupCommand_inRunningContainer_userWithEnvAndWorkingDir
+// proves the env/cd directives that get bundled inside the `su -c` body
+// actually take effect in the inner shell. If our quoting were off, the
+// inner shell would either fail to parse, or the env/cd would silently
+// drop on the floor inside the user-switch boundary.
+func TestDurableStartupCommand_inRunningContainer_userWithEnvAndWorkingDir(t *testing.T) {
+	ctx := context.Background()
+
+	c, err := container.Run(ctx,
+		container.WithImage(alpineLatest),
+		container.WithEntrypoint("tail", "-f", "/dev/null"),
+		container.WithDurableStartupCommand(
+			exec.NewRawCommand(
+				[]string{"sh", "-c", `printf '%s|%s|%s\n' "$(id -un)" "$K1" "$(pwd)" > /tmp/probe`},
+				exec.WithUser("nobody"),
+				exec.WithWorkingDir("/tmp"),
+				exec.WithEnv([]string{"K1=hello world"}),
+			),
+		),
+		container.WithStartupCommand(exec.NewRawCommand(
+			[]string{"sh", container.DurableStartupDispatcherPath},
+		)),
+	)
+	container.Cleanup(t, c)
+	require.NoError(t, err)
+
+	_, r, err := c.Exec(ctx, []string{"cat", "/tmp/probe"}, exec.Multiplexed())
+	require.NoError(t, err)
+	out, err := io.ReadAll(r)
+	require.NoError(t, err)
+	require.Equal(t, "nobody|hello world|/tmp\n", string(out))
+}
+
+// TestDurableStartupCommand_inRunningContainer_userMissingFailsClearly
+// proves the failure-propagation contract: if `su` can't switch to the
+// requested user (because they don't exist), the dispatcher's set -e
+// causes a non-zero exit, AND the side-effect command in the script
+// never runs.
+//
+// Note: the dispatcher's exit code is observed by invoking it directly
+// (via [container.Container.Exec]). [container.WithStartupCommand] is NOT
+// suitable for this assertion because the SDK's lifecycle hook
+// for [container.WithStartupCommand] only checks the Docker-level exec
+// error, not the inner process's exit code, and so silently swallows a
+// non-zero dispatcher exit. Consumers who want first-create coverage to
+// fail loudly should invoke the dispatcher themselves and check the
+// returned exit code.
+func TestDurableStartupCommand_inRunningContainer_userMissingFailsClearly(t *testing.T) {
+	ctx := context.Background()
+
+	c, err := container.Run(ctx,
+		container.WithImage(alpineLatest),
+		container.WithEntrypoint("tail", "-f", "/dev/null"),
+		container.WithDurableStartupCommand(
+			exec.NewRawCommand(
+				// If su somehow succeeded, this would create the marker.
+				// The marker's *absence* is part of the contract.
+				[]string{"sh", "-c", "touch /tmp/should-not-exist"},
+				exec.WithUser("definitely-not-a-real-user-xyz"),
+			),
+		),
+	)
+	container.Cleanup(t, c)
+	require.NoError(t, err)
+	require.NotNil(t, c)
+
+	// Invoke the dispatcher directly so we can observe its exit code.
+	code, reader, err := c.Exec(ctx,
+		[]string{"sh", container.DurableStartupDispatcherPath},
+		exec.Multiplexed(),
+	)
+	require.NoError(t, err) // The Docker-level exec must succeed even
+	// when the inner command fails — Exec returns the inner exit code as
+	// a value, not as an error. (See package container.exec.go.)
+	out, _ := io.ReadAll(reader)
+	require.NotEqual(t, 0, code,
+		"dispatcher should exit non-zero when the requested user is missing\nstderr/stdout:\n%s",
+		out,
+	)
+
+	// And the side-effect script must not have run — its `touch` never
+	// fired, because su aborted before reaching it.
+	absent, _, err := c.Exec(ctx,
+		[]string{"test", "!", "-e", "/tmp/should-not-exist"},
+		exec.Multiplexed(),
+	)
+	require.NoError(t, err)
+	require.Equal(t, 0, absent,
+		"marker file should not have been created — su should have failed before the script's body ran")
+}
+
+// TestDurableStartupCommand_inRunningContainer_perNamespaceUsers checks
+// that different namespaces can each switch to a different user and the
+// switches stay isolated to that namespace's commands.
+func TestDurableStartupCommand_inRunningContainer_perNamespaceUsers(t *testing.T) {
+	ctx := context.Background()
+
+	c, err := container.Run(ctx,
+		container.WithImage(alpineLatest),
+		container.WithEntrypoint("tail", "-f", "/dev/null"),
+
+		// Default namespace runs as root (no WithUser): expect "root".
+		// Also seeds /tmp/log as world-writable so the subsequent nobody
+		// scripts can append to it (otherwise the root-owned 0644 log
+		// would block them — that's a property of the test scaffolding,
+		// not anything the SDK can do anything about).
+		container.WithDurableStartupCommand(
+			exec.NewRawCommand(
+				[]string{"sh", "-c", `: > /tmp/log && chmod 666 /tmp/log && id -un >> /tmp/log`},
+			),
+		),
+		// pg switches to nobody.
+		container.WithDurableStartupCommandsFromDir("pg",
+			exec.NewRawCommand(
+				[]string{"sh", "-c", `id -un >> /tmp/log`},
+				exec.WithUser("nobody"),
+			),
+		),
+		// redis registers two scripts, only the first switches user.
+		// Verifies the user switch doesn't bleed to the next script.
+		container.WithDurableStartupCommandsFromDir("redis",
+			exec.NewRawCommand(
+				[]string{"sh", "-c", `id -un >> /tmp/log`},
+				exec.WithUser("nobody"),
+			),
+			exec.NewRawCommand(
+				[]string{"sh", "-c", `id -un >> /tmp/log`},
+			),
+		),
+		container.WithStartupCommand(exec.NewRawCommand(
+			[]string{"sh", container.DurableStartupDispatcherPath},
+		)),
+	)
+	container.Cleanup(t, c)
+	require.NoError(t, err)
+
+	_, r, err := c.Exec(ctx, []string{"cat", "/tmp/log"}, exec.Multiplexed())
+	require.NoError(t, err)
+	out, err := io.ReadAll(r)
+	require.NoError(t, err)
+	require.Equal(t, "root\nnobody\nnobody\nroot\n", string(out))
+}
+
 // TestDurableStartupCommand_inRunningContainer_layoutOnDisk confirms the
 // script files actually land at the documented paths inside the container,
 // and the dispatcher is at its well-known location.
