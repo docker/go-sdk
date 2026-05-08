@@ -556,14 +556,14 @@ func TestRenderDurableScript(t *testing.T) {
 		// reject them at definition time with a clear error pointing to
 		// WithStartupCommand for full Docker user-spec semantics.
 		for _, bad := range []string{
-			"1000",                  // bare UID
-			"1000:1000",             // uid:gid
-			"appuser:appgroup",      // user:group
-			"-leadingdash",          // not a valid login name
-			"user with space",       // space
-			"user'quote",            // shell metachar
-			"user;rm -rf /",         // injection attempt
-			"",                      // see note: "" means "no user", not invalid
+			"1000",             // bare UID
+			"1000:1000",        // uid:gid
+			"appuser:appgroup", // user:group
+			"-leadingdash",     // not a valid login name
+			"user with space",  // space
+			"user'quote",       // shell metachar
+			"user;rm -rf /",    // injection attempt
+			"",                 // see note: "" means "no user", not invalid
 		} {
 			if bad == "" {
 				continue // empty user means "don't switch", separately covered
