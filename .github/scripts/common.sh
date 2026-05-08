@@ -10,12 +10,14 @@
 #                      When true, commands are echoed instead of executed
 #
 # Functions:
-#   curlGolangProxy  - Trigger Go proxy to fetch module (for publishing)
-#   execute_or_echo  - Execute command or echo based on DRY_RUN setting
-#   find_latest_tag  - Find latest tag for a given module
-#   get_modules      - Get list of modules from go.work file
-#   get_script_dir   - Get directory of the calling script
-#   portable_sed     - Portable in-place sed editing
+#   curlGolangProxy         - Trigger Go proxy to fetch module (for publishing)
+#   execute_or_echo         - Execute command or echo based on DRY_RUN setting
+#   find_latest_tag         - Find latest tag for a given module
+#   get_modules             - Get list of modules from go.work file
+#   get_modules_to_release  - Expand a module to itself + transitive in-repo consumers
+#   get_script_dir          - Get directory of the calling script
+#   portable_sed            - Portable in-place sed editing
+#   validate_git_remote     - Verify origin points to docker/go-sdk
 #
 # Constants:
 #   ROOT_DIR         - Root directory of the repository
@@ -41,7 +43,18 @@ readonly BUILD_DIR="${ROOT_DIR}/.github/scripts/.build"
 readonly GITHUB_REPO="github.com/docker/go-sdk"
 readonly EXPECTED_ORIGIN_SSH="git@github.com:docker/go-sdk.git"
 readonly EXPECTED_ORIGIN_HTTPS="https://${GITHUB_REPO}.git"
-readonly DRY_RUN="${DRY_RUN:-true}"
+
+# Normalize DRY_RUN: only the literal string "false" (any case) opts into a
+# real run. Everything else — typos like "True", "FALSE", "no", or unset —
+# stays in dry-run. This biases the safety default toward not making changes,
+# so a typo in the OFF case can't accidentally trigger a real release.
+# Export so the canonical value propagates to subprocess invocations.
+case "$(echo "${DRY_RUN:-true}" | tr '[:upper:]' '[:lower:]')" in
+  false) DRY_RUN="false" ;;
+  *)     DRY_RUN="true"  ;;
+esac
+export DRY_RUN
+readonly DRY_RUN
 
 # This function is used to trigger the Go proxy to fetch the module.
 # See https://pkg.go.dev/about#adding-a-package for more details.
@@ -109,6 +122,46 @@ validate_git_remote() {
 # Function to get modules from go.work
 get_modules() {
   go work edit -json | jq -r '.Use[] | "\(.DiskPath | ltrimstr("./"))"' | tr '\n' ' ' && echo
+}
+
+# Compute the set of modules that must be released together.
+#
+# When invoked without arguments, returns every module in go.work.
+#
+# When invoked with a single module name, returns that module plus every
+# in-repo module that requires it (transitively). This is required because
+# pre-release.sh rewrites the go.mod of every module that depends on the
+# released one, but only bumps version.go for the released module itself.
+# Without this expansion, consumer modules end up with rewritten go.mod
+# content under main while their existing tag still references the old
+# dependency version — leaving "main" inconsistent with the latest tag.
+get_modules_to_release() {
+  local requested="${1:-}"
+  local all_modules
+  all_modules=$(get_modules)
+
+  if [[ -z "${requested}" ]]; then
+    echo "${all_modules}"
+    return
+  fi
+
+  local to_release="${requested}"
+  local added=1
+  while [[ ${added} -eq 1 ]]; do
+    added=0
+    for m in ${all_modules}; do
+      case " ${to_release} " in *" ${m} "*) continue ;; esac
+      for dep in ${to_release}; do
+        if grep -qE "${GITHUB_REPO}/${dep} v" "${ROOT_DIR}/${m}/go.mod" 2>/dev/null; then
+          to_release="${to_release} ${m}"
+          added=1
+          break
+        fi
+      done
+    done
+  done
+
+  echo "${to_release}"
 }
 
 # Function to find latest tag for a module

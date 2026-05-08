@@ -50,33 +50,41 @@ Dry Run: false
 
 The module name is validated against the modules in `go.work`.
 
-### Local Dry Run Preview
+#### In-repo consumers are bumped together
 
-Always start with a dry run. This does not require origin to point to `docker/go-sdk` — it only previews version changes without any git operations:
+When the requested module is a dependency of other modules in this repository, **those consumer modules are bumped in the same PR** (transitively). For example, requesting a release of `image` will also bump and tag `container`, because `container/go.mod` requires `image`.
 
-```bash
-# Preview version changes for all modules
-DRY_RUN=true make pre-release-all
+This is required for consistency: `pre-release.sh` rewrites the `go.mod` of every consumer to reference the new dependency version. If those consumers were not also bumped, `main` would carry rewritten `go.mod` content while their existing tag still pointed at the old dependency — producing two different module contents under the same version string.
 
-# Preview for a specific module
-cd container
-DRY_RUN=true make pre-release
-```
+When the expansion pulls in additional modules, the PR title switches from `chore(<module>): bump version` to `chore(release): bump module versions` so Phase 2's commit-message check still recognizes it as a release commit. The PR body lists every bumped module.
 
-### Running Phase 1 Locally
+Modules with no in-repo consumers (e.g., `container`, `volume`, `legacyadapters`) release as a single-module bump with no fan-out.
 
-After reviewing the dry run output, you can run the release PR script directly from your machine. Your `origin` remote **must** point to `docker/go-sdk`:
+### Running Phase 1 locally
+
+`prepare-release-pr.sh` is the single entry point for both previewing and creating a release. It defaults to `DRY_RUN=true` — opt in with `DRY_RUN=false` to actually create the PR.
 
 ```bash
-BUMP_TYPE=prerelease ./.github/scripts/prepare-release-pr.sh          # all modules
-BUMP_TYPE=prerelease ./.github/scripts/prepare-release-pr.sh client   # single module
+# Preview (default) — works on any branch, any fork, no origin setup required.
+./.github/scripts/prepare-release-pr.sh client    # one module + its consumers
+./.github/scripts/prepare-release-pr.sh           # all modules
+
+# Real run — requires origin to point to docker/go-sdk and a clean main.
+DRY_RUN=false ./.github/scripts/prepare-release-pr.sh client
+DRY_RUN=false ./.github/scripts/prepare-release-pr.sh
+
+# Different bump types:
+BUMP_TYPE=patch DRY_RUN=false ./.github/scripts/prepare-release-pr.sh client
 ```
 
-The script will:
-1. Validate that `origin` points to `docker/go-sdk` (fails with instructions if not)
-2. Verify you're on `main` with a clean working tree
-3. Fetch `origin/main` and verify your local branch is up to date
-4. Create a release branch, bump versions, commit, push, and open a PR
+The script:
+
+1. Validates the requested module exists in `go.work`.
+2. **Real run only** — validates `origin` points to `docker/go-sdk`, verifies you're on `main` with a clean working tree, and fetches `origin/main` to confirm you're up to date.
+3. Computes the modules to release (the requested module plus its in-repo consumers).
+4. Runs `pre-release.sh` for each module.
+5. **Dry run** — prints a version summary and exits.
+6. **Real run** — creates a release branch, commits, pushes, and opens a PR.
 
 ## Phase 2: Automatic Tagging
 
@@ -171,7 +179,7 @@ If tags were pushed but `main` doesn't contain the version bump commit:
 
 ### Origin Remote Points to a Fork
 
-Both `prepare-release-pr.sh` and `tag-release.sh` validate that `origin` points to `docker/go-sdk`. If you see:
+`tag-release.sh` always — and `prepare-release-pr.sh` when run with `DRY_RUN=false` — validate that `origin` points to `docker/go-sdk`. If you see:
 
 ```
 ❌ Error: Git remote 'origin' points to the wrong repository

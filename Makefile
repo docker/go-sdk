@@ -15,21 +15,6 @@ tidy-all:
 	@echo "Running tidy in all modules..."
 	$(call for-all-modules,go mod tidy)
 
-clean-build-dir:
-	@echo "Cleaning build directory..."
-	@rm -rf .github/scripts/.build
-	@mkdir -p .github/scripts/.build
-
-# Pre-release version for all modules
-pre-release-all: clean-build-dir
-	@echo "Preparing releasing versions for all modules..."
-	$(call for-all-modules,make pre-release)
-
-# Release version for all modules. It must be run after pre-release-all.
-release-all:
-	$(call for-all-modules,make check-pre-release)
-	@./.github/scripts/release.sh
-
 # Tag release for all modules (Phase 2 of release process)
 tag-release:
 	@./.github/scripts/tag-release.sh

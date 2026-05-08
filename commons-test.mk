@@ -77,32 +77,6 @@ dependencies-scan:
 # ------------------------------------------------------------------------------
 # Release
 # ------------------------------------------------------------------------------
-.PHONY: pre-release
-pre-release:
-	@if [ -z "$(MODULE_DIR)" ]; then \
-		echo "Usage: make pre-release, from one of the module directories (e.g. make pre-release from client/ directory)"; \
-		exit 1; \
-	fi
-	@echo "Releasing version for module: $(MODULE_DIR)"
-	@$(ROOT_DIR)/.github/scripts/pre-release.sh "$(MODULE_DIR)"
-
-.PHONY: check-pre-release
-check-pre-release:
-	@if [ -z "$(MODULE_DIR)" ]; then \
-		echo "Usage: make check-pre-release, from one of the module directories (e.g. make check-pre-release from client/ directory)"; \
-		exit 1; \
-	fi
-	@$(ROOT_DIR)/.github/scripts/check-pre-release.sh "$(MODULE_DIR)"
-
-.PHONY: release
-release:
-	@if [ -z "$(MODULE_DIR)" ]; then \
-		echo "Usage: make release, from one of the module directories (e.g. make release from client/ directory)"; \
-		exit 1; \
-	fi
-	@echo "Finalizing release for module: $(MODULE_DIR)"
-	@$(ROOT_DIR)/.github/scripts/release.sh "$(MODULE_DIR)"
-
 .PHONY: tag-release
 tag-release:
 	@if [ -z "$(MODULE_DIR)" ]; then \
