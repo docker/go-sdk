@@ -52,6 +52,14 @@ const DurableStartupDispatcherPath = DurableStartupDir + "/" + durableStartupDis
 // keeps lexical sort intuitive across locales.
 var durableNamespaceNameRe = regexp.MustCompile(`^[a-z0-9][a-z0-9_-]*$`)
 
+// durableUserRe is the set of values [exec.WithUser] is allowed to take
+// in a durable startup command: a POSIX-shaped login name. The renderer
+// switches user via `su`, which only resolves login names — not Docker's
+// numeric UIDs or `uid:gid` / `user:group` specs. Reject those forms at
+// render time so the consumer sees a clear definition-time error
+// instead of a silent dispatcher failure at runtime.
+var durableUserRe = regexp.MustCompile(`^[a-zA-Z_][a-zA-Z0-9_-]*$`)
+
 // ErrDurableStartupReservedNamespace is returned when a consumer attempts
 // to register the reserved "default" namespace via
 // [WithDurableStartupCommandsFromDir]. Use [WithDurableStartupCommand]
@@ -82,6 +90,12 @@ var ErrDurableStartupReservedNamespace = fmt.Errorf("durable startup namespace %
 // switch fails loud (set -e propagates) when the user does not exist or
 // `su` is unavailable. [exec.WithTTY] and other process options are
 // ignored: the script does not go through a Docker exec.
+//
+// [exec.WithUser] only accepts a login name in the durable variant.
+// Docker's `uid:gid`, `user:group`, and bare-UID forms are rejected at
+// definition time because POSIX `su` cannot resolve them. Callers that
+// need full Docker user-spec semantics should use [WithStartupCommand]
+// instead.
 //
 // Not safe to call concurrently on the same [Definition]: collect the
 // option values upstream and apply them serially.
@@ -272,6 +286,21 @@ func renderDurableScript(e Executable) (string, error) {
 			continue
 		}
 		opt.Apply(&po)
+	}
+
+	// `su` only resolves login names. Docker's full user spec
+	// (`uid:gid`, `user:group`, bare UIDs without a /etc/passwd entry)
+	// would silently fail at runtime when the dispatcher tried to switch
+	// users. Reject those forms here so the consumer gets a clear
+	// definition-time error and a pointer to the alternative.
+	if u := po.ExecConfig.User; u != "" && !durableUserRe.MatchString(u) {
+		return "", fmt.Errorf(
+			"durable startup WithUser %q: only login names are supported "+
+				"(uid:gid / user:group / bare-UID forms are not, because the "+
+				"rendered script switches user via `su`); use a login name, "+
+				"or fall back to WithStartupCommand for full Docker user-spec semantics",
+			u,
+		)
 	}
 
 	// Build the inner body: env exports, cd, exec. This is shared between

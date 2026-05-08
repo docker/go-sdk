@@ -550,16 +550,52 @@ func TestRenderDurableScript(t *testing.T) {
 		require.Contains(t, out, "exec 'true'\n")
 	})
 
-	t.Run("with-user-quotes-tricky-username", func(t *testing.T) {
-		// We don't validate usernames — POSIX su will reject invalid
-		// ones at runtime. But our quoting must keep the rendered script
-		// syntactically valid regardless.
-		out, err := renderDurableScript(exec.NewRawCommand(
-			[]string{"true"},
-			exec.WithUser("user'with quote"),
-		))
-		require.NoError(t, err)
-		require.Contains(t, out, ` 'user'\''with quote'`+"\n")
+	t.Run("with-user-rejects-uid-gid-and-non-login-forms", func(t *testing.T) {
+		// `su` only resolves login names. Docker user specs like
+		// uid:gid, user:group, and bare-UIDs won't work at runtime, so
+		// reject them at definition time with a clear error pointing to
+		// WithStartupCommand for full Docker user-spec semantics.
+		for _, bad := range []string{
+			"1000",                  // bare UID
+			"1000:1000",             // uid:gid
+			"appuser:appgroup",      // user:group
+			"-leadingdash",          // not a valid login name
+			"user with space",       // space
+			"user'quote",            // shell metachar
+			"user;rm -rf /",         // injection attempt
+			"",                      // see note: "" means "no user", not invalid
+		} {
+			if bad == "" {
+				continue // empty user means "don't switch", separately covered
+			}
+			_, err := renderDurableScript(exec.NewRawCommand(
+				[]string{"true"},
+				exec.WithUser(bad),
+			))
+			require.Error(t, err, "expected error for WithUser %q", bad)
+			require.Contains(t, err.Error(), bad,
+				"error must include the offending value for diagnosability")
+			require.Contains(t, err.Error(), "WithStartupCommand",
+				"error should point users to the fallback")
+		}
+	})
+
+	t.Run("with-user-accepts-login-names", func(t *testing.T) {
+		for _, good := range []string{
+			"root",
+			"nobody",
+			"appuser",
+			"_systemd",
+			"pg-15",
+			"user_with_underscore",
+			"User",
+		} {
+			_, err := renderDurableScript(exec.NewRawCommand(
+				[]string{"true"},
+				exec.WithUser(good),
+			))
+			require.NoError(t, err, "expected no error for WithUser %q", good)
+		}
 	})
 
 	t.Run("rendering-is-deterministic", func(t *testing.T) {
