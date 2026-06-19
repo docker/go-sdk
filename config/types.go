@@ -65,6 +65,7 @@ type ProxyConfig struct {
 }
 
 // AuthConfig contains authorization information for connecting to a Registry.
+//
 // Deprecated: prefer use of registry.AuthConfig
 type AuthConfig registry.AuthConfig
 

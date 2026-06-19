@@ -11,7 +11,7 @@ define go_install
 endef
 
 $(GOBIN)/golangci-lint:
-	$(call go_install,github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.0.2)
+	$(call go_install,github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.12.2)
 
 $(GOBIN)/gotestsum:
 	$(call go_install,gotest.tools/gotestsum@latest)
