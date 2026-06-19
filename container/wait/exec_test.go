@@ -43,19 +43,22 @@ func (st mockExecTarget) Logs(_ context.Context) (io.ReadCloser, error) {
 }
 
 func (st mockExecTarget) Exec(ctx context.Context, _ []string, _ ...exec.ProcessOption) (int, io.Reader, error) {
-	time.Sleep(st.waitDuration)
-
 	var reader io.Reader
 	if st.response != "" {
 		reader = bytes.NewReader([]byte(st.response))
 	}
 
-	if err := ctx.Err(); err != nil {
-		return st.exitCode, reader, err
+	// Return success immediately once successAfter has passed, without sleeping.
+	if !st.successAfter.IsZero() && time.Now().After(st.successAfter) {
+		return 0, reader, nil
 	}
 
-	if !st.successAfter.IsZero() && time.Now().After(st.successAfter) {
-		return 0, reader, st.failure
+	if st.waitDuration > 0 {
+		select {
+		case <-time.After(st.waitDuration):
+		case <-ctx.Done():
+			return st.exitCode, nil, ctx.Err()
+		}
 	}
 
 	return st.exitCode, reader, st.failure
@@ -137,4 +140,30 @@ func TestExecStrategyWaitUntilReady_withExitCode(t *testing.T) {
 	wg.WithTimeout(time.Second * 2)
 	err = wg.WaitUntilReady(context.Background(), target)
 	require.Errorf(t, err, "Expected strategy to timeout out")
+}
+
+func TestExecStrategyWaitUntilReady_ExecPerPollTimeout(t *testing.T) {
+	pollInterval := 100 * time.Millisecond
+	target := mockExecTarget{
+		exitCode:     1,
+		waitDuration: 3 * pollInterval,            // exec takes longer than one poll tick
+		successAfter: time.Now().Add(time.Second), // after 1s exec returns quickly
+	}
+	wg := wait.NewExecStrategy([]string{"true"}).
+		WithPollInterval(pollInterval).
+		WithTimeout(5 * time.Second)
+	err := wg.WaitUntilReady(context.Background(), target)
+	require.NoError(t, err)
+}
+
+func TestExecStrategyWaitUntilReady_ExecTimeoutDeadlineExceeded(t *testing.T) {
+	pollInterval := 100 * time.Millisecond
+	target := mockExecTarget{
+		waitDuration: 10 * pollInterval, // always hangs longer than PollInterval
+	}
+	wg := wait.NewExecStrategy([]string{"true"}).
+		WithPollInterval(pollInterval).
+		WithTimeout(500 * time.Millisecond)
+	err := wg.WaitUntilReady(context.Background(), target)
+	require.ErrorIs(t, err, context.DeadlineExceeded)
 }

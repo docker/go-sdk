@@ -107,8 +107,16 @@ func (ws *ExecStrategy) WaitUntilReady(ctx context.Context, target StrategyTarge
 		case <-ctx.Done():
 			return ctx.Err()
 		case <-time.After(ws.PollInterval):
-			exitCode, resp, err := target.Exec(ctx, ws.cmd, exec.Multiplexed())
+			execCtx, execCancel := context.WithTimeout(ctx, ws.PollInterval)
+			exitCode, resp, err := target.Exec(execCtx, ws.cmd, exec.Multiplexed())
+			execCancel()
 			if err != nil {
+				if ctx.Err() != nil {
+					return ctx.Err()
+				}
+				if execCtx.Err() != nil {
+					continue
+				}
 				return err
 			}
 			if !ws.ExitCodeMatcher(exitCode) {
