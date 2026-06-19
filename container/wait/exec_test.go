@@ -167,3 +167,27 @@ func TestExecStrategyWaitUntilReady_ExecTimeoutDeadlineExceeded(t *testing.T) {
 	err := wg.WaitUntilReady(context.Background(), target)
 	require.ErrorIs(t, err, context.DeadlineExceeded)
 }
+
+func TestExecStrategyWaitUntilReady_RetryOnError(t *testing.T) {
+	target := mockExecTarget{
+		failure:      errors.New("transient exec error"),
+		successAfter: time.Now().Add(time.Second),
+	}
+	wg := wait.NewExecStrategy([]string{"true"}).
+		WithPollInterval(100 * time.Millisecond).
+		WithTimeout(5 * time.Second).
+		WithRetryOnError()
+	err := wg.WaitUntilReady(context.Background(), target)
+	require.NoError(t, err)
+}
+
+func TestExecStrategyWaitUntilReady_FailOnError(t *testing.T) {
+	execErr := errors.New("exec failed")
+	target := mockExecTarget{
+		failure: execErr,
+	}
+	wg := wait.NewExecStrategy([]string{"true"}).
+		WithTimeout(5 * time.Second)
+	err := wg.WaitUntilReady(context.Background(), target)
+	require.ErrorIs(t, err, execErr)
+}

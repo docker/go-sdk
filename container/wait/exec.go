@@ -24,6 +24,7 @@ type ExecStrategy struct {
 	ExitCodeMatcher func(exitCode int) bool
 	ResponseMatcher func(body io.Reader) bool
 	PollInterval    time.Duration
+	retryOnError    bool
 }
 
 // NewExecStrategy constructs an Exec strategy ...
@@ -68,6 +69,13 @@ func (ws *ExecStrategy) WithPollInterval(pollInterval time.Duration) *ExecStrate
 	return ws
 }
 
+// WithRetryOnError configures the strategy to retry when target.Exec returns an error,
+// instead of failing immediately. The strategy still stops on overall context cancellation.
+func (ws *ExecStrategy) WithRetryOnError() *ExecStrategy {
+	ws.retryOnError = true
+	return ws
+}
+
 // ForExec is a convenience method to assign ExecStrategy
 func ForExec(cmd []string) *ExecStrategy {
 	return NewExecStrategy(cmd)
@@ -109,12 +117,16 @@ func (ws *ExecStrategy) WaitUntilReady(ctx context.Context, target StrategyTarge
 		case <-time.After(ws.PollInterval):
 			execCtx, execCancel := context.WithTimeout(ctx, ws.PollInterval)
 			exitCode, resp, err := target.Exec(execCtx, ws.cmd, exec.Multiplexed())
+			execTimedOut := execCtx.Err() != nil
 			execCancel()
 			if err != nil {
 				if ctx.Err() != nil {
 					return ctx.Err()
 				}
-				if execCtx.Err() != nil {
+				if execTimedOut {
+					continue
+				}
+				if ws.retryOnError {
 					continue
 				}
 				return err
