@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"strings"
 	"sync"
 
 	"github.com/moby/moby/api/types/container"
@@ -96,11 +97,13 @@ func (c *sdkClient) Info(ctx context.Context, options client.InfoOptions) (clien
 
 	infoLabels := ""
 	if len(c.dockerInfo.Info.Labels) > 0 {
-		infoLabels = `
-  Labels:`
+		var sb strings.Builder
+		sb.WriteString("\n  Labels:")
 		for _, lb := range c.dockerInfo.Info.Labels {
-			infoLabels += "\n    " + lb
+			sb.WriteString("\n    ")
+			sb.WriteString(lb)
 		}
+		infoLabels = sb.String()
 	}
 
 	c.log.Info("Connected to docker",
