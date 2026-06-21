@@ -140,6 +140,9 @@ func (s *store) inspect(ctxName string) (Context, error) {
 			}
 
 			cfg, err := config.Load()
+			if errors.Is(err, config.ErrConfigFileNotFound) {
+				return *ctx, nil
+			}
 			if err != nil {
 				return Context{}, fmt.Errorf("load config: %w", err)
 			}

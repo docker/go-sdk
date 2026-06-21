@@ -64,6 +64,9 @@ func New(name string, opts ...CreateContextOption) (*Context, error) {
 	// set the context as the current context if the option is set
 	if defaultOptions.current {
 		cfg, err := config.Load()
+		if errors.Is(err, config.ErrConfigFileNotFound) {
+			return ctx, nil
+		}
 		if err != nil {
 			return nil, fmt.Errorf("load config: %w", err)
 		}

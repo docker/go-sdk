@@ -1,6 +1,7 @@
 package config
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/moby/moby/api/pkg/authconfig"
@@ -17,6 +18,9 @@ const tokenUsername = "<token>"
 // The returned map is keyed by the registry registry hostname for each image.
 func AuthConfigs(images ...string) (map[string]registry.AuthConfig, error) {
 	cfg, err := Load()
+	if errors.Is(err, ErrConfigFileNotFound) {
+		return map[string]registry.AuthConfig{}, nil
+	}
 	if err != nil {
 		return nil, fmt.Errorf("load config: %w", err)
 	}
@@ -30,6 +34,9 @@ func AuthConfigs(images ...string) (map[string]registry.AuthConfig, error) {
 // If the config doesn't exist, it will attempt to load registry credentials using the default credential helper for the platform.
 func AuthConfigForHostname(hostname string) (registry.AuthConfig, error) {
 	cfg, err := Load()
+	if errors.Is(err, ErrConfigFileNotFound) {
+		return registry.AuthConfig{}, nil
+	}
 	if err != nil {
 		return registry.AuthConfig{}, fmt.Errorf("load config: %w", err)
 	}

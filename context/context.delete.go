@@ -30,6 +30,10 @@ func (ctx *Context) Delete() error {
 	if ctx.isCurrent {
 		// reset the current context to the default context
 		cfg, err := config.Load()
+		if errors.Is(err, config.ErrConfigFileNotFound) {
+			return nil
+		}
+
 		if err != nil {
 			return fmt.Errorf("load config: %w", err)
 		}
