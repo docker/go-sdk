@@ -19,7 +19,8 @@ const tokenUsername = "<token>"
 func AuthConfigs(images ...string) (map[string]registry.AuthConfig, error) {
 	cfg, err := Load()
 	if errors.Is(err, ErrConfigFileNotFound) {
-		return map[string]registry.AuthConfig{}, nil
+		cfg = Config{}
+		err = nil
 	}
 	if err != nil {
 		return nil, fmt.Errorf("load config: %w", err)
@@ -35,7 +36,8 @@ func AuthConfigs(images ...string) (map[string]registry.AuthConfig, error) {
 func AuthConfigForHostname(hostname string) (registry.AuthConfig, error) {
 	cfg, err := Load()
 	if errors.Is(err, ErrConfigFileNotFound) {
-		return registry.AuthConfig{}, nil
+		cfg = Config{}
+		err = nil
 	}
 	if err != nil {
 		return registry.AuthConfig{}, fmt.Errorf("load config: %w", err)
