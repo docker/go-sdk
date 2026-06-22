@@ -139,6 +139,8 @@ func (s *store) inspect(ctxName string) (Context, error) {
 				return Context{}, ErrDockerHostNotSet
 			}
 
+			ctx.encodedName = digest.FromString(ctx.Name).Encoded()
+
 			cfg, err := config.Load()
 			if errors.Is(err, config.ErrConfigFileNotFound) {
 				return *ctx, nil
@@ -147,8 +149,6 @@ func (s *store) inspect(ctxName string) (Context, error) {
 				return Context{}, fmt.Errorf("load config: %w", err)
 			}
 			ctx.isCurrent = cfg.CurrentContext == ctx.Name
-
-			ctx.encodedName = digest.FromString(ctx.Name).Encoded()
 
 			return *ctx, nil
 		}
