@@ -127,8 +127,8 @@ package main
 import (
 	"context"
 	"os"
+	"io"
 
-	"github.com/docker/docker/pkg/stdcopy"
 	"github.com/docker/go-sdk/container"
 	"github.com/docker/go-sdk/container/wait"
 )
@@ -149,7 +149,7 @@ func main() {
 		panic(err)
 	}
 
-	stdcopy.StdCopy(os.Stdout, os.Stderr, logs)
+	io.Copy(os.Stdout, logs)
 
 	err = ctr.Terminate(context.Background())
 	if err != nil {
