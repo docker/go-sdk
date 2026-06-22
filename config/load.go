@@ -75,8 +75,6 @@ func fileExists(path string) bool {
 
 // Filepath returns the path to the docker cli config file,
 // checking if the file exists.
-var ErrConfigFileNotFound = errors.New("config file not found")
-
 func Filepath() (string, error) {
 	dir, err := Dir()
 	if err != nil {
