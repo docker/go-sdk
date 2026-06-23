@@ -18,8 +18,10 @@ func setupConfigDirWithoutFile(t *testing.T) {
 }
 
 // setupNonExistentConfigDir points DOCKER_CONFIG at a path that does not exist,
-// exercising the ErrConfigFileNotFound code path in Dir() when the config
-// directory itself is missing (a common fresh-install state).
+// exercising the hard-fail code path in Dir() when an explicitly overridden
+// config directory is missing. Unlike the default ~/.docker case, an explicit
+// DOCKER_CONFIG pointing at a non-existent path is a user error and must NOT
+// surface ErrConfigFileNotFound.
 func setupNonExistentConfigDir(t *testing.T) {
 	t.Helper()
 	t.Setenv(EnvOverrideDir, filepath.Join(t.TempDir(), "does-not-exist"))
@@ -87,11 +89,12 @@ func TestFilepath_ConfigNotFound_ReturnsSentinel(t *testing.T) {
 	require.Contains(t, err.Error(), "config file does not exist")
 }
 
-func TestDir_ConfigDirNotFound_ReturnsSentinel(t *testing.T) {
+func TestDir_OverriddenConfigDirNotFound_NoSentinel(t *testing.T) {
 	setupNonExistentConfigDir(t)
 
 	_, err := Dir()
-	require.ErrorIs(t, err, ErrConfigFileNotFound)
+	require.Error(t, err)
+	require.NotErrorIs(t, err, ErrConfigFileNotFound)
 	require.Contains(t, err.Error(), "file does not exist")
 }
 
@@ -108,16 +111,18 @@ func TestDir_DefaultConfigDirNotFound_ReturnsSentinel(t *testing.T) {
 	require.Contains(t, err.Error(), "file does not exist")
 }
 
-func TestFilepath_ConfigDirNotFound_ReturnsSentinel(t *testing.T) {
+func TestFilepath_OverriddenConfigDirNotFound_NoSentinel(t *testing.T) {
 	setupNonExistentConfigDir(t)
 
 	_, err := Filepath()
-	require.ErrorIs(t, err, ErrConfigFileNotFound)
+	require.Error(t, err)
+	require.NotErrorIs(t, err, ErrConfigFileNotFound)
 }
 
-func TestLoad_ConfigDirNotFound_ReturnsSentinel(t *testing.T) {
+func TestLoad_OverriddenConfigDirNotFound_NoSentinel(t *testing.T) {
 	setupNonExistentConfigDir(t)
 
 	_, err := Load()
-	require.ErrorIs(t, err, ErrConfigFileNotFound)
+	require.Error(t, err)
+	require.NotErrorIs(t, err, ErrConfigFileNotFound)
 }

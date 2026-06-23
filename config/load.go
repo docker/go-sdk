@@ -47,7 +47,7 @@ func Dir() (string, error) {
 	dir := os.Getenv(EnvOverrideDir)
 	if dir != "" {
 		if !fileExists(dir) {
-			return "", errors.Join(fmt.Errorf("file does not exist (%s)", dir), ErrConfigFileNotFound)
+			return "", fmt.Errorf("file does not exist (%s)", dir)
 		}
 		return dir, nil
 	}
