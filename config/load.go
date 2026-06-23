@@ -47,19 +47,19 @@ func Dir() (string, error) {
 	dir := os.Getenv(EnvOverrideDir)
 	if dir != "" {
 		if !fileExists(dir) {
-			return "", fmt.Errorf("file does not exist (%s)", dir)
+			return "", errors.Join(fmt.Errorf("file does not exist (%s)", dir), ErrConfigFileNotFound)
 		}
 		return dir, nil
 	}
 
 	home, err := getHomeDir()
 	if err != nil {
-		return "", fmt.Errorf("user home dir: %w", err)
+		return "", errors.Join(fmt.Errorf("user home dir: %w", err), ErrConfigFileNotFound)
 	}
 
 	configDir := filepath.Join(home, configFileDir)
 	if !fileExists(configDir) {
-		return "", fmt.Errorf("file does not exist (%s)", configDir)
+		return "", errors.Join(fmt.Errorf("file does not exist (%s)", configDir), ErrConfigFileNotFound)
 	}
 
 	return configDir, nil
@@ -110,6 +110,7 @@ func Load() (Config, error) {
 
 	cfg, err = loadFromFilepath(p)
 	if errors.Is(err, os.ErrNotExist) {
+		cfg.filepath = p
 		return cfg, nil
 	}
 	if err != nil {
