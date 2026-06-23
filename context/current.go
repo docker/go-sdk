@@ -1,6 +1,7 @@
 package context
 
 import (
+	"errors"
 	"fmt"
 	"net/url"
 	"os"
@@ -23,6 +24,9 @@ func Current() (string, error) {
 	cfg, err := config.Load()
 	if err != nil {
 		if os.IsNotExist(err) {
+			return DefaultContextName, nil
+		}
+		if errors.Is(err, config.ErrConfigFileNotFound) {
 			return DefaultContextName, nil
 		}
 		return "", fmt.Errorf("load docker config: %w", err)

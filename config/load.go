@@ -59,7 +59,7 @@ func Dir() (string, error) {
 
 	configDir := filepath.Join(home, configFileDir)
 	if !fileExists(configDir) {
-		return "", fmt.Errorf("file does not exist (%s)", configDir)
+		return "", errors.Join(fmt.Errorf("file does not exist (%s)", configDir), ErrConfigFileNotFound)
 	}
 
 	return configDir, nil
@@ -83,7 +83,7 @@ func Filepath() (string, error) {
 
 	configFilePath := filepath.Join(dir, FileName)
 	if !fileExists(configFilePath) {
-		return "", fmt.Errorf("config file does not exist (%s)", configFilePath)
+		return "", errors.Join(fmt.Errorf("config file does not exist (%s)", configFilePath), ErrConfigFileNotFound)
 	}
 
 	return configFilePath, nil
@@ -109,6 +109,10 @@ func Load() (Config, error) {
 	}
 
 	cfg, err = loadFromFilepath(p)
+	if errors.Is(err, os.ErrNotExist) {
+		cfg.filepath = p
+		return cfg, nil
+	}
 	if err != nil {
 		return cfg, fmt.Errorf("load config: %w", err)
 	}
