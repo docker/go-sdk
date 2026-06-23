@@ -54,7 +54,7 @@ func Dir() (string, error) {
 
 	home, err := getHomeDir()
 	if err != nil {
-		return "", errors.Join(fmt.Errorf("user home dir: %w", err), ErrConfigFileNotFound)
+		return "", fmt.Errorf("user home dir: %w", err)
 	}
 
 	configDir := filepath.Join(home, configFileDir)
