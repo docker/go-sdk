@@ -3,6 +3,7 @@ package config
 import (
 	"errors"
 	"os/exec"
+	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -14,6 +15,14 @@ import (
 func setupConfigDirWithoutFile(t *testing.T) {
 	t.Helper()
 	t.Setenv(EnvOverrideDir, t.TempDir())
+}
+
+// setupNonExistentConfigDir points DOCKER_CONFIG at a path that does not exist,
+// exercising the ErrConfigFileNotFound code path in Dir() when the config
+// directory itself is missing (a common fresh-install state).
+func setupNonExistentConfigDir(t *testing.T) {
+	t.Helper()
+	t.Setenv(EnvOverrideDir, filepath.Join(t.TempDir(), "does-not-exist"))
 }
 
 func TestAuthConfigs_ConfigNotFound(t *testing.T) {
@@ -76,4 +85,39 @@ func TestFilepath_ConfigNotFound_ReturnsSentinel(t *testing.T) {
 	_, err := Filepath()
 	require.ErrorIs(t, err, ErrConfigFileNotFound)
 	require.Contains(t, err.Error(), "config file does not exist")
+}
+
+func TestDir_ConfigDirNotFound_ReturnsSentinel(t *testing.T) {
+	setupNonExistentConfigDir(t)
+
+	_, err := Dir()
+	require.ErrorIs(t, err, ErrConfigFileNotFound)
+	require.Contains(t, err.Error(), "file does not exist")
+}
+
+func TestDir_DefaultConfigDirNotFound_ReturnsSentinel(t *testing.T) {
+	// Point HOME at a temp dir without a .docker subdirectory, and clear
+	// DOCKER_CONFIG so Dir() falls back to the default ~/.docker path.
+	tmpHome := t.TempDir()
+	t.Setenv("HOME", tmpHome)
+	t.Setenv("USERPROFILE", tmpHome) // Windows support
+	t.Setenv(EnvOverrideDir, "")
+
+	_, err := Dir()
+	require.ErrorIs(t, err, ErrConfigFileNotFound)
+	require.Contains(t, err.Error(), "file does not exist")
+}
+
+func TestFilepath_ConfigDirNotFound_ReturnsSentinel(t *testing.T) {
+	setupNonExistentConfigDir(t)
+
+	_, err := Filepath()
+	require.ErrorIs(t, err, ErrConfigFileNotFound)
+}
+
+func TestLoad_ConfigDirNotFound_ReturnsSentinel(t *testing.T) {
+	setupNonExistentConfigDir(t)
+
+	_, err := Load()
+	require.ErrorIs(t, err, ErrConfigFileNotFound)
 }
