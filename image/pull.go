@@ -70,7 +70,8 @@ func Pull(ctx context.Context, imageName string, opts ...PullOption) error {
 		pullOpts.client = sdk
 	}
 
-	if pullOpts.credentialsFn == nil {
+	defaultedCredentials := pullOpts.credentialsFn == nil
+	if defaultedCredentials {
 		if err := WithCredentialsFromConfig(pullOpts); err != nil {
 			return fmt.Errorf("set credentials for pull option: %w", err)
 		}
@@ -82,7 +83,11 @@ func Pull(ctx context.Context, imageName string, opts ...PullOption) error {
 
 	username, password, err := pullOpts.credentialsFn(imageName)
 	if err != nil {
-		return fmt.Errorf("failed to retrieve registry credentials for %s: %w", imageName, err)
+		if !defaultedCredentials {
+			return fmt.Errorf("failed to retrieve registry credentials for %s: %w", imageName, err)
+		}
+		pullOpts.client.Logger().Warn("failed to retrieve registry credentials, pulling without authentication", "image", imageName, "error", err)
+		username, password = "", ""
 	}
 
 	imgRef, err := configauth.ParseImageRef(imageName)
