@@ -47,6 +47,9 @@ var defaultPullHandler = DisplayProgress(os.Stdout)
 // Pull pulls an image from a remote registry, retrying on non-permanent errors.
 // See [client.IsPermanentClientError] for the list of non-permanent errors.
 // It first extracts the registry credentials from the image name, and sets them in the pull options.
+// When no credentials fn is set with [WithCredentialsFn], credentials are resolved from the
+// Docker CLI config; if that resolution fails, the pull proceeds anonymously and a warning is
+// logged. Errors from an explicitly provided credentials fn still fail the pull.
 // It needs to be called with a valid image name, and optional pull options, see [PullOption].
 // It's possible to override the default pull handler function by using the [WithPullHandler] option.
 func Pull(ctx context.Context, imageName string, opts ...PullOption) error {

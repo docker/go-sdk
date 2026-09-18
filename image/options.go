@@ -47,7 +47,9 @@ type pullOptions struct {
 	credentialsFn func(string) (string, string, error)
 }
 
-// WithCredentialsFn sets the function to retrieve credentials for an image to be pulled
+// WithCredentialsFn sets the function to retrieve credentials for an image to be pulled.
+// It is optional and only needed for custom credential sources: by default credentials are
+// resolved from the Docker CLI config, and public images work without it.
 func WithCredentialsFn(credentialsFn func(string) (string, string, error)) PullOption {
 	return func(opts *pullOptions) error {
 		opts.credentialsFn = credentialsFn

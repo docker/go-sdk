@@ -27,6 +27,9 @@ The Pull operation can be customized using functional options. The following opt
 - `WithPullOptions(options apiimage.PullOptions) image.PullOption`: The options to use to pull the image. The type of the options is "github.com/moby/moby/api/types/image".
 - `WithPullHandler(pullHandler func(r io.ReadCloser) error) image.PullOption`: The handler to use to pull the image, which acts as a callback to the pull operation.
 
+> [!NOTE]
+> Credentials default to the Docker CLI config (`WithCredentialsFn` is optional). If no credentials can be resolved, the pull falls back to anonymous with a logged warning, so no credentials fn is needed for public registries.
+
 First, you need to import the following packages:
 
 ```go
