@@ -4,7 +4,10 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"fmt"
 	"log/slog"
+	"os"
+	"path/filepath"
 	"testing"
 	"time"
 
@@ -143,5 +146,93 @@ func TestPull(t *testing.T) {
 
 		out := testPull(t, "some_tag", defaultPullOpts, mockCliWithLogger, true)
 		require.Contains(t, out, "failed to pull image, will retry")
+	})
+}
+
+func TestPullDefaultCredentials(t *testing.T) {
+	newSDK := func(t *testing.T, mockCli *errMockCli, buf *bytes.Buffer) sdkclient.SDKClient {
+		t.Helper()
+		sdk, err := sdkclient.New(context.TODO(),
+			sdkclient.WithDockerAPI(mockCli),
+			sdkclient.WithLogger(slog.New(slog.NewTextHandler(buf, nil))))
+		require.NoError(t, err)
+		return sdk
+	}
+
+	t.Run("broken-config/anonymous-fallback", func(t *testing.T) {
+		tmpDir := t.TempDir()
+		// unique helper name to avoid the config module's content-hash cache
+		helper := fmt.Sprintf("broken-helper-%d", time.Now().UnixNano())
+		binDir := t.TempDir()
+		helperPath := filepath.Join(binDir, "docker-credential-"+helper)
+		require.NoError(t, os.WriteFile(helperPath, []byte("#!/bin/sh\nexit 1\n"), 0o755))
+		t.Setenv("PATH", binDir+string(os.PathListSeparator)+os.Getenv("PATH"))
+		cfg := fmt.Sprintf(`{"credHelpers":{"myregistry.example.com":%q}}`, helper)
+		require.NoError(t, os.WriteFile(filepath.Join(tmpDir, "config.json"), []byte(cfg), 0o600))
+		t.Setenv("DOCKER_CONFIG", tmpDir)
+		t.Setenv("DOCKER_AUTH_CONFIG", "")
+
+		mockCli := &errMockCli{}
+		buf := &bytes.Buffer{}
+		sdk := newSDK(t, mockCli, buf)
+
+		ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
+		defer cancel()
+		err := Pull(ctx, "myregistry.example.com/myimage:tag",
+			WithPullOptions(dockerclient.ImagePullOptions{}),
+			WithPullClient(sdk),
+		)
+		require.NoError(t, err)
+		require.Contains(t, buf.String(), "failed to retrieve registry credentials, pulling without authentication")
+		require.Positive(t, mockCli.imagePullCount)
+
+		decoded, err := authconfig.Decode(mockCli.lastPullOptions.RegistryAuth)
+		require.NoError(t, err)
+		require.Empty(t, decoded.Username)
+		require.Empty(t, decoded.Password)
+		require.Empty(t, decoded.IdentityToken)
+	})
+
+	t.Run("no-config/anonymous", func(t *testing.T) {
+		t.Setenv("DOCKER_CONFIG", t.TempDir())
+		t.Setenv("DOCKER_AUTH_CONFIG", "")
+
+		mockCli := &errMockCli{}
+		buf := &bytes.Buffer{}
+		sdk := newSDK(t, mockCli, buf)
+
+		ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
+		defer cancel()
+		err := Pull(ctx, "myregistry.example.com/myimage:tag",
+			WithPullOptions(dockerclient.ImagePullOptions{}),
+			WithPullClient(sdk),
+		)
+		require.NoError(t, err)
+		require.Positive(t, mockCli.imagePullCount)
+
+		decoded, err := authconfig.Decode(mockCli.lastPullOptions.RegistryAuth)
+		require.NoError(t, err)
+		require.Empty(t, decoded.Username)
+		require.Empty(t, decoded.Password)
+		require.Empty(t, decoded.IdentityToken)
+	})
+
+	t.Run("explicit-credentials-fn/error-fails", func(t *testing.T) {
+		mockCli := &errMockCli{}
+		buf := &bytes.Buffer{}
+		sdk := newSDK(t, mockCli, buf)
+
+		ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
+		defer cancel()
+		err := Pull(ctx, "myregistry.example.com/myimage:tag",
+			WithPullOptions(dockerclient.ImagePullOptions{}),
+			WithCredentialsFn(func(string) (string, string, error) {
+				return "", "", errors.New("boom")
+			}),
+			WithPullClient(sdk),
+		)
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "failed to retrieve registry credentials")
+		require.Zero(t, mockCli.imagePullCount)
 	})
 }
