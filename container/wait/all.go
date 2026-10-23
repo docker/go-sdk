@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"reflect"
 	"strings"
 	"time"
 )
@@ -54,7 +53,7 @@ func (ms *MultiStrategy) String() string {
 
 	var strategies []string
 	for _, strategy := range ms.Strategies {
-		if strategy == nil || reflect.ValueOf(strategy).IsNil() {
+		if isNilStrategy(strategy) {
 			continue
 		}
 		if s, ok := strategy.(fmt.Stringer); ok {
@@ -81,7 +80,7 @@ func (ms *MultiStrategy) WaitUntilReady(ctx context.Context, target StrategyTarg
 	}
 
 	for _, strategy := range ms.Strategies {
-		if strategy == nil || reflect.ValueOf(strategy).IsNil() {
+		if isNilStrategy(strategy) {
 			// A module could be appending strategies after part of the container initialization,
 			// and use wait.ForAll on a not initialized strategy.
 			// In this case, we just skip the nil strategy.
