@@ -114,16 +114,11 @@ func (ms *AnyMultiStrategy) WaitUntilReady(ctx context.Context, target StrategyT
 		return nil
 	}
 
-	for {
-		select {
-		case err := <-resCh:
-			if err != nil {
-				return err
-			}
-			return nil
-		case <-ctx.Done():
-			return fmt.Errorf("timed out waiting for strategies: %w", ctx.Err())
-		}
+	select {
+	case err := <-resCh:
+		return err
+	case <-ctx.Done():
+		return fmt.Errorf("timed out waiting for strategies: %w", ctx.Err())
 	}
 }
 
