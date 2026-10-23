@@ -64,7 +64,8 @@ In order to wait for the container to be ready, you can use the `WithWaitStrateg
 - ForHTTP: waits for a container to respond to an HTTP request
 - ForLog: waits for a container to log a message
 - ForSQL: waits for a SQL connection to be established
-- ForAll: waits for a combination of strategies
+- ForAll: waits for all of a combination of strategies to be ready
+- ForAny: waits for any one of a combination of strategies to be ready (the remaining ones are then cancelled)
 
 You can also define your own wait strategy by implementing the `wait.Strategy` interface.
 
