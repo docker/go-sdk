@@ -1,6 +1,8 @@
 module github.com/docker/go-sdk/config
 
-go 1.24.0
+go 1.27.0
+
+toolchain go1.27.3
 
 require (
 	github.com/distribution/reference v0.6.0

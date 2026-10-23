@@ -11,13 +11,13 @@ define go_install
 endef
 
 $(GOBIN)/golangci-lint:
-	$(call go_install,github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.12.2)
+	$(call go_install,github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.15.0)
 
 $(GOBIN)/gotestsum:
 	$(call go_install,gotest.tools/gotestsum@latest)
 
 $(GOBIN)/mockery:
-	$(call go_install,github.com/vektra/mockery/v2@v2.53.4)
+	$(call go_install,github.com/vektra/mockery/v2@v2.53.8)
 
 .PHONY: install-tools
 install-tools: $(GOBIN)/golangci-lint $(GOBIN)/gotestsum $(GOBIN)/mockery

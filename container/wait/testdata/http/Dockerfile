@@ -1,4 +1,4 @@
-FROM golang:1.24-alpine3.22@sha256:92b6d90efb23fa6ee3eef6d45f5d06527e56b0d3100e98eb5a1d9b3b8acd9bca as builder
+FROM golang:1.27.3-alpine3.24@sha256:b8c9b82affbbb82a020bbcf998dad2ba9516944ac7e883524642a481a9505e9c as builder
 WORKDIR /app
 COPY . .
 RUN mkdir -p dist
