@@ -141,9 +141,64 @@ func TestTarFile(t *testing.T) {
 	require.Equal(t, b, untarBytes)
 }
 
+func TestUntar_rejectsPathTraversal(t *testing.T) {
+	tests := []struct {
+		name     string
+		typeflag byte
+	}{
+		{name: "../evil.txt", typeflag: tar.TypeReg},
+		{name: "nested/../../evil.txt", typeflag: tar.TypeReg},
+		{name: "/evil.txt", typeflag: tar.TypeReg},
+		{name: "../evil-dir", typeflag: tar.TypeDir},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			content := []byte("evil")
+
+			var buf bytes.Buffer
+			gw := gzip.NewWriter(&buf)
+			tw := tar.NewWriter(gw)
+			hdr := &tar.Header{Name: tc.name, Typeflag: tc.typeflag, Mode: 0o644}
+			if tc.typeflag == tar.TypeReg {
+				hdr.Size = int64(len(content))
+			}
+			require.NoError(t, tw.WriteHeader(hdr))
+			if tc.typeflag == tar.TypeReg {
+				_, err := tw.Write(content)
+				require.NoError(t, err)
+			}
+			require.NoError(t, tw.Close())
+			require.NoError(t, gw.Close())
+
+			parent := t.TempDir()
+			dst := filepath.Join(parent, "dst")
+			require.NoError(t, os.Mkdir(dst, 0o755))
+
+			err := untar(dst, &buf)
+			require.Error(t, err)
+
+			_, err = os.Stat(filepath.Join(parent, filepath.Base(tc.name)))
+			require.ErrorIs(t, err, os.ErrNotExist)
+		})
+	}
+}
+
 // untar takes a destination path and a reader; a tar reader loops over the tarfile
-// creating the file structure at 'dst' along the way, and writing any files
+// creating the file structure at 'dst' along the way, and writing any files.
+// All filesystem operations go through an os.Root scoped to 'dst', so entries
+// whose names escape it (e.g. "../evil" or absolute paths) are rejected.
 func untar(dst string, r io.Reader) error {
+	if err := os.MkdirAll(dst, 0o755); err != nil {
+		return err
+	}
+
+	root, err := os.OpenRoot(dst)
+	if err != nil {
+		return err
+	}
+	defer root.Close()
+
 	gzr, err := gzip.NewReader(r)
 	if err != nil {
 		return err
@@ -170,33 +225,25 @@ func untar(dst string, r io.Reader) error {
 			continue
 		}
 
-		// the target location where the dir/file should be created
-		target := filepath.Join(dst, header.Name)
-
-		// the following switch could also be done using fi.Mode(), not sure if there
-		// a benefit of using one vs. the other.
-		// fi := header.FileInfo()
-
 		// check the file type
 		switch header.Typeflag {
 
-		// if it's a dir and it doesn't exist create it
+		// if it's a dir, create it (and any missing parents) inside the root
 		case tar.TypeDir:
-			if _, err := os.Stat(target); err != nil {
-				if err := os.MkdirAll(target, 0o755); err != nil {
-					return err
-				}
+			if err := root.MkdirAll(header.Name, 0o755); err != nil {
+				return err
 			}
 
-		// if it's a file create it
+		// if it's a file create it inside the root
 		case tar.TypeReg:
-			f, err := os.OpenFile(target, os.O_CREATE|os.O_RDWR, os.FileMode(header.Mode))
+			f, err := root.OpenFile(header.Name, os.O_CREATE|os.O_RDWR, os.FileMode(header.Mode))
 			if err != nil {
 				return err
 			}
 
 			// copy over contents
 			if _, err := io.Copy(f, tr); err != nil {
+				f.Close()
 				return err
 			}
 
