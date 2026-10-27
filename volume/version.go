@@ -3,7 +3,7 @@ package volume
 import "github.com/docker/go-sdk/client"
 
 const (
-	version     = "0.1.0-alpha005"
+	version     = "0.1.0-alpha006"
 	moduleLabel = client.LabelBase + ".volume"
 )
 

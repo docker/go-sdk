@@ -3,7 +3,7 @@ package container
 import "github.com/docker/go-sdk/client"
 
 const (
-	version     = "0.1.0-alpha016"
+	version     = "0.1.0-alpha017"
 	moduleLabel = client.LabelBase + ".container"
 )
 

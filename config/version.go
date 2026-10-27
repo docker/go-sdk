@@ -1,7 +1,7 @@
 package config
 
 const (
-	version = "0.1.0-alpha013"
+	version = "0.1.0-alpha014"
 )
 
 // Version returns the version of the config package.

@@ -7,7 +7,7 @@ toolchain go1.27.3
 replace github.com/docker/go-sdk/config => ../config
 
 require (
-	github.com/docker/go-sdk/config v0.1.0-alpha013
+	github.com/docker/go-sdk/config v0.1.0-alpha014
 	github.com/opencontainers/go-digest v1.0.0
 	github.com/stretchr/testify v1.10.0
 )
