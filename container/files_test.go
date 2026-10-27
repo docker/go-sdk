@@ -184,6 +184,25 @@ func TestUntar_rejectsPathTraversal(t *testing.T) {
 	}
 }
 
+func TestUntar_specialModeBits(t *testing.T) {
+	b := []byte("content")
+
+	// os.Root rejects permission bits outside 0o777, so setuid/setgid/sticky
+	// bits must be masked before extracting.
+	buff, err := tarFile("special.file", func(tw io.Writer) error {
+		_, err := tw.Write(b)
+		return err
+	}, int64(len(b)), 0o4755)
+	require.NoError(t, err)
+
+	tmpDir := t.TempDir()
+	require.NoError(t, untar(tmpDir, bytes.NewReader(buff.Bytes())))
+
+	untarBytes, err := os.ReadFile(filepath.Join(tmpDir, "special.file"))
+	require.NoError(t, err)
+	require.Equal(t, b, untarBytes)
+}
+
 // untar takes a destination path and a reader; a tar reader loops over the tarfile
 // creating the file structure at 'dst' along the way, and writing any files.
 // All filesystem operations go through an os.Root scoped to 'dst', so entries
@@ -236,7 +255,7 @@ func untar(dst string, r io.Reader) error {
 
 		// if it's a file create it inside the root
 		case tar.TypeReg:
-			f, err := root.OpenFile(header.Name, os.O_CREATE|os.O_RDWR, os.FileMode(header.Mode))
+			f, err := root.OpenFile(header.Name, os.O_CREATE|os.O_RDWR, header.FileInfo().Mode().Perm())
 			if err != nil {
 				return err
 			}
