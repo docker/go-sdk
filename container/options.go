@@ -304,6 +304,24 @@ func WithStartupCommand(execs ...Executable) CustomizeDefinitionOption {
 	}
 }
 
+// WithStrictStartupCommand will execute the command representation of each Executable into the container.
+// It will leverage the container lifecycle hooks to call the command right after the container
+// is started.
+//
+// As opposed to WithStartupCommand, non-zero exit codes of each Executable are treated as errors.
+func WithStrictStartupCommand(execs ...Executable) CustomizeDefinitionOption {
+	return func(def *Definition) error {
+		startupCommandsHook := createStrictExecutableHooks(execs, func(hooks []ContainerHook) LifecycleHooks {
+			return LifecycleHooks{
+				PostStarts: hooks,
+			}
+		})
+
+		def.lifecycleHooks = append(def.lifecycleHooks, startupCommandsHook)
+		return nil
+	}
+}
+
 // WithAfterReadyCommand will execute the command representation of each Executable into the container.
 // It will leverage the container lifecycle hooks to call the command right after the container
 // is ready.
@@ -330,6 +348,34 @@ func createExecutableHooks(execs []Executable, hookCreator func([]ContainerHook)
 			if executor, ok := c.(ContainerExecutor); ok {
 				_, _, err := executor.Exec(ctx, exec.AsCommand(), exec.Options()...)
 				return err
+			}
+			return errors.New("container does not support execution")
+		}
+		hooks = append(hooks, execFn)
+	}
+
+	return hookCreator(hooks)
+}
+
+// createStrictExecutableHooks creates lifecycle hooks for a slice of executables.
+// hookCreator is a function that creates the appropriate LifecycleHooks with the provided ContainerHook slice.
+//
+// This is a variant of createExecutableHooks; the difference is that createStrictExecutableHooks treats non-zero
+// exit codes in execs as errors.
+func createStrictExecutableHooks(execs []Executable, hookCreator func([]ContainerHook) LifecycleHooks) LifecycleHooks {
+	hooks := make([]ContainerHook, 0, len(execs))
+
+	for _, exec := range execs {
+		execFn := func(ctx context.Context, c ContainerInfo) error {
+			if executor, ok := c.(ContainerExecutor); ok {
+				code, _, err := executor.Exec(ctx, exec.AsCommand(), exec.Options()...)
+				if err != nil {
+					return err
+				}
+				if code != 0 {
+					return fmt.Errorf("startup command %v exited with code %d", exec.AsCommand(), code)
+				}
+				return nil
 			}
 			return errors.New("container does not support execution")
 		}
