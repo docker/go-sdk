@@ -305,7 +305,6 @@ echo "done"
 		require.Equal(t, "/tmp/.container-test\n", string(content))
 	})
 
-
 	t.Run("with-strict-after-ready-command", func(t *testing.T) {
 		ctx := context.Background()
 		{
