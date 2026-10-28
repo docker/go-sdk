@@ -338,8 +338,26 @@ func WithAfterReadyCommand(execs ...Executable) CustomizeDefinitionOption {
 	}
 }
 
-// createExecutableHooks creates lifecycle hooks for a slice of executables
-// hookCreator is a function that creates the appropriate LifecycleHooks with the provided ContainerHook slice
+// WithStrictAfterReadyCommand will execute the command representation of each Executable into the container.
+// It will leverage the container lifecycle hooks to call the command right after the container
+// is ready.
+//
+// As opposed to WithAfterReadyCommand, non-zero exit codes of each Executable are treated as errors.
+func WithStrictAfterReadyCommand(execs ...Executable) CustomizeDefinitionOption {
+	return func(def *Definition) error {
+		postReadiesHook := createStrictExecutableHooks(execs, func(hooks []ContainerHook) LifecycleHooks {
+			return LifecycleHooks{
+				PostReadies: hooks,
+			}
+		})
+
+		def.lifecycleHooks = append(def.lifecycleHooks, postReadiesHook)
+		return nil
+	}
+}
+
+// createExecutableHooks creates lifecycle hooks for a slice of executables.
+// hookCreator is a function that creates the appropriate LifecycleHooks with the provided ContainerHook slice.
 func createExecutableHooks(execs []Executable, hookCreator func([]ContainerHook) LifecycleHooks) LifecycleHooks {
 	hooks := make([]ContainerHook, 0, len(execs))
 
