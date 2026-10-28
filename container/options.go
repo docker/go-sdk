@@ -327,11 +327,18 @@ func createExecutableHooks(execs []Executable, hookCreator func([]ContainerHook)
 
 	for _, exec := range execs {
 		execFn := func(ctx context.Context, c ContainerInfo) error {
-			if executor, ok := c.(ContainerExecutor); ok {
-				_, _, err := executor.Exec(ctx, exec.AsCommand(), exec.Options()...)
+			executor, ok := c.(ContainerExecutor)
+			if !ok {
+				return errors.New("container does not support execution")
+			}
+			code, _, err := executor.Exec(ctx, exec.AsCommand(), exec.Options()...)
+			if err != nil {
 				return err
 			}
-			return errors.New("container does not support execution")
+			if code != 0 {
+				return fmt.Errorf("command %v exited with code %d", exec.AsCommand(), code)
+			}
+			return nil
 		}
 		hooks = append(hooks, execFn)
 	}

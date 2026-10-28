@@ -2,8 +2,10 @@ package container
 
 import (
 	"bytes"
+	"context"
 	"errors"
 	"io"
+	"log/slog"
 	"testing"
 	"time"
 
@@ -132,6 +134,31 @@ func TestWithStartupCommand(t *testing.T) {
 
 	require.Len(t, def.lifecycleHooks, 1)
 	require.Len(t, def.lifecycleHooks[0].PostStarts, 1)
+
+	t.Run("nonzero-exit", func(t *testing.T) {
+		fake := &hookExecTarget{code: 7}
+		err := def.lifecycleHooks[0].PostStarts[0](context.Background(), fake)
+		require.Error(t, err)
+		require.ErrorContains(t, err, "exited with code 7")
+		require.Equal(t, []string{"touch", ".go-sdk"}, fake.cmd)
+	})
+
+	t.Run("zero-exit", func(t *testing.T) {
+		fake := &hookExecTarget{code: 0}
+		err := def.lifecycleHooks[0].PostStarts[0](context.Background(), fake)
+		require.NoError(t, err)
+	})
+
+	t.Run("exec-error", func(t *testing.T) {
+		fake := &hookExecTarget{err: errors.New("daemon went away")}
+		err := def.lifecycleHooks[0].PostStarts[0](context.Background(), fake)
+		require.ErrorContains(t, err, "daemon went away")
+	})
+
+	t.Run("no-executor", func(t *testing.T) {
+		err := def.lifecycleHooks[0].PostStarts[0](context.Background(), infoOnlyTarget{})
+		require.ErrorContains(t, err, "does not support execution")
+	})
 }
 
 func TestWithAfterReadyCommand(t *testing.T) {
@@ -713,4 +740,23 @@ func TestWithCredentialsFn(t *testing.T) {
 	})
 	require.NoError(t, opt.Customize(&def))
 	require.Len(t, def.pullOptions, 1)
+}
+
+type infoOnlyTarget struct{}
+
+func (infoOnlyTarget) ID() string           { return "id" }
+func (infoOnlyTarget) Image() string        { return "img" }
+func (infoOnlyTarget) ShortID() string      { return "short" }
+func (infoOnlyTarget) Logger() *slog.Logger { return slog.Default() }
+
+type hookExecTarget struct {
+	infoOnlyTarget
+	code int
+	err  error
+	cmd  []string
+}
+
+func (f *hookExecTarget) Exec(_ context.Context, cmd []string, _ ...exec.ProcessOption) (int, io.Reader, error) {
+	f.cmd = cmd
+	return f.code, nil, f.err
 }

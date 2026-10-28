@@ -433,13 +433,9 @@ echo "done"
 		// requested user, the dispatcher's set -e causes a non-zero
 		// exit, AND the side-effect command never runs.
 		//
-		// We invoke the dispatcher directly to observe its exit code.
-		// container.WithStartupCommand isn't suitable for this assertion:
-		// its lifecycle hook only checks the Docker-level exec error,
-		// not the inner process's exit code, so it silently swallows a
-		// non-zero dispatcher exit. Consumers who want first-create
-		// coverage to fail loudly should invoke the dispatcher
-		// themselves and check the returned exit code.
+		// Invoke the dispatcher directly so this test can see the exit
+		// code and the missing marker. WithStartupCommand would fail
+		// Run on that non-zero exit, but it does not return the code.
 		ctx := context.Background()
 
 		c, err := container.Run(ctx,
