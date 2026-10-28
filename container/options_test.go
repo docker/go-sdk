@@ -134,6 +134,22 @@ func TestWithStartupCommand(t *testing.T) {
 	require.Len(t, def.lifecycleHooks[0].PostStarts, 1)
 }
 
+func TestWithStrictStartupCommand(t *testing.T) {
+	def := Definition{
+		image:      "alpine",
+		entrypoint: []string{"tail", "-f", "/dev/null"},
+		started:    true,
+	}
+
+	testExec := exec.NewRawCommand([]string{"touch", ".go-sdk"}, exec.WithWorkingDir("/tmp"))
+
+	err := WithStartupCommand(testExec)(&def)
+	require.NoError(t, err)
+
+	require.Len(t, def.lifecycleHooks, 1)
+	require.Len(t, def.lifecycleHooks[0].PostStarts, 1)
+}
+
 func TestWithAfterReadyCommand(t *testing.T) {
 	def := Definition{
 		image:      "alpine",
@@ -144,6 +160,22 @@ func TestWithAfterReadyCommand(t *testing.T) {
 	testExec := exec.NewRawCommand([]string{"touch", "/tmp/.go-sdk"})
 
 	err := WithAfterReadyCommand(testExec)(&def)
+	require.NoError(t, err)
+
+	require.Len(t, def.lifecycleHooks, 1)
+	require.Len(t, def.lifecycleHooks[0].PostReadies, 1)
+}
+
+func TestWithStrictAfterReadyCommand(t *testing.T) {
+	def := Definition{
+		image:      "alpine",
+		entrypoint: []string{"tail", "-f", "/dev/null"},
+		started:    true,
+	}
+
+	testExec := exec.NewRawCommand([]string{"touch", "/tmp/.go-sdk"})
+
+	err := WithStrictAfterReadyCommand(testExec)(&def)
 	require.NoError(t, err)
 
 	require.Len(t, def.lifecycleHooks, 1)
