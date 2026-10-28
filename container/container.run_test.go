@@ -254,6 +254,37 @@ echo "done"
 		require.Equal(t, "/tmp/.container-test\n", string(content))
 	})
 
+	t.Run("with-strict-startup-command", func(t *testing.T) {
+		ctx := context.Background()
+		{
+			c, err := container.Run(ctx,
+				container.WithImage(alpineLatest),
+				container.WithEntrypoint("tail", "-f", "/dev/null"),
+				container.WithStrictStartupCommand(exec.NewRawCommand([]string{"touch", "/tmp/.container-test"})),
+			)
+			container.Cleanup(t, c)
+			require.NoError(t, err)
+			require.NotNil(t, c)
+
+			_, reader, err := c.Exec(context.Background(), []string{"ls", "/tmp/.container-test"}, exec.Multiplexed())
+			require.NoError(t, err)
+
+			content, err := io.ReadAll(reader)
+			require.NoError(t, err)
+			require.Equal(t, "/tmp/.container-test\n", string(content))
+		}
+		{
+			c, err := container.Run(ctx,
+				container.WithImage(alpineLatest),
+				container.WithEntrypoint("tail", "-f", "/dev/null"),
+				container.WithStrictStartupCommand(exec.NewRawCommand([]string{"false"})),
+			)
+			container.Cleanup(t, c)
+			require.Error(t, err)
+			require.NotNil(t, c)
+		}
+	})
+
 	t.Run("with-after-ready-command", func(t *testing.T) {
 		ctx := context.Background()
 
@@ -272,6 +303,38 @@ echo "done"
 		content, err := io.ReadAll(reader)
 		require.NoError(t, err)
 		require.Equal(t, "/tmp/.container-test\n", string(content))
+	})
+
+
+	t.Run("with-strict-after-ready-command", func(t *testing.T) {
+		ctx := context.Background()
+		{
+			c, err := container.Run(ctx,
+				container.WithImage(alpineLatest),
+				container.WithEntrypoint("tail", "-f", "/dev/null"),
+				container.WithStrictAfterReadyCommand(exec.NewRawCommand([]string{"touch", "/tmp/.container-test"})),
+			)
+			container.Cleanup(t, c)
+			require.NoError(t, err)
+			require.NotNil(t, c)
+
+			_, reader, err := c.Exec(context.Background(), []string{"ls", "/tmp/.container-test"}, exec.Multiplexed())
+			require.NoError(t, err)
+
+			content, err := io.ReadAll(reader)
+			require.NoError(t, err)
+			require.Equal(t, "/tmp/.container-test\n", string(content))
+		}
+		{
+			c, err := container.Run(ctx,
+				container.WithImage(alpineLatest),
+				container.WithEntrypoint("tail", "-f", "/dev/null"),
+				container.WithStrictAfterReadyCommand(exec.NewRawCommand([]string{"false"})),
+			)
+			container.Cleanup(t, c)
+			require.Error(t, err)
+			require.NotNil(t, c)
+		}
 	})
 
 	t.Run("with-durable-startup-command", func(t *testing.T) {
