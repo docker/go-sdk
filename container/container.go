@@ -21,6 +21,9 @@ type Container struct {
 	// shortID the short Container ID, using the first 12 characters of the ID
 	shortID string
 
+	// name the name of the container
+	name string
+
 	// WaitingFor the waiting strategy to use for the container.
 	waitingFor wait.Strategy
 
@@ -73,6 +76,11 @@ func (c *Container) Running(b bool) {
 // WaitingFor returns the waiting strategy used by the container.
 func (c *Container) WaitingFor() wait.Strategy {
 	return c.waitingFor
+}
+
+// Name returns the name of the container.
+func (c *Container) Name() string {
+	return c.name
 }
 
 // Host gets host (ip or name) of the docker daemon where the container port is exposed
@@ -130,10 +138,16 @@ func FromResponse(ctx context.Context, dockerClient client.SDKClient, response c
 		shortID = response.ID[:12]
 	}
 
+	name := ""
+	if len(response.Names) > 0 {
+		name = response.Names[0] // Docker API returns a list of names, and the current container name is the first one in the list
+	}
+
 	ctr := &Container{
 		dockerClient: dockerClient,
 		containerID:  response.ID,
 		shortID:      shortID,
+		name:         name,
 		image:        response.Image,
 		isRunning:    response.State == "running",
 		exposedPorts: exposedPorts,
